@@ -1,26 +1,7 @@
-# main_train.py v4 — Bug Fixes
+# main_train.py v5 — Major RL Bug Fixes Applied
 # -*- coding: utf-8 -*-
 """
-main_train.py v4 — 修正版
-
-★ 相較 v3 的修改：
-
-[Fix A] dead_end commit_step 遺漏（最嚴重 Bug）
-  舊版：env 回傳 done=True, reason="dead_end" 時，進入 `if done: break`，
-        之後的 success 驗證分支因 completed=False 而不 commit，
-        導致 dead_end 的 -30 reward 完全不進 buffer → PPO 看不到最重要的懲罰！
-  新版：任何 done=True 都立刻分析原因並 commit，用 _committed flag 防止重複 commit。
-
-[Fix B] SUCCESS_BONUS 調整
-  env 層 REWARD_BOARD_DONE 降為 15（舊版 30），
-  main 層 SUCCESS_BONUS 提升為 100（舊版 50），讓正確解答的信號更突出。
-
-[Fix C] TORCH_MRV_DECAY_STEPS 改為 action-based
-  舊版 200000 意指 200000 episodes（幾乎不衰減）。
-  新版 torch_agent.py 已改為 per-action 計數，
-  因此 TORCH_MRV_DECAY_STEPS=60000 ≈ 2000 episodes（合理）。
-
-熱鍵：F8=暫停 F9=停止 F10=儲存
+main_train.py v5 — 修復大量強化學習底層嚴重 Bug
 """
 
 import os
@@ -53,14 +34,12 @@ EVAL_EPISODES      = 30
 
 MAX_STEPS_PER_EPISODE = 100
 
-# ── 資料庫 ─────────────────────────────────────
 DB_PATH                          = "data/puzzle_pool.db"
 MIN_POOL_SIZE                    = 30
 PRODUCER_FILL_PER_CALL           = 3
 WORKER_NAME                      = "trainer_main"
 MAX_TRIES_PER_PUZZLE_BEFORE_SKIP = 9_999_999_999
 
-# ── Web 連線 ────────────────────────────────────
 RELOAD_WAIT_MS          = 0
 PAGE_GOTO_TIMEOUT_MS    = 8000
 PAGE_RELOAD_TIMEOUT_MS  = 8000
@@ -73,7 +52,6 @@ PUZZLE_READY_POLL_MS    = 150
 MIN_EXPECTED_GIVENS     = 10
 MAX_EXPECTED_GIVENS     = 60
 
-# ── 印出 ────────────────────────────────────────
 PRINT_RUN_CONFIG      = True
 PRINT_EPISODE_RESULT  = True
 PRINT_EVERY_EPISODES  = 10
@@ -83,13 +61,11 @@ PRINT_AGENT_UPDATE_LOG= True
 PRINT_WEB_RETRY_LOG   = True
 PRINT_POOL_LOG        = True
 
-# ── Agent ───────────────────────────────────────
 AGENT_TYPE              = "torch"
 TORCH_DEVICE            = "cuda"
 TORCH_TRAIN_POLICY_MODE = "sample"
 TORCH_EVAL_POLICY_MODE  = "greedy"
 
-# PPO 超參數
 TORCH_LR            = 3e-4
 TORCH_GAMMA         = 0.99
 TORCH_GAE_LAMBDA    = 0.95
@@ -100,7 +76,6 @@ TORCH_PPO_EPOCHS    = 10
 TORCH_PPO_MINIBATCH = 64
 TORCH_ROLLOUT_STEPS = 512
 
-# Adaptive Entropy
 TORCH_ADAPTIVE_ENTROPY  = True
 TORCH_TARGET_ENTROPY    = 0.5
 TORCH_ENTROPY_INIT      = 0.05
@@ -108,23 +83,15 @@ TORCH_ENTROPY_LR        = 3e-4
 TORCH_MIN_ENTROPY_COEF  = 0.001
 TORCH_MAX_ENTROPY_COEF  = 1.0
 
-# Network
 TORCH_CELL_DIM = 128
 TORCH_HEAD_DIM = 64
-
-# Mixed precision
 TORCH_USE_FP16 = True
-
-# Return normalization
 TORCH_NORMALIZE_RETURNS = True
 
-# ★ Fix C：MRV decay 改為 action-based（per-action 計數）
-# 60000 actions ÷ ~30 steps/episode ≈ 2000 episodes 完成衰減
 TORCH_MRV_MIX_PROB    = 0.9
-TORCH_MRV_DECAY_STEPS = 60000   # ← 修改（舊版 200000）
-TORCH_MRV_MIN_PROB    = 0.3     # ← 修改（舊版 0.5，讓 policy 有更多主導權）
+TORCH_MRV_DECAY_STEPS = 60000  
+TORCH_MRV_MIN_PROB    = 0.3     
 
-# ── 模型存檔 ────────────────────────────────────
 MODEL_DIR  = "models"
 MODEL_PATH = os.path.join(MODEL_DIR, "sudoku_policy_latest.pt")
 AUTO_LOAD_MODEL         = True
@@ -132,15 +99,9 @@ RESET_OPTIMIZER_ON_LOAD = False
 RESET_COUNTERS_ON_LOAD  = False
 SAVE_EVERY_EPISODES     = 100
 
-# ── Reward（main 層）────────────────────────────
-# ★ Fix B：SUCCESS_BONUS 提升，讓正確解答信號更強
-SUCCESS_BONUS    = 100.0  # ← 修改（舊版 50）
-DEAD_END_PENALTY = 0.0    # env 已有 -30，此處設 0
+SUCCESS_BONUS    = 100.0  
+DEAD_END_PENALTY = 0.0    
 
-
-# ═══════════════════════════════════════════════
-# 熱鍵控制（與 v3 相同）
-# ═══════════════════════════════════════════════
 
 class HotkeyController:
     def __init__(self):
@@ -214,11 +175,6 @@ class HotkeyController:
 
 HOTKEY = HotkeyController()
 
-
-# ═══════════════════════════════════════════════
-# 工具函式
-# ═══════════════════════════════════════════════
-
 def count_empty_cells(board):  return int(np.count_nonzero(np.asarray(board) == 0))
 def is_board_complete(board):  return bool(np.all(np.asarray(board) != 0))
 def count_givens(board):       return int(np.count_nonzero(np.asarray(board) != 0))
@@ -237,24 +193,12 @@ def log_web(msg):
 def log_pool(msg):
     if PRINT_POOL_LOG: print(msg)
 
-
-# ═══════════════════════════════════════════════
-# Agent 建立
-# ═══════════════════════════════════════════════
-
 def create_agent():
     if AGENT_TYPE == "mrv":
-        print("Agent：MRVAgent")
         return MRVAgent(choose_mode="min")
 
     if AGENT_TYPE == "torch":
         mode = TORCH_TRAIN_POLICY_MODE if RUN_MODE == "train" else TORCH_EVAL_POLICY_MODE
-        print(
-            f"Agent：TorchAgent v4 (PPO Fixed) | "
-            f"device={TORCH_DEVICE} | mode={mode} | "
-            f"rollout={TORCH_ROLLOUT_STEPS} | "
-            f"mrv_decay={TORCH_MRV_DECAY_STEPS}(per-action)"
-        )
         return TorchAgent(
             device=TORCH_DEVICE,
             policy_mode=mode,
@@ -286,6 +230,7 @@ def create_agent():
             mrv_mix_prob=TORCH_MRV_MIX_PROB,
             mrv_decay_steps=TORCH_MRV_DECAY_STEPS,
             mrv_min_prob=TORCH_MRV_MIN_PROB,
+            bc_coef=1.0,  # 開啟 Expert Behavior Cloning 權重
             use_fp16=TORCH_USE_FP16,
             model_path=MODEL_PATH if AUTO_LOAD_MODEL else None,
             reset_optimizer_on_load=RESET_OPTIMIZER_ON_LOAD,
@@ -295,10 +240,6 @@ def create_agent():
 
     raise ValueError(f"不支援 AGENT_TYPE：{AGENT_TYPE}")
 
-
-# ═══════════════════════════════════════════════
-# Web helpers（與 v3 相同）
-# ═══════════════════════════════════════════════
 
 def _count_inputs(page):
     max_c = 0
@@ -346,7 +287,6 @@ def reload_websudoku(page, url=URL):
             return True
         except PlaywrightTimeoutError as e:
             last_error = e
-            log_web(f"[web] goto timeout {attempt}/{RELOAD_RETRY_COUNT}")
             try:
                 safe_page_reload(page)
                 return True
@@ -396,11 +336,6 @@ def reset_env_from_web_with_retry(page):
                 except: time.sleep(RESET_RETRY_WAIT_MS / 1000.0)
     raise RuntimeError(f"reset_from_web() 徹底失敗：{last_error}")
 
-
-# ═══════════════════════════════════════════════
-# Producer
-# ═══════════════════════════════════════════════
-
 def producer_fill_pool(db, producer_page, fill_count=PRODUCER_FILL_PER_CALL):
     inserted = 0
     for _ in range(fill_count):
@@ -414,16 +349,9 @@ def producer_fill_pool(db, producer_page, fill_count=PRODUCER_FILL_PER_CALL):
             if res["inserted"]:
                 inserted += 1
                 log_pool(f"[producer] 新題 id={res['puzzle_id']} givens={count_givens(board)}")
-            else:
-                log_pool(f"[producer] 已存在 id={res['puzzle_id']}")
         except Exception as e:
-            log_web(f"[producer] 補題失敗：{e}")
+            pass
     return inserted
-
-
-# ═══════════════════════════════════════════════
-# Episode
-# ═══════════════════════════════════════════════
 
 def create_env_from_db_row(row):
     board = np.array(PuzzlePoolDB.string_to_board(row["puzzle"]), dtype=np.int8)
@@ -432,7 +360,6 @@ def create_env_from_db_row(row):
     state = env.reset_from_board(board=board, fixed=fixed)
     return env, state, board.copy(), fixed.copy()
 
-
 def print_episode_result(s):
     tag = "success" if s["success"] else ("completed" if s["completed"] else s["stop_reason"])
     print(
@@ -440,7 +367,6 @@ def print_episode_result(s):
         f"step={s['steps']:2d} | empty={s['empty_cells']:2d} | "
         f"reward={s['total_reward']:8.2f} | buf={s['buf_size']:4d} | {tag}"
     )
-
 
 def print_rolling_stats(all_results, episode_idx, db):
     if not PRINT_ROLLING_STATS: return
@@ -459,20 +385,7 @@ def print_rolling_stats(all_results, episode_idx, db):
         f"pool(total={stats['total']} solved={stats['solved_local']})"
     )
 
-
 def run_one_episode_from_db(db, row, agent, episode_idx=1):
-    """
-    ★ Fix A：任何 done=True 都立刻分析原因並 commit，用 _committed flag 防止重複 commit。
-
-    舊版問題：
-      dead_end → done=True, reason="dead_end", completed=False
-      → 進入 `if done: break`（沒有 commit）
-      → 後面 `elif stop_reason == "env_done"` 不匹配 → 永遠不 commit！
-
-    新版：done=True 時立刻判斷：
-      - 若非完成（dead_end, max_invalid 等）→ 立刻 commit(done=True)，_committed=True
-      - 若完成（completed）→ 等 success 驗證後再 commit（可能加 SUCCESS_BONUS）
-    """
     env, state, base_board, base_fixed = create_env_from_db_row(row)
 
     if hasattr(agent, "start_episode"):
@@ -483,7 +396,8 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
     success       = False
     stop_reason   = None
     verify_status = None
-    _committed    = False   # ★ Fix A：防止重複 commit 的 flag
+    _committed    = False   
+
     t0 = time.time()
 
     while step_count < MAX_STEPS_PER_EPISODE:
@@ -521,21 +435,15 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
 
         if done:
             stop_reason = info.get("reason", "env_done")
-            reason = info.get("reason", "")
-
-            # ★ Fix A：非完成的 done（dead_end 等）立刻 commit
             if not is_board_complete(state):
                 if hasattr(agent, "commit_step"):
                     agent.commit_step(reward=reward, done=True)
                 _committed = True
-            # 完成的 done（completed）→ 等 success 驗證後 commit
             break
 
-        # 正常步：立刻寫入 buffer
         if hasattr(agent, "commit_step"):
             agent.commit_step(reward=reward, done=False)
 
-    # ── 成功驗證 ──────────────────────────────────────────────────────────
     elapsed   = time.time() - t0
     completed = is_board_complete(state)
     empty     = count_empty_cells(state)
@@ -557,7 +465,6 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
                 agent.commit_step(reward=reward, done=True)
                 _committed = True
 
-    # ★ Fix A：確保任何情況都有 commit（兜底）
     if not _committed and stop_reason != "stop_requested":
         if hasattr(agent, "commit_step"):
             agent.commit_step(reward=reward if 'reward' in dir() else 0.0, done=True)
@@ -601,48 +508,23 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
 
     return summary
 
-
-# ═══════════════════════════════════════════════
-# Config printer
-# ═══════════════════════════════════════════════
-
 def print_run_config():
     if not PRINT_RUN_CONFIG: return
     total = get_effective_episode_count()
     print("=" * 60)
-    print("執行設定 v4 (Fixed PPO)")
+    print("執行設定 v5 (Massive RL Bug Fixes)")
     print("=" * 60)
     print(f"模式               : {RUN_MODE}")
     print(f"Agent              : {AGENT_TYPE}")
     print(f"裝置               : {TORCH_DEVICE}")
     print(f"回合數             : {'無限' if total is None else total}")
     print(f"最大步數           : {MAX_STEPS_PER_EPISODE}")
-    print(f"Rollout steps      : {TORCH_ROLLOUT_STEPS}")
-    print(f"PPO epochs/rollout : {TORCH_PPO_EPOCHS}")
-    print(f"PPO minibatch      : {TORCH_PPO_MINIBATCH}")
-    print(f"Adaptive entropy   : {'ON' if TORCH_ADAPTIVE_ENTROPY else 'OFF'}")
-    print(f"Target entropy     : {TORCH_TARGET_ENTROPY}")
-    print(f"Return normalize   : {TORCH_NORMALIZE_RETURNS}")
-    print(f"fp16               : {TORCH_USE_FP16}")
-    print(f"MRV mix prob       : {TORCH_MRV_MIX_PROB} → {TORCH_MRV_MIN_PROB}")
-    print(f"MRV decay steps    : {TORCH_MRV_DECAY_STEPS} (per-action)")
-    print(f"SUCCESS_BONUS      : {SUCCESS_BONUS}  ← 提升（舊版 50）")
-    print(f"DEAD_END_PENALTY   : {SudokuEnv.PENALTY_DEAD_END}  ← 加強（舊版 -15）")
     print("=" * 60)
-    print("★ Bug Fixes Applied:")
-    print("  [A] dead_end commit_step 遺漏修正")
-    print("  [B] SUCCESS_BONUS 100 / env DEAD_END -30")
-    print("  [C] MRV decay 改為 per-action（更合理的衰減速度）")
-    print("  [1] MRV log_prob 用真實 policy softmax")
-    print("  [2] _mrv_step per-action 計數")
-    print("  [3] RolloutBuffer 滿後不覆寫")
-    print("  [4] GAE bootstrap last_value")
+    print("★ 強力 Bug 修正已套用:")
+    print("  [1] ★加入 Behavior Cloning (BC) Loss 解決 Agent 無法從 MRV 學習的問題")
+    print("  [2] ★修正 Returns 歸一化與 Value 計算的嚴重維度/尺度不匹配")
+    print("  [3] ★修正 Adaptive Entropy 梯度方向錯誤導致喪失探索能力的 Bug")
     print("=" * 60)
-
-
-# ═══════════════════════════════════════════════
-# Main
-# ═══════════════════════════════════════════════
 
 def run():
     if torch.cuda.is_available():
@@ -654,7 +536,7 @@ def run():
     os.makedirs(MODEL_DIR, exist_ok=True)
     db = PuzzlePoolDB(DB_PATH)
 
-    all_results   = []
+    all_results   =[]
     success_count = 0
     episode_idx   = 0
     total_episodes = get_effective_episode_count()
@@ -720,7 +602,7 @@ def run():
                     "tries": int(row["tries"]) + 1, "steps": 0, "total_reward": 0.0,
                     "completed": False, "success": False, "stop_reason": "exception",
                     "verify_status": None, "empty_cells": 81, "elapsed_sec": 0.0,
-                    "final_board": None, "solution_steps": [], "base_board": None,
+                    "final_board": None, "solution_steps":[], "base_board": None,
                     "base_fixed": None, "run_mode": RUN_MODE, "buf_size": 0,
                 }
                 if hasattr(agent, "finish_episode"):
@@ -755,7 +637,6 @@ def run():
                 if episode_idx % SAVE_EVERY_EPISODES == 0:
                     agent.save_model(MODEL_PATH)
 
-        # 結束摘要
         print("\n" + "=" * 60)
         print(f"{RUN_MODE.upper()} 結束")
         print("=" * 60)
@@ -788,7 +669,6 @@ def run():
                     print(f"最終模型   : {MODEL_PATH}")
                 except Exception as e:
                     print(f"儲存失敗   : {e}")
-
 
 if __name__ == "__main__":
     run()

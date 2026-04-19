@@ -1,40 +1,5 @@
 # app/sudoku/torch_agent.py
 # -*- coding: utf-8 -*-
-"""
-TorchAgent v4 — Bug Fixes + 改進版
-
-★ 與 v3 相比的修正：
-
-[Fix 1] MRV log_prob 錯誤（嚴重 Bug）
-  舊版：MRV 選的 action 的 log_prob = log(1/n_legal)（均勻假設）
-        → PPO importance ratio 完全錯誤，policy 學到的是假信號。
-  新版：即使 MRV 決定選哪個 action，log_prob 仍從 policy network 的 softmax 取得。
-        → old_log_prob 是真實 policy 概率，PPO ratio 正確。
-
-[Fix 2] _mrv_step 計數單位錯誤
-  舊版：在 finish_episode() 呼叫，每個 episode 只計 1 次。
-        設 mrv_decay_steps=200000 意指 200000 episodes，幾乎不會衰減。
-  新版：在 select_action() 呼叫，每個 action 計 1 次。
-        200000 steps ÷ ~30 steps/episode ≈ 6667 episodes 後完成衰減。
-
-[Fix 3] RolloutBuffer push 覆寫問題
-  舊版：buffer 滿後繼續 push（circular overwrite），
-        導致 is_ready 觸發時 buffer 內容已被舊 episode 的後半段覆蓋。
-  新版：buffer 滿後停止 push，等待 _ppo_update() 重置後再填。
-
-[Fix 4] GAE bootstrap 缺少 last_value
-  舊版：rollout 最後一步的 next_val 硬設為 0.0。
-        若 rollout 在 mid-episode 結束（done=False），Value 低估，
-        導致後面幾步的 advantage 偏負。
-  新版：RolloutBuffer.set_last_value() 讓 finish_episode 傳入
-        最後一個 pending_state 的 V(s) 作為 bootstrap。
-
-[Fix 5] dead_end commit_step 遺漏（main_train.py 的 Bug）
-  → 見 main_train_fixed.py 的修改說明。
-
-[Fix 6] finish_episode 中移除 _mrv_step 計數
-  → 改至 select_action。
-"""
 
 import os
 import math
@@ -46,10 +11,6 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 from torch.amp import GradScaler, autocast
 
-
-# ═══════════════════════════════════════════════════════
-# Running Statistics
-# ═══════════════════════════════════════════════════════
 
 class RunningMeanStd:
     def __init__(self, epsilon: float = 1e-4):
@@ -79,10 +40,6 @@ class RunningMeanStd:
         normed = (np.asarray(x, dtype=np.float32) - self.mean) / self.std
         return np.clip(normed, -clip, clip)
 
-
-# ═══════════════════════════════════════════════════════
-# Network（與 v3 相同）
-# ═══════════════════════════════════════════════════════
 
 class ConstraintHead(nn.Module):
     def __init__(self, cell_dim: int, head_dim: int):
@@ -150,23 +107,14 @@ class SudokuPPONet(nn.Module):
         return logits, value
 
 
-# ═══════════════════════════════════════════════════════
-# Rollout Buffer（修正版）
-# ═══════════════════════════════════════════════════════
-
 class RolloutBuffer:
-    """
-    ★ Fix 3：push 時若 buffer 已滿，直接 return，不覆寫舊資料。
-    ★ Fix 4：新增 last_value（GAE bootstrap）和 set_last_value()。
-    """
-
     def __init__(self, capacity: int, in_channels: int, device: torch.device):
         self.capacity    = capacity
         self.in_channels = in_channels
         self.device      = device
         self._ptr        = 0
         self._full       = False
-        self.last_value  = 0.0  # ★ Fix 4: bootstrap value for truncated rollout
+        self.last_value  = 0.0  
 
         self.states    = torch.zeros(capacity, in_channels, 9, 9, dtype=torch.float32)
         self.actions   = torch.zeros(capacity, dtype=torch.long)
@@ -174,9 +122,11 @@ class RolloutBuffer:
         self.values    = torch.zeros(capacity, dtype=torch.float32)
         self.rewards   = torch.zeros(capacity, dtype=torch.float32)
         self.dones     = torch.zeros(capacity, dtype=torch.float32)
+        
+        # 新增 is_mrv 標籤，用於標記專家動作以便後續 BC Loss 使用
+        self.is_mrvs   = torch.zeros(capacity, dtype=torch.bool)
 
-    def push(self, state, action, log_prob, value, reward, done):
-        # ★ Fix 3：滿了就停，不覆寫
+    def push(self, state, action, log_prob, value, reward, done, is_mrv):
         if self._full:
             return
 
@@ -187,12 +137,12 @@ class RolloutBuffer:
         self.values[i]    = float(value)
         self.rewards[i]   = float(reward)
         self.dones[i]     = float(done)
+        self.is_mrvs[i]   = bool(is_mrv)
         self._ptr += 1
         if self._ptr >= self.capacity:
             self._full = True
 
     def set_last_value(self, v: float):
-        """★ Fix 4：設定 bootstrap value，在 PPO update 前呼叫。"""
         self.last_value = float(v)
 
     @property
@@ -219,21 +169,35 @@ class RolloutBuffer:
         values  = self.values[:T].numpy()
         dones   = self.dones[:T].numpy()
 
+        # ★ Bug Fix：Value 反歸一化
+        # 如果網路已經學會預測歸一化後的 Returns，在跟原始 rewards 運算 GAE 前，
+        # 必須將其「反歸一化」，否則 GAE 的維度跟尺度會徹底崩壞。
+        if normalize_returns and return_rms.count > 1.0:
+            std = return_rms.std
+            mean = return_rms.mean
+            values_unnorm = values * std + mean
+            last_val_unnorm = self.last_value * std + mean
+        else:
+            values_unnorm = values.copy()
+            last_val_unnorm = self.last_value
+
         advantages = np.zeros(T, dtype=np.float32)
         gae = 0.0
         for t in reversed(range(T)):
             if t + 1 < T:
-                next_val = values[t + 1]
+                next_val = values_unnorm[t + 1]
             else:
-                # ★ Fix 4：用 last_value 做 bootstrap（不再硬設 0）
-                next_val = self.last_value
+                next_val = last_val_unnorm
+                
             next_val *= (1.0 - dones[t])
-            delta = rewards[t] + gamma * next_val - values[t]
+            delta = rewards[t] + gamma * next_val - values_unnorm[t]
             gae   = delta + gamma * gae_lambda * (1.0 - dones[t]) * gae
             advantages[t] = gae
 
-        returns = advantages + values
+        # 這裡的 returns 是原始分數的 Returns
+        returns = advantages + values_unnorm
 
+        # 計算完真實的 Returns 後，再更新並歸一化給 Value Network 當 Target
         if normalize_returns:
             return_rms.update(returns)
             returns_normed = return_rms.normalize(returns)
@@ -258,15 +222,11 @@ class RolloutBuffer:
             self.actions[:T],
             self.log_probs[:T],
             self.values[:T],
+            self.is_mrvs[:T]
         )
 
 
-# ═══════════════════════════════════════════════════════
-# PPO Agent v4
-# ═══════════════════════════════════════════════════════
-
 class TorchAgent:
-
     def __init__(
         self,
         device: str = "cpu",
@@ -300,6 +260,7 @@ class TorchAgent:
         mrv_mix_prob: float = 0.0,
         mrv_decay_steps: int = 5000,
         mrv_min_prob: float = 0.0,
+        bc_coef: float = 1.0,  # ★ 新增：專家示範 (MRV) 的 Behavior Cloning 權重
         model_path: str = None,
         reset_optimizer_on_load: bool = False,
         reset_counters_on_load: bool = False,
@@ -311,7 +272,6 @@ class TorchAgent:
         normalize_advantages: bool = True,
     ):
         if device == "cuda" and not torch.cuda.is_available():
-            print("警告：CUDA 不可用，改用 CPU。")
             device = "cpu"
 
         self.device      = torch.device(device)
@@ -345,7 +305,8 @@ class TorchAgent:
         self.mrv_mix_prob    = float(mrv_mix_prob)
         self.mrv_decay_steps = int(mrv_decay_steps)
         self.mrv_min_prob    = float(mrv_min_prob)
-        self._mrv_step       = 0  # ★ Fix 2：以 action 為單位計數
+        self.bc_coef         = float(bc_coef)
+        self._mrv_step       = 0  
 
         self.in_channels = self._compute_in_channels()
 
@@ -355,9 +316,7 @@ class TorchAgent:
             head_dim=head_dim,
         ).to(self.device)
 
-        self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=lr, eps=1e-5
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, eps=1e-5)
         self.lr = lr
         self.reset_optimizer_on_load = reset_optimizer_on_load
         self.reset_counters_on_load  = reset_counters_on_load
@@ -366,6 +325,7 @@ class TorchAgent:
             math.log(max(entropy_coef, 1e-8)), dtype=torch.float32,
             device=self.device, requires_grad=True
         )
+        # Alpha optimizer 不需要 GradScaler 以避免不穩定
         self._alpha_optimizer = torch.optim.Adam([self._log_alpha], lr=entropy_lr)
 
         self.return_rms = RunningMeanStd()
@@ -377,27 +337,22 @@ class TorchAgent:
         )
 
         self._use_fp16 = use_fp16 and (device == "cuda" or str(self.device) == "cuda")
-        self.scaler       = GradScaler('cuda', enabled=self._use_fp16)
-        self._alpha_scaler = GradScaler('cuda', enabled=self._use_fp16)
+        self.scaler    = GradScaler('cuda', enabled=self._use_fp16)
 
         self._pending_state    = None
         self._pending_action   = None
         self._pending_log_prob = None
         self._pending_value    = None
+        self._pending_is_mrv   = False
 
         self.episode_counter     = 0
         self.update_counter      = 0
         self.last_loss_value     = None
         self.last_entropy_value  = None
         self.last_advantage_mean = None
-        self.batch_episodes      = 1
 
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
-
-    # ──────────────────────────────────────────────────
-    # Helpers
-    # ──────────────────────────────────────────────────
 
     def _compute_in_channels(self) -> int:
         n = 1
@@ -441,10 +396,6 @@ class TorchAgent:
             ch.append(env.get_single_candidate_grid().astype(np.float32) if (env and hasattr(env, "get_single_candidate_grid")) else np.zeros((9,9), dtype=np.float32))
         return torch.from_numpy(np.stack(ch, 0).astype(np.float32)).to(self.device, non_blocking=True)
 
-    # ──────────────────────────────────────────────────
-    # MRV curriculum
-    # ──────────────────────────────────────────────────
-
     def _effective_mrv_prob(self) -> float:
         if self.mrv_decay_steps <= 0:
             return self.mrv_min_prob
@@ -455,7 +406,7 @@ class TorchAgent:
         if not hasattr(env, "candidate_count_grid"):
             acts = env.get_valid_actions()
             return random.choice(acts) if acts else None
-        best, min_cnt = [], None
+        best, min_cnt =[], None
         for r in range(9):
             for c in range(9):
                 if env.board[r, c] != 0: continue
@@ -468,25 +419,17 @@ class TorchAgent:
         cands = sorted(env.candidates_cache[r][c])
         return (r, c, random.choice(cands)) if cands else None
 
-    # ──────────────────────────────────────────────────
-    # Episode management
-    # ──────────────────────────────────────────────────
-
     def start_episode(self):
         self.episode_counter += 1
         self._pending_state    = None
         self._pending_action   = None
         self._pending_log_prob = None
         self._pending_value    = None
+        self._pending_is_mrv   = False
 
-    def record_reward(self, reward: float):
-        pass  # Legacy no-op
+    def record_reward(self, reward: float): pass
 
     def commit_step(self, reward: float, done: bool):
-        """
-        在 env.step() 返回後呼叫，把 (state, action, log_prob, value, reward, done)
-        寫入 RolloutBuffer。
-        """
         if self._pending_state is None:
             return
         self.rollout_buf.push(
@@ -496,8 +439,10 @@ class TorchAgent:
             self._pending_value,
             reward,
             done,
+            self._pending_is_mrv,
         )
         self._pending_state = None
+        self._pending_is_mrv = False
 
     def finish_episode(
         self,
@@ -507,28 +452,8 @@ class TorchAgent:
         rewards: list = None,
         dones: list = None,
     ):
-        """
-        Episode 結束。
-        ★ Fix 4：在觸發 PPO update 前，計算 last_value（bootstrap）。
-        ★ Fix 6：移除 _mrv_step 計數（已移至 select_action）。
-        """
-        # Legacy Mode B fallback
-        if rewards is not None and len(rewards) > 0:
-            if self._pending_state is not None:
-                r = float(rewards[0])
-                d = bool(dones[0]) if dones else False
-                self.rollout_buf.push(
-                    self._pending_state, self._pending_action,
-                    self._pending_log_prob, self._pending_value,
-                    r, d,
-                )
-                self._pending_state = None
-
         if do_update and self.policy_mode == "sample":
             if self.rollout_buf.is_ready:
-                # ★ Fix 4：設定 last_value
-                # 若 episode 是 done=True 結束 → last_value=0（已在 push 中以 done=True 處理）
-                # 若 rollout 在 mid-episode 被截斷 → 估計最後一個 pending state 的 V(s)
                 self._set_bootstrap_value()
                 info = self._ppo_update()
                 if info and self.print_update_log:
@@ -544,11 +469,6 @@ class TorchAgent:
                     )
 
     def _set_bootstrap_value(self):
-        """
-        ★ Fix 4：計算 RolloutBuffer 末尾的 bootstrap value。
-        若最後一個 step 是 done=True，GAE 已通過 dones 處理，last_value 無影響。
-        若最後一個 step 是 done=False（mid-episode 截斷），需要 V(s_T) 作為 bootstrap。
-        """
         T = self.rollout_buf.size()
         if T == 0:
             self.rollout_buf.set_last_value(0.0)
@@ -556,34 +476,24 @@ class TorchAgent:
 
         last_done = self.rollout_buf.dones[T - 1].item()
         if last_done > 0.5:
-            # Episode 正常結束，last_value = 0
             self.rollout_buf.set_last_value(0.0)
             return
 
-        # Mid-episode 截斷：用最後一個 pending state 估計 V(s)
-        # （此時 _pending_state 是下一個 action 還未被 commit 的 state）
         if self._pending_state is not None:
             x = self._pending_state.to(self.device).unsqueeze(0)
             with torch.no_grad():
                 _, v = self.model(x)
             self.rollout_buf.set_last_value(v.item())
         else:
-            # 沒有 pending state（episode 剛好在 rollout 邊界結束）
             self.rollout_buf.set_last_value(0.0)
-
-    # ──────────────────────────────────────────────────
-    # Action selection
-    # ──────────────────────────────────────────────────
 
     def select_action(self, env, state):
         is_train = (self.policy_mode == "sample")
         self.model.train() if is_train else self.model.eval()
 
-        # ★ Fix 2：_mrv_step 在 select_action 中計數（每個 action +1）
         if is_train:
             self._mrv_step += 1
 
-        # MRV curriculum
         if is_train and self._effective_mrv_prob() > 0.0:
             if random.random() < self._effective_mrv_prob():
                 action = self._mrv_action(env)
@@ -591,7 +501,6 @@ class TorchAgent:
                     x = self._board_to_tensor(state, env=env)
                     mask = self._get_mask(env)
 
-                    # ★ Fix 1：從 policy network 取得真實 log_prob
                     with torch.no_grad():
                         with autocast('cuda', enabled=self._use_fp16):
                             logits, value = self.model(x.unsqueeze(0))
@@ -603,20 +512,18 @@ class TorchAgent:
                     probs = F.softmax(masked, dim=0)
 
                     action_idx = self._action_to_index(*action)
-                    # 確保 action_idx 在 mask 範圍內
                     if not mask[action_idx]:
-                        # MRV 選的 action 不在 mask 內（理論上不應發生，但防禦）
                         legal = torch.where(mask)[0]
                         action_idx = legal[torch.randint(len(legal), (1,))].item()
                         action = self._index_to_action(action_idx)
 
-                    # ★ 真實 policy log_prob（不再是均勻假設）
                     lp = torch.log(probs[action_idx].clamp(min=1e-8))
 
                     self._pending_state    = x.cpu()
                     self._pending_action   = action_idx
                     self._pending_log_prob = lp.item()
                     self._pending_value    = value.item()
+                    self._pending_is_mrv   = True
                     return action
 
         x = self._board_to_tensor(state, env=env)
@@ -642,6 +549,7 @@ class TorchAgent:
                 self._pending_action   = idx
                 self._pending_log_prob = math.log(1.0 / len(legal))
                 self._pending_value    = value.item()
+                self._pending_is_mrv   = False
             return self._index_to_action(idx)
 
         if self.policy_mode == "greedy":
@@ -653,11 +561,8 @@ class TorchAgent:
         self._pending_action   = sample.item()
         self._pending_log_prob = dist.log_prob(sample).item()
         self._pending_value    = value.item()
+        self._pending_is_mrv   = False
         return self._index_to_action(sample.item())
-
-    # ──────────────────────────────────────────────────
-    # PPO Update
-    # ──────────────────────────────────────────────────
 
     def _ppo_update(self) -> dict:
         T = self.rollout_buf.size()
@@ -672,13 +577,14 @@ class TorchAgent:
             normalize_returns=self.normalize_returns,
         )
 
-        states, actions, old_log_probs, _ = self.rollout_buf.get_tensors()
+        states, actions, old_log_probs, _, is_mrvs = self.rollout_buf.get_tensors()
 
         states        = states.to(self.device, non_blocking=True)
         actions       = actions.to(self.device, non_blocking=True)
         old_log_probs = old_log_probs.to(self.device, non_blocking=True)
         advantages    = advantages.to(self.device, non_blocking=True)
         returns       = returns.to(self.device, non_blocking=True)
+        is_mrvs       = is_mrvs.to(self.device, non_blocking=True)
 
         adv_std = float(advantages.std().item())
 
@@ -696,6 +602,7 @@ class TorchAgent:
                 mb_olp = old_log_probs[idx]
                 mb_adv = advantages[idx]
                 mb_ret = returns[idx]
+                mb_is_mrv = is_mrvs[idx]
 
                 with autocast('cuda', enabled=self._use_fp16):
                     logits, vals = self.model(mb_s)
@@ -706,13 +613,22 @@ class TorchAgent:
                     new_lp  = dist.log_prob(mb_a)
                     entropy = dist.entropy().mean()
 
+                    # 正常的 PPO Actor Loss
                     ratio = torch.exp(new_lp - mb_olp)
                     s1    = ratio * mb_adv
                     s2    = ratio.clamp(1 - self.ppo_clip_eps, 1 + self.ppo_clip_eps) * mb_adv
                     p_loss = -torch.min(s1, s2).mean()
+                    
+                    # 正常的 PPO Critic Loss
                     v_loss = F.mse_loss(vals, mb_ret)
 
+                    # 總損失
                     loss = p_loss + self.value_coef * v_loss - self.entropy_coef * entropy
+
+                    # ★ Bug Fix：利用 Behavior Cloning 強制學習 MRV 動作，繞過 PPO Clip 限制
+                    if mb_is_mrv.any():
+                        bc_loss = -new_lp[mb_is_mrv].mean()
+                        loss += self.bc_coef * bc_loss
 
                 self.optimizer.zero_grad()
                 self.scaler.scale(loss).backward()
@@ -722,12 +638,12 @@ class TorchAgent:
                 self.scaler.update()
 
                 if self.adaptive_entropy:
-                    with autocast('cuda', enabled=self._use_fp16):
-                        alpha_loss = -(self._log_alpha.exp() * (entropy.detach() - self.target_entropy))
+                    # ★ Bug Fix：修正梯度方向。當 H < H0 時，必須增加 alpha。
+                    # 對 _log_alpha 偏微分為 (H - H0)，若 H < H0，梯度為負，這樣才有效提高 alpha！
+                    alpha_loss = self._log_alpha * (entropy.detach() - self.target_entropy)
                     self._alpha_optimizer.zero_grad()
-                    self._alpha_scaler.scale(alpha_loss).backward()
-                    self._alpha_scaler.step(self._alpha_optimizer)
-                    self._alpha_scaler.update()
+                    alpha_loss.backward()
+                    self._alpha_optimizer.step()
                     new_coef = self._log_alpha.exp().item()
                     self.entropy_coef = float(np.clip(new_coef, self.min_entropy_coef, self.max_entropy_coef))
 
@@ -752,10 +668,6 @@ class TorchAgent:
             "adv_std":     adv_std,
             "T":           T,
         }
-
-    # ──────────────────────────────────────────────────
-    # Save / Load
-    # ──────────────────────────────────────────────────
 
     def save_model(self, path: str):
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
@@ -785,6 +697,7 @@ class TorchAgent:
             "mrv_mix_prob":         self.mrv_mix_prob,
             "mrv_decay_steps":      self.mrv_decay_steps,
             "mrv_min_prob":         self.mrv_min_prob,
+            "bc_coef":              self.bc_coef,
             "_mrv_step":            self._mrv_step,
             "episode_counter":      self.episode_counter,
             "update_counter":       self.update_counter,
@@ -827,7 +740,7 @@ class TorchAgent:
         for attr in ("gamma","gae_lambda","entropy_coef","target_entropy",
                      "adaptive_entropy","value_coef","ppo_clip_eps","ppo_epochs",
                      "ppo_minibatch","rollout_steps","mrv_mix_prob","mrv_decay_steps",
-                     "mrv_min_prob"):
+                     "mrv_min_prob", "bc_coef"):
             if attr in p: setattr(self, attr, p[attr])
 
         if not self.reset_counters_on_load:
