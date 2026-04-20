@@ -40,6 +40,8 @@ class TrainingWindow(QMainWindow):
         self._prod_blocked= 0
         self._proxy_valid = 0
         self._proxy_total = 0
+        self._pool_total   = 0
+        self._pool_unsolved= 0
 
         self._build_ui(max_boards, hotkey)
 
@@ -212,18 +214,14 @@ class TrainingWindow(QMainWindow):
         )
 
     def _on_pool_update(self, d: dict) -> None:
-        self._stats.update_pool(
-            total=d.get("total", 0),
-            unsolved=d.get("unsolved", 0),
-            proxy_valid=self._proxy_valid,
-            proxy_total=self._proxy_total,
-            prod_ok=self._prod_ok,
-            prod_fail=self._prod_fail,
-            prod_blocked=self._prod_blocked,
-        )
+        self._pool_total    = d.get("total",   self._pool_total)
+        self._pool_unsolved = d.get("unsolved", self._pool_unsolved)
+        self._refresh_pool_ui()
 
     def _refresh_pool_ui(self) -> None:
         self._stats.update_pool(
+            total=self._pool_total,
+            unsolved=self._pool_unsolved,
             proxy_valid=self._proxy_valid,
             proxy_total=self._proxy_total,
             prod_ok=self._prod_ok,

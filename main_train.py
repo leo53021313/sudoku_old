@@ -835,6 +835,8 @@ def run():
             )
 
             if result["stop_reason"] != "stop_requested":
+                # 每回合更新題庫數（輕量查詢，不走 get_pool_stats）
+                gui_bus.put("pool_update", unsolved=db.count_unsolved())
                 db.mark_puzzle_attempt(
                     puzzle_id=result["puzzle_id"],
                     total_reward=result["total_reward"],
