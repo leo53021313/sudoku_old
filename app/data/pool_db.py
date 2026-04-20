@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 SQLite 題庫管理：
-  puzzles   - 題目池
+  puzzles   - 題目池（含難度等級 level）
   solutions - 解答池
 """
 
@@ -22,7 +22,7 @@ class PuzzlePoolDB:
 
     def __init__(self, db_path="data/puzzle_pool.db"):
         self.db_path = db_path
-        self._local  = threading.local()
+        self._local = threading.local()
 
         folder = os.path.dirname(db_path)
         if folder:
@@ -30,9 +30,8 @@ class PuzzlePoolDB:
 
         self._init_db()
 
-    # ---------------------------------------------------------------
-    # Connection
-    # ---------------------------------------------------------------
+    # ── Connection ──────────────────────────────────────────────────────────
+
     def _get_conn(self):
         conn = getattr(self._local, "conn", None)
         if conn is None:
@@ -63,6 +62,7 @@ class PuzzlePoolDB:
                 puzzle_key  TEXT    NOT NULL UNIQUE,
                 puzzle      TEXT    NOT NULL,
                 givens      INTEGER NOT NULL,
+                level       INTEGER NOT NULL DEFAULT 1,
                 source      TEXT    NOT NULL DEFAULT 'websudoku',
                 status      TEXT    NOT NULL DEFAULT 'new',
                 tries       INTEGER NOT NULL DEFAULT 0,
@@ -77,6 +77,15 @@ class PuzzlePoolDB:
             );
             """)
 
+            # 舊資料庫遷移：必須在建立 level 索引之前確保欄位存在
+            try:
+                conn.execute(
+                    "ALTER TABLE puzzles"
+                    " ADD COLUMN level INTEGER NOT NULL DEFAULT 1"
+                )
+            except sqlite3.OperationalError:
+                pass  # 欄位已存在（新建 DB 或已遷移過），略過
+
             conn.execute("""
             CREATE TABLE IF NOT EXISTS solutions (
                 id                   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,27 +96,47 @@ class PuzzlePoolDB:
                 verify_status        TEXT    DEFAULT NULL,
                 created_at           TEXT    NOT NULL,
                 verified_at          TEXT    DEFAULT NULL,
-                FOREIGN KEY (puzzle_id) REFERENCES puzzles(id) ON DELETE CASCADE
+                FOREIGN KEY (puzzle_id) REFERENCES puzzles(id)
+                    ON DELETE CASCADE
             );
             """)
 
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_puzzles_status ON puzzles(status);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_puzzles_status_tries ON puzzles(status, tries, best_empty, id);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_puzzles_created_at ON puzzles(created_at);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_solutions_verified ON solutions(verified_local);")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_puzzles_status"
+                " ON puzzles(status);"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_puzzles_status_tries"
+                " ON puzzles(status, tries, best_empty, id);"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_puzzles_level"
+                " ON puzzles(level, status);"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_puzzles_created_at"
+                " ON puzzles(created_at);"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_solutions_verified"
+                " ON solutions(verified_local);"
+            )
 
-    # ---------------------------------------------------------------
-    # Static helpers
-    # ---------------------------------------------------------------
+    # ── Static helpers ──────────────────────────────────────────────────────
+
     @staticmethod
     def board_to_string(board):
-        return "".join(str(int(board[r][c])) for r in range(9) for c in range(9))
+        return "".join(
+            str(int(board[r][c])) for r in range(9) for c in range(9)
+        )
 
     @staticmethod
     def string_to_board(s):
         if s is None or len(s) != 81:
-            raise ValueError(f"board string 長度錯誤：{len(s) if s else 'None'}")
-        return [[int(s[r*9+c]) for c in range(9)] for r in range(9)]
+            raise ValueError(
+                f"board string 長度錯誤：{len(s) if s else 'None'}"
+            )
+        return [[int(s[r * 9 + c]) for c in range(9)] for r in range(9)]
 
     @staticmethod
     def steps_to_json(steps):
@@ -117,14 +146,17 @@ class PuzzlePoolDB:
     def json_to_steps(s):
         return json.loads(s) if s else []
 
-    # ---------------------------------------------------------------
-    # Puzzle management
-    # ---------------------------------------------------------------
-    def upsert_puzzle(self, board, source="websudoku"):
-        puzzle     = self.board_to_string(board)
-        givens     = sum(1 for ch in puzzle if ch != "0")
+    # ── Puzzle management ───────────────────────────────────────────────────
+
+    def upsert_puzzle(self, board, source="websudoku", level=1):
+        """
+        插入新題目；若已存在（puzzle_key 相同）則略過。
+        level：難度等級，1=easy, 2=medium, 3=hard, 4=evil。
+        """
+        puzzle = self.board_to_string(board)
+        givens = sum(1 for ch in puzzle if ch != "0")
         puzzle_key = puzzle
-        now        = now_str()
+        now = now_str()
 
         with self.transaction() as conn:
             row = conn.execute(
@@ -132,79 +164,156 @@ class PuzzlePoolDB:
             ).fetchone()
 
             if row:
-                return {"inserted": False, "puzzle_id": int(row["id"]), "puzzle_key": puzzle_key}
+                return {
+                    "inserted":   False,
+                    "puzzle_id":  int(row["id"]),
+                    "puzzle_key": puzzle_key,
+                }
 
+            init_empty = 81 - givens
             cur = conn.execute("""
                 INSERT INTO puzzles
-                    (puzzle_key, puzzle, givens, source, status,
+                    (puzzle_key, puzzle, givens, level, source, status,
                      tries, best_empty, best_reward, last_reward, last_empty,
                      locked_by, locked_at, created_at, updated_at)
-                VALUES (?, ?, ?, ?, 'new', 0, 81, 0, 0, 81, NULL, NULL, ?, ?)
-            """, (puzzle_key, puzzle, givens, source, now, now))
+                VALUES (?, ?, ?, ?, ?, 'new', 0, ?, 0, 0, ?,
+                        NULL, NULL, ?, ?)
+            """, (puzzle_key, puzzle, givens, int(level), source,
+                  init_empty, init_empty, now, now))
 
-            return {"inserted": True, "puzzle_id": int(cur.lastrowid), "puzzle_key": puzzle_key}
+            return {
+                "inserted":   True,
+                "puzzle_id":  int(cur.lastrowid),
+                "puzzle_key": puzzle_key,
+            }
 
-    def get_pool_stats(self):
+    def get_pool_stats(self, level=None):
+        """
+        回傳題庫統計。
+        level：若指定則只統計該難度；None 表示全部難度合計。
+        """
         with self.transaction() as conn:
             def count(q, *a):
                 return int(conn.execute(q, a).fetchone()[0])
 
-            return {
-                "total":          count("SELECT COUNT(*) FROM puzzles"),
-                "new":            count("SELECT COUNT(*) FROM puzzles WHERE status='new'"),
-                "training":       count("SELECT COUNT(*) FROM puzzles WHERE status='training'"),
-                "solved_local":   count("SELECT COUNT(*) FROM puzzles WHERE status='solved_local'"),
-                "skipped":        count("SELECT COUNT(*) FROM puzzles WHERE status='skipped'"),
-                "verified_local": count("SELECT COUNT(*) FROM solutions WHERE verified_local=1"),
-            }
-
-    def count_unsolved(self, max_tries=None):
-        with self.transaction() as conn:
-            if max_tries is None:
-                row = conn.execute("""
-                    SELECT COUNT(*) FROM puzzles WHERE status IN ('new','training')
-                """).fetchone()
+            if level is None:
+                return {
+                    "total":          count("SELECT COUNT(*) FROM puzzles"),
+                    "new":            count(
+                        "SELECT COUNT(*) FROM puzzles WHERE status='new'"
+                    ),
+                    "training":       count(
+                        "SELECT COUNT(*) FROM puzzles WHERE status='training'"
+                    ),
+                    "solved_local":   count(
+                        "SELECT COUNT(*) FROM puzzles"
+                        " WHERE status='solved_local'"
+                    ),
+                    "skipped":        count(
+                        "SELECT COUNT(*) FROM puzzles WHERE status='skipped'"
+                    ),
+                    "verified_local": count(
+                        "SELECT COUNT(*) FROM solutions WHERE verified_local=1"
+                    ),
+                }
             else:
-                row = conn.execute("""
-                    SELECT COUNT(*) FROM puzzles
-                    WHERE status IN ('new','training') AND tries < ?
-                """, (int(max_tries),)).fetchone()
+                return {
+                    "total":        count(
+                        "SELECT COUNT(*) FROM puzzles WHERE level=?", level
+                    ),
+                    "new":          count(
+                        "SELECT COUNT(*) FROM puzzles"
+                        " WHERE status='new' AND level=?", level
+                    ),
+                    "training":     count(
+                        "SELECT COUNT(*) FROM puzzles"
+                        " WHERE status='training' AND level=?", level
+                    ),
+                    "solved_local": count(
+                        "SELECT COUNT(*) FROM puzzles"
+                        " WHERE status='solved_local' AND level=?", level
+                    ),
+                    "skipped":      count(
+                        "SELECT COUNT(*) FROM puzzles"
+                        " WHERE status='skipped' AND level=?", level
+                    ),
+                }
+
+    def count_unsolved(self, max_tries=None, level=None):
+        """
+        回傳可供訓練的未解題數（status 為 'new' 或 'training'）。
+        level：若指定則只計算該難度。
+        """
+        with self.transaction() as conn:
+            level_clause = "AND level=?" if level is not None else ""
+            tries_clause = "AND tries < ?" if max_tries is not None else ""
+
+            args = []
+            if level is not None:
+                args.append(int(level))
+            if max_tries is not None:
+                args.append(int(max_tries))
+
+            row = conn.execute(
+                f"SELECT COUNT(*) FROM puzzles"
+                f" WHERE status IN ('new','training')"
+                f" {level_clause} {tries_clause}",
+                args,
+            ).fetchone()
             return int(row[0])
 
-    def fetch_one_puzzle_for_training(self, worker_name="trainer", max_tries=None):
+    def fetch_one_puzzle_for_training(
+        self, worker_name="trainer", max_tries=None, level=None
+    ):
+        """
+        取出一道可訓練題目並鎖定（status → 'training'）。
+        level：若指定則只取該難度的題目（擴充介面）。
+        """
         now = now_str()
+
+        level_clause = "AND level=?" if level is not None else ""
+        tries_clause = "AND tries < ?" if max_tries is not None else ""
+
+        args = []
+        if level is not None:
+            args.append(int(level))
+        if max_tries is not None:
+            args.append(int(max_tries))
+
         with self.transaction() as conn:
-            if max_tries is None:
-                row = conn.execute("""
-                    SELECT * FROM puzzles
-                    WHERE status IN ('new','training')
-                    ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,
-                             tries ASC, best_empty ASC, id ASC
-                    LIMIT 1
-                """).fetchone()
-            else:
-                row = conn.execute("""
-                    SELECT * FROM puzzles
-                    WHERE status IN ('new','training') AND tries < ?
-                    ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,
-                             tries ASC, best_empty ASC, id ASC
-                    LIMIT 1
-                """, (int(max_tries),)).fetchone()
+            row = conn.execute(
+                f"SELECT * FROM puzzles"
+                f" WHERE status IN ('new','training')"
+                f" {level_clause} {tries_clause}"
+                f" ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,"
+                f"          tries ASC, best_empty ASC, id ASC"
+                f" LIMIT 1",
+                args,
+            ).fetchone()
 
             if row is None:
                 return None
 
             conn.execute("""
-                UPDATE puzzles SET status='training', locked_by=?, locked_at=?, updated_at=?
+                UPDATE puzzles
+                SET status='training', locked_by=?, locked_at=?, updated_at=?
                 WHERE id=?
             """, (worker_name, now, now, row["id"]))
 
-            return dict(conn.execute("SELECT * FROM puzzles WHERE id=?", (row["id"],)).fetchone())
+            return dict(
+                conn.execute(
+                    "SELECT * FROM puzzles WHERE id=?", (row["id"],)
+                ).fetchone()
+            )
 
-    def mark_puzzle_attempt(self, puzzle_id, total_reward, empty_cells, success=False):
+    def mark_puzzle_attempt(
+        self, puzzle_id, total_reward, empty_cells, success=False
+    ):
         now = now_str()
         with self.transaction() as conn:
-            row = conn.execute("SELECT * FROM puzzles WHERE id=?", (puzzle_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM puzzles WHERE id=?", (puzzle_id,)
+            ).fetchone()
             if row is None:
                 raise ValueError(f"找不到 puzzle_id={puzzle_id}")
 
@@ -216,6 +325,8 @@ class PuzzlePoolDB:
                     last_reward = ?,
                     last_empty  = ?,
                     status      = ?,
+                    locked_by   = NULL,
+                    locked_at   = NULL,
                     updated_at  = ?
                 WHERE id = ?
             """, (
@@ -232,11 +343,13 @@ class PuzzlePoolDB:
                 (now_str(), int(puzzle_id)),
             )
 
-    def save_solution(self, puzzle_id, solved_board, solution_steps=None,
-                      verified_local=False, verify_status=None):
+    def save_solution(
+        self, puzzle_id, solved_board, solution_steps=None,
+        verified_local=False, verify_status=None
+    ):
         solution_str = self.board_to_string(solved_board)
-        steps_json   = self.steps_to_json(solution_steps or [])
-        now          = now_str()
+        steps_json = self.steps_to_json(solution_steps or [])
+        now = now_str()
 
         with self.transaction() as conn:
             conn.execute("""
@@ -245,12 +358,12 @@ class PuzzlePoolDB:
                      verified_local, verify_status, created_at, verified_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(puzzle_id) DO UPDATE SET
-                    solution             = excluded.solution,
-                    solution_steps_json  = excluded.solution_steps_json,
-                    verified_local       = excluded.verified_local,
-                    verify_status        = excluded.verify_status,
-                    created_at           = excluded.created_at,
-                    verified_at          = excluded.verified_at
+                    solution            = excluded.solution,
+                    solution_steps_json = excluded.solution_steps_json,
+                    verified_local      = excluded.verified_local,
+                    verify_status       = excluded.verify_status,
+                    created_at          = excluded.created_at,
+                    verified_at         = excluded.verified_at
             """, (
                 puzzle_id, solution_str, steps_json,
                 1 if verified_local else 0, verify_status,
@@ -259,7 +372,10 @@ class PuzzlePoolDB:
 
             conn.execute("""
                 UPDATE puzzles SET status=?, updated_at=? WHERE id=?
-            """, ("solved_local" if verified_local else "training", now, puzzle_id))
+            """, (
+                "solved_local" if verified_local else "training",
+                now, puzzle_id,
+            ))
 
     def list_recent_puzzles(self, limit=20):
         with self.transaction() as conn:
@@ -271,7 +387,7 @@ class PuzzlePoolDB:
     def list_recent_solutions(self, limit=20):
         with self.transaction() as conn:
             rows = conn.execute("""
-                SELECT s.*, p.puzzle, p.givens, p.status
+                SELECT s.*, p.puzzle, p.givens, p.status, p.level
                 FROM solutions s JOIN puzzles p ON p.id = s.puzzle_id
                 ORDER BY s.id DESC LIMIT ?
             """, (int(limit),)).fetchall()
