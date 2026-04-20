@@ -82,6 +82,9 @@ class ProxyManager:
         self._index = 0
         self._lock = threading.Lock()
         self._stop_validation = threading.Event()
+        # GUI 統計用（執行緒安全）
+        self._total_loaded: int = 0
+        self._checked_count: int = 0
 
     # ── 下載 ─────────────────────────────────────────────────────────────────
 
@@ -111,6 +114,8 @@ class ProxyManager:
         with self._lock:
             self._proxies = collected
             self._index = 0
+            self._total_loaded = len(collected)
+            self._checked_count = 0
 
         print(f"[Proxy] 共下載 {len(collected)} 個代理（尚未驗證）")
         return len(collected)
@@ -161,6 +166,8 @@ class ProxyManager:
             }
             for future in as_completed(future_map):
                 checked += 1
+                with self._lock:
+                    self._checked_count = checked
                 try:
                     ok = future.result()
                 except Exception:
@@ -233,6 +240,8 @@ class ProxyManager:
                     if stop.is_set():
                         break
                     checked += 1
+                    with self._lock:
+                        self._checked_count = checked
                     try:
                         ok = future.result()
                     except Exception:
@@ -336,3 +345,12 @@ class ProxyManager:
 
     def is_empty(self):
         return self.size() == 0
+
+    def get_stats(self) -> dict:
+        """回傳 GUI 用的統計數據（執行緒安全）。"""
+        with self._lock:
+            return {
+                "valid":   len(self._proxies),
+                "checked": self._checked_count,
+                "total":   self._total_loaded,
+            }

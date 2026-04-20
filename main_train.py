@@ -18,6 +18,21 @@ from app.sudoku.torch_agent import TorchAgent
 from app.sudoku.validator import validate_completed_board
 from app.data.pool_db import PuzzlePoolDB
 
+# GUI EventBus（GUI_ENABLED=False 時用空殼替代，零效能開銷）
+if True:  # 延遲決定，等 GUI_ENABLED 在後面定義後再用
+    class _NullBus:
+        def put(self, *_, **__): pass
+    gui_bus = _NullBus()
+
+# 爬蟲統計計數器（供 GUI 定時查詢）
+import threading as _threading
+_producer_stats_lock = _threading.Lock()
+_producer_stats = {"ok": 0, "fail": 0, "blocked": 0}
+
+def _producer_stats_inc(key: str) -> None:
+    with _producer_stats_lock:
+        _producer_stats[key] += 1
+
 
 # ═══════════════════════════════════════════════════════════════════
 # 執行設定
@@ -127,6 +142,11 @@ SAVE_EVERY_EPISODES     = 100
 
 SUCCESS_BONUS    = 100.0
 DEAD_END_PENALTY = 0.0
+
+# ── GUI 設定 ─────────────────────────────────────────────────────────
+GUI_ENABLED    = True   # False = 純 CLI，零開銷
+GUI_MAX_BOARDS = 4      # 最多同時顯示幾個盤面（1→1x1, 4→2x2, 9→3x3）
+GUI_BOARD_FPS  = 20     # 盤面即時更新最高 FPS（限流，避免 event bus 爆滿）
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -374,6 +394,7 @@ def _run_producer(db, proxy_manager, stop_event):
 
             except BlockedError:
                 log_pool(f"[{name}] IP 封鎖，切換 Proxy")
+                _producer_stats_inc("blocked")
                 stop_event.wait(timeout=2.0)
                 continue
 
@@ -382,6 +403,7 @@ def _run_producer(db, proxy_manager, stop_event):
                 if proxy_manager and server_url:
                     proxy_manager.blacklist_server(server_url)
                 log_web(f"[{name}] 解析失敗，已移除代理：{e}")
+                _producer_stats_inc("fail")
                 stop_event.wait(timeout=0.5)
                 continue
 
@@ -390,11 +412,13 @@ def _run_producer(db, proxy_manager, stop_event):
                     f"[{name}] 抓取失敗（{type(e).__name__}: {e}）"
                     + (f"\n{traceback.format_exc().strip()}" if PRODUCER_DEBUG else "")
                 )
+                _producer_stats_inc("fail")
                 stop_event.wait(timeout=1.0)
                 continue
 
             res = db.upsert_puzzle(board, source="websudoku", level=level)
             if res["inserted"]:
+                _producer_stats_inc("ok")
                 log_producer_success(
                     f"[{name}] 新題 id={res['puzzle_id']}"
                     f" L{level} givens={count_givens(board)}"
@@ -469,6 +493,8 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
     _committed    = False
 
     t0 = time.time()
+    _last_board_push = 0.0
+    _board_push_interval = 1.0 / max(GUI_BOARD_FPS, 1)
 
     while step_count < MAX_STEPS_PER_EPISODE:
         if HOTKEY.stop_requested:
@@ -502,6 +528,20 @@ def run_one_episode_from_db(db, row, agent, episode_idx=1):
 
         state      = next_state
         step_count += 1
+
+        # GUI 盤面即時更新（限流）
+        _now = time.monotonic()
+        if _now - _last_board_push >= _board_push_interval:
+            _last_board_push = _now
+            r, c, _ = action
+            gui_bus.put(
+                "board_update",
+                thread_id=0,
+                board=state.tolist(),
+                fixed=base_fixed.tolist(),
+                highlight=(int(r), int(c)),
+                episode_idx=episode_idx,
+            )
 
         if done:
             stop_reason = info.get("reason", "env_done")
@@ -612,6 +652,12 @@ def print_run_config():
 # ═══════════════════════════════════════════════════════════════════
 
 def run():
+    # 依 GUI_ENABLED 決定是否啟用真實 EventBus
+    global gui_bus
+    if GUI_ENABLED:
+        from app.gui.event_bus import bus as _real_bus
+        gui_bus = _real_bus
+
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
 
@@ -669,20 +715,39 @@ def run():
     total_episodes = get_effective_episode_count()
     agent          = create_agent()
 
+    _gui_state        = "running"
+    _last_periodic    = time.time()
+    _PERIODIC_SECS    = 30.0
+    gui_bus.put("state_change", state="running")
+    # 初始資料推送
+    _init_stats = db.get_pool_stats()
+    gui_bus.put("pool_update", total=_init_stats.get("total", 0), unsolved=db.count_unsolved())
+    if proxy_manager:
+        _pm0 = proxy_manager.get_stats()
+        gui_bus.put("proxy_update", valid=_pm0["valid"], total=_pm0["total"])
+
     try:
         while True:
             if HOTKEY.stop_requested:
                 print("[main] 收到停止要求...")
                 break
 
+            # GUI 暫停/繼續狀態同步
+            if HOTKEY.pause_requested and _gui_state != "paused":
+                _gui_state = "paused"
+                gui_bus.put("state_change", state="paused")
             HOTKEY.wait_if_paused(agent=agent)
             if HOTKEY.stop_requested:
                 break
+            if _gui_state == "paused":
+                _gui_state = "running"
+                gui_bus.put("state_change", state="running")
 
             if HOTKEY.consume_save_request() and isinstance(agent, TorchAgent):
                 try:
                     agent.save_model(MODEL_PATH)
                     print(f"[main] 手動儲存：{MODEL_PATH}")
+                    gui_bus.put("model_saved", path=MODEL_PATH, episode_idx=episode_idx)
                 except Exception as e:
                     print(f"[main] 儲存失敗：{e}")
 
@@ -705,6 +770,19 @@ def run():
             if int(row.get("tries", 0)) >= MAX_TRIES_PER_PUZZLE_BEFORE_SKIP:
                 db.mark_puzzle_skipped(row["id"])
                 continue
+
+            # GUI：新 episode 開始
+            _ep_board = PuzzlePoolDB.string_to_board(row["puzzle"])
+            _ep_fixed = (np.array(_ep_board, dtype=np.int8) != 0).tolist()
+            gui_bus.put(
+                "episode_start",
+                thread_id=0,
+                episode_idx=episode_idx,
+                puzzle_id=int(row["id"]),
+                level=int(row.get("level", 0)),
+                board=_ep_board,
+                fixed=_ep_fixed,
+            )
 
             try:
                 result = run_one_episode_from_db(
@@ -740,6 +818,22 @@ def run():
 
             all_results.append(result)
 
+            # GUI：episode 結束
+            _raw_board = result.get("final_board")
+            _raw_fixed = result.get("base_fixed")
+            _end_board = _raw_board.tolist() if hasattr(_raw_board, "tolist") else (_raw_board or [[0]*9]*9)
+            _end_fixed = _raw_fixed.tolist() if hasattr(_raw_fixed, "tolist") else (_raw_fixed or [[False]*9]*9)
+            gui_bus.put(
+                "episode_end",
+                thread_id=0,
+                episode_idx=episode_idx,
+                success=result["success"],
+                steps=result["steps"],
+                total_reward=result["total_reward"],
+                board=_end_board,
+                fixed=_end_fixed,
+            )
+
             if result["stop_reason"] != "stop_requested":
                 db.mark_puzzle_attempt(
                     puzzle_id=result["puzzle_id"],
@@ -768,6 +862,19 @@ def run():
                 and episode_idx % PRINT_EVERY_EPISODES == 0
             ):
                 print_rolling_stats(all_results, episode_idx, db)
+                # GUI stats 更新
+                if isinstance(agent, TorchAgent):
+                    gui_bus.put(
+                        "stats_update",
+                        episode_idx=episode_idx,
+                        total_episodes=total_episodes or 0,
+                        update_count=agent.update_counter,
+                        mrv_prob=agent._effective_mrv_prob() if hasattr(agent, "_effective_mrv_prob") else 0.0,
+                        entropy=getattr(agent, "last_entropy_value", 0.0),
+                        loss=getattr(agent, "last_loss_value", 0.0),
+                        rollout_size=agent.rollout_buf.size() if hasattr(agent, "rollout_buf") else 0,
+                        rollout_cap=TORCH_ROLLOUT_STEPS,
+                    )
 
             if (
                 isinstance(agent, TorchAgent)
@@ -775,8 +882,36 @@ def run():
                 and episode_idx % SAVE_EVERY_EPISODES == 0
             ):
                 agent.save_model(MODEL_PATH)
+                gui_bus.put("model_saved", path=MODEL_PATH, episode_idx=episode_idx)
+
+            # 定時推送爬蟲 / 題庫 / proxy 狀態（每 30 秒）
+            _now_t = time.time()
+            if _now_t - _last_periodic >= _PERIODIC_SECS:
+                _last_periodic = _now_t
+                _ps = db.get_pool_stats()
+                gui_bus.put(
+                    "pool_update",
+                    total=_ps.get("total", 0),
+                    unsolved=db.count_unsolved(),
+                )
+                if proxy_manager:
+                    _pm = proxy_manager.get_stats()
+                    gui_bus.put(
+                        "proxy_update",
+                        valid=_pm["valid"],
+                        total=_pm["total"],
+                    )
+                with _producer_stats_lock:
+                    gui_bus.put(
+                        "producer_update",
+                        success_delta=_producer_stats["ok"],
+                        fail_delta=_producer_stats["fail"],
+                        blocked_delta=_producer_stats["blocked"],
+                    )
+                    _producer_stats.update({"ok": 0, "fail": 0, "blocked": 0})
 
     finally:
+        gui_bus.put("state_change", state="stopped")
         # 中止背景驗證、通知所有爬蟲執行緒結束並等待
         if proxy_manager:
             proxy_manager.stop_validation()
@@ -819,4 +954,15 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    if GUI_ENABLED:
+        # 訓練跑在背景執行緒，Qt GUI 跑在主執行緒（Qt 規定）
+        _train_thread = threading.Thread(
+            target=run, name="TrainingThread", daemon=True
+        )
+        _train_thread.start()
+        from app.gui.training_gui import launch_gui
+        launch_gui(hotkey=HOTKEY, max_boards=GUI_MAX_BOARDS)
+        # GUI 視窗關閉後，等訓練執行緒自然退出（最多 10 秒）
+        _train_thread.join(timeout=10.0)
+    else:
+        run()
