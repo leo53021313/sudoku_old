@@ -9,6 +9,18 @@ from PyQt6.QtWidgets import QWidget, QSizePolicy
 from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QFontMetrics
 from PyQt6.QtCore import Qt, QRect, QSize
 
+# level → (顏色, 英文名稱, 星等字串)
+_LEVEL_INFO: dict[int, tuple] = {
+    1: (QColor("#27ae60"), "Easy", "★☆☆☆"),
+    2: (QColor("#e67e22"), "Med",  "★★☆☆"),
+    3: (QColor("#e74c3c"), "Hard", "★★★☆"),
+    4: (QColor("#8e44ad"), "Evil", "★★★★"),
+}
+
+_TITLE_ROW1 = 20   # 上半列高（episode/狀態 + badge）
+_TITLE_ROW2 = 18   # 下半列高（難度星等）
+TITLE_H = _TITLE_ROW1 + _TITLE_ROW2
+
 
 # ── 色彩配置 ───────────────────────────────────────────────────────────────
 _C = {
@@ -30,8 +42,6 @@ _C = {
     "title_fg":     QColor(255, 255, 255),
 }
 
-TITLE_H = 22
-
 
 class SudokuBoardWidget(QWidget):
     """
@@ -46,6 +56,7 @@ class SudokuBoardWidget(QWidget):
         self._highlight = None   # (row, col) or None
         self._status: str = "idle"
         self._episode: int = 0
+        self._level: int = 0
 
         sp = QSizePolicy(
             QSizePolicy.Policy.Preferred,
@@ -64,12 +75,14 @@ class SudokuBoardWidget(QWidget):
         highlight=None,
         status: str = "active",
         episode: int = 0,
+        level: int = 0,
     ) -> None:
         self._board = board
         self._fixed = fixed
         self._highlight = highlight
         self._status = status
         self._episode = episode
+        self._level = level
         self.update()
 
     def reset_idle(self) -> None:
@@ -78,6 +91,7 @@ class SudokuBoardWidget(QWidget):
         self._highlight = None
         self._status = "idle"
         self._episode = 0
+        self._level = 0
         self.update()
 
     # ── Qt overrides ───────────────────────────────────────────────────────
@@ -109,33 +123,62 @@ class SudokuBoardWidget(QWidget):
     # ── 私有繪製方法 ────────────────────────────────────────────────────────
 
     def _draw_title(self, p: QPainter, W: int) -> None:
-        color = {
+        status_color = {
             "active":  _C["title_active"],
             "success": _C["title_succ"],
             "failed":  _C["title_fail"],
         }.get(self._status, _C["title_idle"])
 
-        p.fillRect(0, 0, W, TITLE_H, color)
+        # ── 上半列：episode / 狀態 ────────────────────────────────
+        p.fillRect(0, 0, W, _TITLE_ROW1, status_color)
 
         status_text = {
             "active":  "解題中",
             "success": "✓ 成功",
             "failed":  "✗ 失敗",
         }.get(self._status, "---")
+        label = (
+            f"Ep {self._episode}  [{status_text}]"
+            if self._episode > 0 else f"[{status_text}]"
+        )
 
-        if self._episode > 0:
-            label = f"Ep {self._episode}  [{status_text}]"
-        else:
-            label = f"[{status_text}]"
+        # 右側難度徽章（Easy / Med / Hard / Evil）
+        badge_w = 0
+        if self._level in _LEVEL_INFO:
+            lvl_color, lvl_name, _ = _LEVEL_INFO[self._level]
+            badge_font = QFont("Arial", 7, QFont.Weight.Bold)
+            fm = QFontMetrics(badge_font)
+            badge_w = fm.horizontalAdvance(lvl_name) + 8
+            bx = W - badge_w - 2
+            p.fillRect(bx, 2, badge_w, _TITLE_ROW1 - 4, lvl_color)
+            p.setFont(badge_font)
+            p.setPen(QColor(255, 255, 255))
+            p.drawText(QRect(bx, 2, badge_w, _TITLE_ROW1 - 4),
+                       Qt.AlignmentFlag.AlignCenter, lvl_name)
 
-        font = QFont("Arial", 8, QFont.Weight.Bold)
-        p.setFont(font)
+        p.setFont(QFont("Arial", 8, QFont.Weight.Bold))
         p.setPen(_C["title_fg"])
         p.drawText(
-            QRect(0, 0, W, TITLE_H),
+            QRect(0, 0, W - badge_w - 2, _TITLE_ROW1),
             Qt.AlignmentFlag.AlignCenter,
             label,
         )
+
+        # ── 下半列：難度星等 ──────────────────────────────────────
+        y2 = _TITLE_ROW1
+        if self._level in _LEVEL_INFO:
+            lvl_color, _, stars = _LEVEL_INFO[self._level]
+            dark = lvl_color.darker(130)
+            p.fillRect(0, y2, W, _TITLE_ROW2, dark)
+            p.setFont(QFont("Arial", 9, QFont.Weight.Bold))
+            p.setPen(QColor(255, 255, 220))
+            p.drawText(
+                QRect(0, y2, W, _TITLE_ROW2),
+                Qt.AlignmentFlag.AlignCenter,
+                stars,
+            )
+        else:
+            p.fillRect(0, y2, W, _TITLE_ROW2, status_color.darker(130))
 
     def _draw_cells(self, p: QPainter, ox: int, oy: int, cell: float) -> None:
         font_sz = max(7, int(cell * 0.52))
@@ -176,7 +219,7 @@ class SudokuBoardWidget(QWidget):
         self, p: QPainter, ox: int, oy: int, board_px: int, cell: float
     ) -> None:
         pen_cell = QPen(_C["cell_line"], 1)
-        pen_box  = QPen(_C["box_line"], 2)
+        pen_box = QPen(_C["box_line"], 2)
 
         for i in range(10):
             p.setPen(pen_box if i % 3 == 0 else pen_cell)

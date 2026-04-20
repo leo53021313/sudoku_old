@@ -1,5 +1,48 @@
 # HISTORY.md — 重大變更紀錄
 
+---
+
+## [v7] GUI 視覺化強化 + 設定系統重構（2026-04-20）
+
+### Added
+
+- **難度徽章（Difficulty Badge）**（`app/gui/board_widget.py`）
+  - 每個盤面標題列右側顯示彩色徽章：Easy=綠 / Med=橘 / Hard=紅 / Evil=紫
+  - `_LEVEL_INFO` dict 統一管理顏色、縮寫、星等字串
+- **難度星等第二列**（`app/gui/board_widget.py`）
+  - 標題列擴為兩行（`_TITLE_ROW1=20px` + `_TITLE_ROW2=18px`，`TITLE_H=38px`）
+  - 第二行以難度色背景顯示 ★☆☆☆ 等星等
+- **系統托盤（QSystemTrayIcon）**（`app/gui/training_gui.py`）
+  - 隱藏視窗後可透過托盤雙擊或右鍵「顯示 GUI」恢復
+  - `closeEvent`：訓練中→隱藏（ignore），已停止→正常退出
+- **⚙ 設定對話框**（`app/gui/settings_dialog.py` 新增）
+  - 動態從 `CONFIG_SCHEMA` 生成 UI（8 個 Tab）
+  - `reload_required=False` 設定即時生效，`True` 則顯示 ⚠ 需重啟提示
+- **Config 系統**（`app/config/` 新增）
+  - `schema.py`：全部 60+ 設定的 schema 定義（type, default, min, max, label, description）
+  - `manager.py`：`ConfigManager` — thread-safe get/set，JSON 持久化（`data/user_config.json`），hot-reload callback
+  - 分 8 類：`gui`, `training`, `run`, `crawler`, `proxy`, `logging`, `model`, `db`
+
+### Changed
+
+- **`main_train.py`** — 移除全部 110 行硬編碼常數，改為 94 個 `config.get("key")` 呼叫
+  - `import json` 移至檔案頂部（原散落在函式內部）
+  - 移除冗餘的 `import threading as _threading`，統一用 `threading.Lock()`
+- **`app/gui/board_grid_panel.py`** — `on_episode_start` 加入 `level` 參數並傳遞給 widget
+- **`app/gui/stats_panel.py`** — 移除未使用的 `QColor` import
+
+### Fixed
+
+- **`board_widget.py` 雙重 `TITLE_H` 定義**（Critical）
+  - 舊版在 `_C` 色彩 dict 之後留有 `TITLE_H = 22`，覆蓋了第 14 行的 `TITLE_H = 38`
+  - 導致難度星等第二列（y=20–38）幾乎全被盤面（oy=22）蓋住，僅剩 2px 可見
+  - 修復：移除多餘的 `TITLE_H = 22`
+- **`board_grid_panel.on_board_update` 中途清零 level**（Warning）
+  - 中途更新未傳 `level`，導致 `self._level` 被重設為 0，難度徽章在每步後消失
+  - 修復：改為 `w.update_state(..., w._level)` 保留現有 level
+
+---
+
 本文件記錄本專案的重大設計決策與架構變更，供未來維護時參考。
 若某次改動的動機不明，可在此查找背景說明。
 

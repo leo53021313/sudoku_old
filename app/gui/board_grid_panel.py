@@ -43,7 +43,9 @@ class BoardGridPanel(QFrame):
 
     # ── 公開 API（由 training_gui QTimer callback 呼叫）──────────────────
 
-    def on_episode_start(self, board: list, fixed: list, episode: int) -> None:
+    def on_episode_start(
+        self, board: list, fixed: list, episode: int, level: int = 0
+    ) -> None:
         """新 episode 開始：把所有歷史向右推一格，slot 0 顯示新盤面。"""
         for i in range(self._max - 1, 0, -1):
             src = self._widgets[i - 1]
@@ -53,14 +55,16 @@ class BoardGridPanel(QFrame):
                 None,
                 src._status if src._episode > 0 else "idle",
                 src._episode,
+                src._level,
             )
-        self._widgets[0].update_state(board, fixed, None, "active", episode)
+        self._widgets[0].update_state(board, fixed, None, "active", episode, level)
 
     def on_board_update(
         self, board: list, fixed: list, highlight, episode: int
     ) -> None:
-        """即時步驟更新（只更新 slot 0）。"""
-        self._widgets[0].update_state(board, fixed, highlight, "active", episode)
+        """即時步驟更新（只更新 slot 0，保留原有 level）。"""
+        w = self._widgets[0]
+        w.update_state(board, fixed, highlight, "active", episode, w._level)
 
     def on_episode_end(
         self, board: list, fixed: list, success: bool, episode: int

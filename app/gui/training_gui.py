@@ -12,9 +12,10 @@ import time
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QHBoxLayout, QVBoxLayout, QSplitter, QPushButton,
+    QSystemTrayIcon, QMenu, QStyle,
 )
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtGui import QCloseEvent, QAction
 
 from .event_bus import bus as gui_bus
 from .board_grid_panel import BoardGridPanel
@@ -77,12 +78,30 @@ class TrainingWindow(QMainWindow):
         tbl.addWidget(title_lbl)
         tbl.addStretch()
 
+        settings_btn = QPushButton("⚙ 設定")
+        settings_btn.setFixedWidth(60)
+        settings_btn.clicked.connect(self._open_settings)
+        tbl.addWidget(settings_btn)
+
         self._hide_btn = QPushButton("隱藏 GUI")
         self._hide_btn.setFixedWidth(70)
-        self._hide_btn.clicked.connect(self.hide)
+        self._hide_btn.clicked.connect(self._toggle_window)
         tbl.addWidget(self._hide_btn)
 
         root_layout.addWidget(toolbar)
+
+        # ── 系統托盤 ──────────────────────────────────────────────────
+        self._tray = QSystemTrayIcon(self)
+        self._tray.setIcon(
+            self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
+        )
+        tray_menu = QMenu()
+        show_action = QAction("顯示 GUI", self)
+        show_action.triggered.connect(self._show_window)
+        tray_menu.addAction(show_action)
+        self._tray.setContextMenu(tray_menu)
+        self._tray.activated.connect(self._on_tray_activated)
+        self._tray.show()
 
         # ── 主體 Splitter ─────────────────────────────────────────────
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -153,8 +172,9 @@ class TrainingWindow(QMainWindow):
         board   = d.get("board", [[0]*9]*9)
         fixed   = d.get("fixed", [[False]*9]*9)
         episode = d.get("episode_idx", 0)
+        level   = d.get("level", 0)
         self._episode = episode
-        self._boards.on_episode_start(board, fixed, episode)
+        self._boards.on_episode_start(board, fixed, episode, level)
 
     def _on_board_update(self, d: dict) -> None:
         board   = d.get("board", [[0]*9]*9)
@@ -236,13 +256,40 @@ class TrainingWindow(QMainWindow):
         if state == "stopped":
             self._timer.stop()
 
-    # ── 視窗關閉：通知訓練停止 ───────────────────────────────────────
+    # ── 視窗顯示/隱藏控制 ────────────────────────────────────────────
+
+    def _toggle_window(self) -> None:
+        if self.isVisible():
+            self.hide()
+        else:
+            self._show_window()
+
+    def _show_window(self) -> None:
+        self.show()
+        self.activateWindow()
+        self.raise_()
+
+    def _on_tray_activated(self, reason) -> None:
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            self._show_window()
+
+    def _open_settings(self) -> None:
+        from .settings_dialog import SettingsDialog
+        dlg = SettingsDialog(parent=self)
+        dlg.exec()
+
+    # ── 視窗關閉：訓練中則改為隱藏，已停止則正常關閉 ─────────────────
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self._hotkey and not self._hotkey.stop_requested:
-            self._hotkey.request_stop()
-        self._timer.stop()
-        event.accept()
+        if self._state != "stopped":
+            event.ignore()
+            self.hide()
+        else:
+            self._tray.hide()
+            if self._hotkey and not self._hotkey.stop_requested:
+                self._hotkey.request_stop()
+            self._timer.stop()
+            event.accept()
 
 
 # ── 進入點 ─────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QFrame, QVBoxLayout, QLabel, QProgressBar,
     QGridLayout, QWidget, QSizePolicy,
 )
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QSize
 
 
