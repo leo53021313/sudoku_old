@@ -759,6 +759,7 @@ def run():
                 total_reward=result["total_reward"],
                 board=_end_board,
                 fixed=_end_fixed,
+                level=int(row.get("level", 0)),
             )
 
             if result["stop_reason"] != "stop_requested":
@@ -790,16 +791,20 @@ def run():
                 if config.get("logging.print_rolling_stats"):
                     print_rolling_stats(all_results, episode_idx, db)
                 if isinstance(agent, TorchAgent):
+                    _mrv = agent._effective_mrv_prob() if hasattr(agent, "_effective_mrv_prob") else 0.0
+                    _phase = (agent.phase_manager.phase if hasattr(agent, "phase_manager") else
+                              (1 if _mrv > 0.40 else (2 if _mrv > 0.10 else 3)))
                     gui_bus.put(
                         "stats_update",
                         episode_idx=episode_idx,
                         total_episodes=total_episodes or 0,
                         update_count=agent.update_counter,
-                        mrv_prob=agent._effective_mrv_prob() if hasattr(agent, "_effective_mrv_prob") else 0.0,
+                        mrv_prob=_mrv,
                         entropy=agent.last_entropy_value,
                         loss=agent.last_loss_value,
                         rollout_size=agent.rollout_buf.size() if hasattr(agent, "rollout_buf") else 0,
                         rollout_cap=config.get("training.rollout_steps"),
+                        phase=_phase,
                     )
 
             _save_interval = config.get("training.save_every_episodes")

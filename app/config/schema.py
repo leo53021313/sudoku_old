@@ -3,8 +3,10 @@
 """
 所有設定的 Schema 定義。
 每個設定項包含：label、category、type、default、reload_required 等欄位。
-category 對應 GUI 設定頁的分頁。
-reload_required=False 表示即時生效（hot reload），True 表示需重啟訓練。
+新增欄位：
+  tooltip_zh   — 繁體中文 hover 說明（白話 + 影響說明）
+  tab_group    — GUI 側欄分頁："general" | "ai" | "crawler" | "debug"
+  visibility   — 顯示等級："core" | "advanced" | "debug"
 """
 
 CONFIG_SCHEMA: dict[str, dict] = {
@@ -17,6 +19,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "啟用視覺化訓練介面（需重啟生效）",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "開啟或關閉視覺化訓練介面。關閉後訓練速度略快，適合純跑分。需重啟才生效。",
     },
     "gui.board_fps": {
         "label": "盤面 FPS",
@@ -27,6 +32,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 60,
         "reload_required": False,
         "description": "盤面即時更新最高 FPS，降低可減少 CPU 占用",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "盤面即時刷新的畫面率。調高看起來更流暢，但稍微增加 CPU 使用率。",
     },
     "gui.max_boards": {
         "label": "最多盤面數",
@@ -37,6 +45,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 9,
         "reload_required": True,
         "description": "同時顯示的盤面數量（1→1x1, 4→2x2, 9→3x3），需重啟生效",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "同時顯示的數獨盤面數量（1-9）。盤面越多，越能看到 AI 的歷史成敗記錄。需重啟。",
     },
 
     # ── AI 訓練（需重啟）───────────────────────────────────────────────
@@ -49,6 +60,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1e-1,
         "reload_required": True,
         "description": "PPO 優化器學習率",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "AI 學習的步長。調高讓模型更快改變，但可能不穩定；調低學習更慢更穩。建議在 1e-4 到 5e-4 之間調整。",
     },
     "training.gamma": {
         "label": "折扣係數 (γ)",
@@ -59,6 +73,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "未來獎勵的折扣比例",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "未來獎勵的折扣比例。接近 1.0 代表 AI 很重視長遠規劃；降低則偏向立即獎勵。數獨需要多步規劃，建議保持 0.95 以上。",
     },
     "training.gae_lambda": {
         "label": "GAE λ",
@@ -69,6 +86,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "Generalized Advantage Estimation 的 lambda 值",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "優勢估計的偏差/方差平衡係數。接近 1.0 低偏差高方差，接近 0.0 高偏差低方差。預設 0.95 是標準最佳實踐。",
     },
     "training.ppo_clip": {
         "label": "PPO Clip ε",
@@ -79,6 +99,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 0.5,
         "reload_required": True,
         "description": "PPO 策略比例裁剪範圍",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "限制每次更新時新舊策略的差距幅度。調高允許更大更新（容易不穩），調低更保守。預設 0.2 是標準值。",
     },
     "training.ppo_epochs": {
         "label": "PPO 更新輪數",
@@ -89,6 +112,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 50,
         "reload_required": True,
         "description": "每次 rollout 後的 PPO 更新迭代次數",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "每批數據進行 PPO 更新的迭代次數。調高充分利用每批數據，但過高會過擬合。預設 10 次適合大多數情況。",
     },
     "training.ppo_minibatch": {
         "label": "Mini-batch 大小",
@@ -99,6 +125,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 512,
         "reload_required": True,
         "description": "PPO 更新時的 mini-batch 大小",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "PPO 更新時每個 mini-batch 的大小。較大的 batch 梯度估計更穩定，但佔更多顯存。需整除 rollout_steps。",
     },
     "training.rollout_steps": {
         "label": "Rollout 步數",
@@ -109,6 +138,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 4096,
         "reload_required": True,
         "description": "每次收集的經驗步數，達到後觸發 PPO 更新",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "AI 每收集幾步經驗後進行一次 PPO 更新。較大的值讓每次更新的資料更豐富，但更新頻率降低。",
     },
     "training.mrv_mix_prob": {
         "label": "MRV 初始混合率",
@@ -119,6 +151,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "訓練初期使用 MRV 專家示範的機率（Phase 1 起點）",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "Phase 1 開始時，MRV 專家示範的初始機率。設 0.9 代表 90% 的行動由專家示範。調高讓初期學習更有效率。",
     },
     "training.mrv_decay_steps": {
         "label": "MRV 衰減步數（Phase 2 結束點）",
@@ -129,6 +164,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 500000,
         "reload_required": True,
         "description": "Phase 2 完成時（MRV 從 0.40 降至 0.10）所需的總步數",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "Phase 2 中 MRV 機率衰減的步數上限（time backstop）。設較大值讓 Phase 2 更長，AI 有更多時間漸進獨立。",
     },
     "training.save_every_episodes": {
         "label": "自動儲存間隔（回合）",
@@ -139,6 +177,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10000,
         "reload_required": False,
         "description": "每隔多少回合自動儲存模型",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "每訓練幾回合自動儲存一次模型。設越小越安全（不怕意外停止），但頻繁寫入磁碟也稍慢。即時生效。",
     },
     "training.device": {
         "label": "運算裝置",
@@ -148,6 +189,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "options": ["cuda", "cpu"],
         "reload_required": True,
         "description": "訓練使用的運算裝置（cuda 需要 NVIDIA GPU）",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "使用 GPU（cuda）可以加快 3-10 倍訓練速度。沒有 NVIDIA 顯卡時改為 cpu。",
     },
     "training.use_fp16": {
         "label": "混合精度訓練 (FP16)",
@@ -156,6 +200,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "啟用 FP16 混合精度以加速訓練、降低顯存占用",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "使用半精度浮點運算。可加速 GPU 訓練並節省顯存，在支援的顯卡上幾乎無精度損失。",
     },
     "training.level_dist": {
         "label": "難度分布",
@@ -164,6 +211,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": '{"1": 0.6, "2": 0.3, "3": 0.1}',
         "reload_required": False,
         "description": "爬蟲抓題難度比例，JSON 格式，key=難度(1-4)，value=比例",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "AI 練習各難度題目的比例，JSON 格式。{\"1\":0.6,\"2\":0.3,\"3\":0.1} 代表 60% 簡單、30% 中等、10% 困難。即時生效。",
     },
 
     # ── 爬蟲（需重啟執行緒）────────────────────────────────────────────
@@ -176,6 +226,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 100,
         "reload_required": True,
         "description": "背景爬蟲並行執行緒數量",
+        "tab_group": "crawler",
+        "visibility": "core",
+        "tooltip_zh": "同時執行的背景爬蟲執行緒數量。調高填充題庫更快，但更容易觸發網站封鎖。建議搭配 Proxy 使用，設 10-30 之間。需重啟。",
     },
     "crawler.min_delay": {
         "label": "最小延遲（秒）",
@@ -186,6 +239,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10.0,
         "reload_required": False,
         "description": "每次成功抓題後的最小等待秒數",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "每次成功抓題後的最短等待秒數。設 0 最大化速度；調高降低封鎖風險。即時生效。",
     },
     "crawler.max_delay": {
         "label": "最大延遲（秒）",
@@ -196,6 +252,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 30.0,
         "reload_required": False,
         "description": "每次成功抓題後的最大等待秒數",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "每次成功抓題後的最長等待秒數。實際等待時間在 min_delay 和 max_delay 之間隨機，模擬人工瀏覽。即時生效。",
     },
     "crawler.page_timeout_ms": {
         "label": "頁面逾時（毫秒）",
@@ -206,6 +265,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 60000,
         "reload_required": False,
         "description": "HTTP 請求逾時時間（毫秒）",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "單次 HTTP 請求的逾時時間（毫秒）。網路差時調高（15000ms）；網路穩定時調低（5000ms）可加速失敗偵測。即時生效。",
     },
     "crawler.max_pool_size": {
         "label": "題庫上限",
@@ -216,6 +278,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1000000,
         "reload_required": False,
         "description": "題庫最多儲存的題目數量，達到後停止爬蟲",
+        "tab_group": "crawler",
+        "visibility": "core",
+        "tooltip_zh": "題庫最多儲存的未解題目數。達到上限後爬蟲暫停。每道題約 1KB，設 50000 約佔 50MB。即時生效。",
     },
     "crawler.min_pool_size": {
         "label": "題庫下限",
@@ -226,6 +291,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10000,
         "reload_required": False,
         "description": "題庫低於此數量時恢復爬蟲",
+        "tab_group": "crawler",
+        "visibility": "core",
+        "tooltip_zh": "題庫題目數低於此值時重新補充。建議設為 max_pool_size 的 5-10%，避免訓練時等待題目。即時生效。",
     },
 
     # ── Proxy（需重啟）─────────────────────────────────────────────────
@@ -236,6 +304,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "停用則直連 websudoku.com（容易被封鎖）",
+        "tab_group": "crawler",
+        "visibility": "core",
+        "tooltip_zh": "啟用 Proxy 代理伺服器。停用後直接用真實 IP，爬取量大時容易被封鎖。建議開啟。需重啟。",
     },
     "proxy.validate": {
         "label": "啟動時驗證 Proxy",
@@ -244,6 +315,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "啟動時過濾無效 Proxy（建議開啟）",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "啟動時先驗證 Proxy 清單哪些可用。開啟確保爬蟲使用有效 Proxy；關閉則跳過驗證，啟動更快但可能用到失效的 Proxy。需重啟。",
     },
     "proxy.validate_workers": {
         "label": "驗證並行數",
@@ -254,6 +328,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 500,
         "reload_required": True,
         "description": "Proxy 驗證時的並行執行緒數",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "驗證 Proxy 時的並行執行緒數。Proxy 清單越長，調高可加速驗證過程。需重啟。",
     },
     "proxy.validate_timeout": {
         "label": "驗證逾時（秒）",
@@ -264,6 +341,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 30,
         "reload_required": True,
         "description": "每個 Proxy 驗證的逾時秒數",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "每個 Proxy 驗證連線的逾時秒數。設太短會誤殺慢速但可用的 Proxy；設太長則驗證整個清單需更多時間。需重啟。",
     },
 
     # ── 日誌（即時生效）────────────────────────────────────────────────
@@ -274,6 +354,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "每回合結束後是否在終端顯示結果",
+        "tab_group": "debug",
+        "visibility": "core",
+        "tooltip_zh": "每回合結束後在終端顯示結果（回合號、步數、獎勵、成敗）。訓練早期方便追蹤；高速訓練時可關閉減少輸出。即時生效。",
     },
     "logging.print_every_episodes": {
         "label": "統計顯示間隔",
@@ -284,6 +367,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1000,
         "reload_required": False,
         "description": "每隔多少回合顯示一次滾動統計",
+        "tab_group": "debug",
+        "visibility": "core",
+        "tooltip_zh": "每隔幾回合顯示一次統計訊息。設 1 每回合都顯示；設 100 表示每 100 回合顯示一次摘要，適合高速訓練避免刷屏。即時生效。",
     },
     "logging.print_rolling_stats": {
         "label": "顯示滾動統計",
@@ -292,6 +378,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "是否顯示最近 N 回合的平均統計",
+        "tab_group": "debug",
+        "visibility": "core",
+        "tooltip_zh": "是否定期顯示最近 N 回合的滾動統計（成功率、平均獎勵等）。適合快速了解訓練趨勢。即時生效。",
     },
     "logging.print_agent_update_log": {
         "label": "顯示 Agent 更新日誌",
@@ -300,6 +389,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "PPO 更新後是否顯示 loss 等資訊",
+        "tab_group": "debug",
+        "visibility": "advanced",
+        "tooltip_zh": "每次 PPO 更新後顯示 loss、entropy 等詳細數值。適合觀察訓練是否收斂；訓練穩定後可關閉。即時生效。",
     },
     "logging.print_producer_success": {
         "label": "顯示爬蟲成功日誌",
@@ -308,6 +400,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": False,
         "reload_required": False,
         "description": "每插入一道新題是否印出一行（20 個 worker 時較吵）",
+        "tab_group": "debug",
+        "visibility": "debug",
+        "tooltip_zh": "每成功插入一道新題時印出一行日誌。20 個爬蟲執行緒同時跑時輸出量極大，僅在除錯爬蟲邏輯時短暫開啟。即時生效。",
     },
 
     # ── 執行模式（需重啟）──────────────────────────────────────────────
@@ -319,6 +414,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "options": ["train", "eval"],
         "reload_required": True,
         "description": "train=訓練模式，eval=純評估（不更新模型）",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "train=正式訓練（AI 會從每道題更新神經網路），eval=純評估（不更新，只統計成功率）。",
     },
     "run.infinite_training": {
         "label": "無限訓練",
@@ -327,6 +425,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "開啟後忽略回合數限制，持續訓練直到手動停止",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "開啟後持續訓練不停，直到手動按 Stop。建議長時間訓練時開啟，搭配自動儲存使用。",
     },
     "run.train_episodes": {
         "label": "訓練回合數上限",
@@ -337,6 +438,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10000000,
         "reload_required": True,
         "description": "無限訓練關閉時，訓練到此回合數後停止",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "無限訓練關閉時，AI 訓練到此回合數後自動停止。設太小會讓 AI 還沒學好就中斷。",
     },
     "run.eval_episodes": {
         "label": "評估回合數",
@@ -347,6 +451,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 100000,
         "reload_required": True,
         "description": "eval 模式下的回合總數",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "eval 模式下執行的回合總數。回合數越多統計越準，但耗時也越長。",
     },
     "run.max_steps_per_episode": {
         "label": "每回合最大步數",
@@ -357,6 +464,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10000,
         "reload_required": True,
         "description": "超過此步數強制結束該回合",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "每道題 AI 最多走幾步。超過後強制結束（計為失敗）。設太小會讓複雜題目無法完成。",
     },
 
     # ── 資料庫（需重啟）────────────────────────────────────────────────
@@ -367,6 +477,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": "data/puzzle_pool.db",
         "reload_required": True,
         "description": "SQLite 題庫路徑（相對於 main_train.py）",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "SQLite 題庫資料庫檔案路徑（相對於 main_train.py 執行位置）。修改後需重啟，且新路徑若無資料庫會建立新的空資料庫（需重新爬取題目）。",
     },
     "db.worker_name": {
         "label": "訓練 Worker 名稱",
@@ -375,6 +488,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": "trainer_main",
         "reload_required": True,
         "description": "DB 鎖記錄中使用的 Worker 識別名稱",
+        "tab_group": "crawler",
+        "visibility": "debug",
+        "tooltip_zh": "此訓練 Worker 在資料庫鎖記錄中的識別名稱。多個 Worker 同時跑時，各 Worker 應使用不同名稱以避免重複分配同一道題。需重啟。",
     },
 
     # ── 爬蟲補充 ───────────────────────────────────────────────────────
@@ -387,6 +503,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 2147483647,
         "reload_required": False,
         "description": "同一道題嘗試超過此次數後標記為 skipped（2147483647=無限）",
+        "tab_group": "crawler",
+        "visibility": "advanced",
+        "tooltip_zh": "同一道題最多嘗試幾次訓練。超過後標記為跳過，不再分配。設預設最大值相當於不限制。即時生效。",
     },
     "crawler.min_expected_givens": {
         "label": "最少初始格子數",
@@ -397,6 +516,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 80,
         "reload_required": False,
         "description": "抓到的題目初始格子數低於此值時視為無效",
+        "tab_group": "crawler",
+        "visibility": "debug",
+        "tooltip_zh": "題目中初始已填格子數的最低門檻，低於此值視為爬取錯誤。標準數獨至少有 17 個初始格子。即時生效。",
     },
     "crawler.max_expected_givens": {
         "label": "最多初始格子數",
@@ -407,6 +529,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 81,
         "reload_required": False,
         "description": "抓到的題目初始格子數高於此值時視為無效",
+        "tab_group": "crawler",
+        "visibility": "debug",
+        "tooltip_zh": "題目中初始已填格子數的最高門檻，高於此值視為無效（可能爬到已解題目）。即時生效。",
     },
 
     # ── Proxy 補充 ─────────────────────────────────────────────────────
@@ -419,6 +544,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 100000,
         "reload_required": True,
         "description": "-1 = 驗證所有已下載的代理",
+        "tab_group": "crawler",
+        "visibility": "debug",
+        "tooltip_zh": "最多驗證幾個 Proxy。設 -1 表示驗證全部；設正整數值可限制驗證時間，適合清單非常大時。需重啟。",
     },
 
     # ── 日誌補充 ────────────────────────────────────────────────────────
@@ -429,6 +557,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "訓練開始時印出設定摘要到終端",
+        "tab_group": "debug",
+        "visibility": "advanced",
+        "tooltip_zh": "訓練開始時印出完整設定摘要。有助於確認啟動設定是否正確；確認後可關閉以簡化輸出。即時生效。",
     },
     "logging.print_web_retry": {
         "label": "顯示 Web 重試日誌",
@@ -437,6 +568,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "顯示爬蟲 HTTP 失敗與重試訊息",
+        "tab_group": "debug",
+        "visibility": "advanced",
+        "tooltip_zh": "顯示爬蟲 HTTP 請求失敗、重試和切換 Proxy 的日誌。出現大量重試時開啟可診斷網路問題；正常運作時可關閉。即時生效。",
     },
     "logging.print_pool": {
         "label": "顯示題庫操作日誌",
@@ -445,6 +579,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": False,
         "description": "顯示爬蟲執行緒啟停、題庫等待等訊息",
+        "tab_group": "debug",
+        "visibility": "advanced",
+        "tooltip_zh": "顯示爬蟲執行緒啟停、題庫等待等訊息。適合監控題庫填充狀況；日常訓練中可關閉。即時生效。",
     },
     "logging.producer_debug": {
         "label": "爬蟲 Debug 模式",
@@ -453,6 +590,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": False,
         "reload_required": False,
         "description": "顯示 HTTP 狀態碼、HTML 內容等詳細爬蟲訊息",
+        "tab_group": "debug",
+        "visibility": "debug",
+        "tooltip_zh": "顯示 HTTP 狀態碼、HTML 原始內容等詳細爬蟲除錯訊息。輸出量極大，僅在懷疑爬蟲解析有問題時開啟。即時生效。",
     },
     "logging.rolling_stats_window": {
         "label": "滾動統計視窗大小",
@@ -463,6 +603,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10000,
         "reload_required": False,
         "description": "計算成功率與平均獎勵時使用最近 N 回合",
+        "tab_group": "debug",
+        "visibility": "core",
+        "tooltip_zh": "滾動統計使用最近幾個回合的數據。設 100 表示成功率是最近 100 回合的平均；設越大越穩定但對近期變化響應越慢。即時生效。",
     },
 
     # ── 訓練補充（需重啟）──────────────────────────────────────────────
@@ -474,6 +617,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "options": ["torch", "mrv"],
         "reload_required": True,
         "description": "torch=PPO 神經網路，mrv=純 MRV 啟發式",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "Agent 類型：torch=PPO 神經網路（主要訓練模式），mrv=純 MRV 啟發式（無 GPU 對照實驗用）。",
     },
     "training.train_policy_mode": {
         "label": "訓練策略取樣方式",
@@ -483,6 +629,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "options": ["sample", "greedy"],
         "reload_required": True,
         "description": "訓練時動作取樣方式",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "訓練時動作選擇方式：sample=隨機取樣（有探索性），greedy=取機率最高動作（確定性）。訓練時建議用 sample。",
     },
     "training.eval_policy_mode": {
         "label": "評估策略取樣方式",
@@ -492,6 +641,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "options": ["sample", "greedy"],
         "reload_required": True,
         "description": "eval 模式時動作取樣方式",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "評估時動作選擇方式。eval 模式通常用 greedy 以取得最穩定的成功率統計。",
     },
     "training.value_coef": {
         "label": "值函數損失係數",
@@ -502,6 +654,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "PPO 損失中值函數部分的權重",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "PPO 損失中 Critic（值函數）部分的加權係數。調高讓值函數學習更被重視，有助於更準確的優勢估計。預設 0.5。",
     },
     "training.grad_clip": {
         "label": "梯度裁剪",
@@ -512,6 +667,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10.0,
         "reload_required": True,
         "description": "梯度 L2 norm 裁剪閾值（0=不裁剪）",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "梯度 L2 norm 裁剪閾值。超過此值的梯度會被等比縮小，防止訓練崩潰（梯度爆炸）。設 0 表示不裁剪。",
     },
     "training.adaptive_entropy": {
         "label": "自適應熵係數",
@@ -520,6 +678,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "自動調整熵係數以維持目標熵值",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "自動調整探索強度，使策略的熵值接近 target_entropy。讓 AI 既不過度確定也不過度隨機。建議保持開啟。",
     },
     "training.target_entropy": {
         "label": "目標熵值",
@@ -530,6 +691,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 5.0,
         "reload_required": True,
         "description": "自適應熵調整的目標熵值",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "自適應熵調整的目標值。較高值讓 AI 更愛探索（動作更分散），較低值讓 AI 更果斷（傾向重複成功動作）。",
     },
     "training.entropy_init": {
         "label": "初始熵係數",
@@ -540,6 +704,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "訓練開始時的熵係數初始值",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "訓練開始時的熵係數初始值。adaptive_entropy=True 時此值為出發點；adaptive_entropy=False 時此值在整個訓練中固定。",
     },
     "training.entropy_lr": {
         "label": "熵係數學習率",
@@ -550,6 +717,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "調整熵係數時的梯度步長",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "調整熵係數時的步長。調高讓熵係數快速響應當前偏差，但可能震盪；調低則調整更緩慢穩定。",
     },
     "training.min_entropy_coef": {
         "label": "最小熵係數",
@@ -560,6 +730,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "熵係數自適應調整的下界",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "熵係數自適應調整的下界。避免熵係數下降到讓策略完全確定性的程度。設 0.001 保留極少量探索。",
     },
     "training.max_entropy_coef": {
         "label": "最大熵係數",
@@ -570,6 +743,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 10.0,
         "reload_required": True,
         "description": "熵係數自適應調整的上界",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "熵係數自適應調整的上界。避免熵係數上升過高導致策略幾乎隨機，通常設在 0.5-1.0 之間。",
     },
     "training.cell_dim": {
         "label": "Cell 嵌入維度",
@@ -580,6 +756,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 512,
         "reload_required": True,
         "description": "神經網路每個格子嵌入的維度",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "神經網路中每個數獨格子的嵌入向量維度。調高讓網路能學習更複雜的策略，但訓練更慢、佔更多顯存。",
     },
     "training.head_dim": {
         "label": "Constraint Head 維度",
@@ -590,6 +769,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 256,
         "reload_required": True,
         "description": "行/列/宮約束 Head 的隱藏維度",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "行/列/宮約束 Head 的隱藏層維度。控制約束推理模組的容量。通常設為 cell_dim 的一半左右。",
     },
     "training.normalize_returns": {
         "label": "正規化 Returns",
@@ -598,6 +780,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "PPO 更新前對 Returns 進行 running mean/std 正規化",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "更新前對 Returns 進行標準化，有助於不同難度、不同獎勵尺度的數據共同訓練時更穩定。建議保持開啟。",
     },
     "training.mrv_min_prob": {
         "label": "MRV Floor（Phase 3 固定值）",
@@ -608,6 +793,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 0.5,
         "reload_required": True,
         "description": "Phase 3 的固定 MRV 機率；設 0 表示完全關閉 teacher",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "Phase 3 中固定的 MRV 最低機率。設 0.05 保留極少量 MRV 作為『最後防線』；設 0 讓 AI 完全自主。",
     },
     "training.phase1_steps": {
         "label": "Phase 1 步數上限",
@@ -618,6 +806,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 500000,
         "reload_required": True,
         "description": "Phase 1→2 的 time backstop；success_rate≥tau1 可提早觸發",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "Phase 1 的最大步數上限（time backstop）。即使成功率未達門檻，超過此步數後強制進入 Phase 2。",
     },
     "training.phase2_steps": {
         "label": "Phase 2 步數上限",
@@ -628,6 +819,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1000000,
         "reload_required": True,
         "description": "Phase 2→3 的 time backstop；success_rate≥tau2 可提早觸發",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "Phase 2 的最大步數上限（time backstop）。超過後強制進入 Phase 3。建議比 phase1_steps 大 2-3 倍。",
     },
     "training.phase1_tau": {
         "label": "Phase 1 success 門檻",
@@ -638,6 +832,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "最近 100 回合成功率達此值時提前進入 Phase 2",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "Phase 1→2 的觸發成功率門檻（0-1）。最近 100 回合的成功率達到此值時，提前進入 Phase 2。設 0.30 表示 30% 成功率即進階。",
     },
     "training.phase2_tau": {
         "label": "Phase 2 success 門檻",
@@ -648,6 +845,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1.0,
         "reload_required": True,
         "description": "最近 100 回合成功率達此值時提前進入 Phase 3",
+        "tab_group": "ai",
+        "visibility": "core",
+        "tooltip_zh": "Phase 2→3 的觸發成功率門檻（0-1）。達到後進入自主解題的 Phase 3。設 0.65 表示 65% 成功率才進階。",
     },
     "training.teacher_max_cand": {
         "label": "Teacher 最大 candidate 數",
@@ -658,6 +858,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 9,
         "reload_required": True,
         "description": "格子 candidate 數超過此值時 teacher 放棄出手（Level 5），不產生 BC loss",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "MRV 專家最多在幾個候選數的格子上出手示範。超過此值時專家放棄，讓 AI 自行探索。設較小值讓專家只在高把握時示範。",
     },
     "training.policy_demo_capacity": {
         "label": "PolicyDemoStore 容量（步數）",
@@ -668,6 +871,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 32768,
         "reload_required": True,
         "description": "Phase 3 自我改善回路的 ring buffer 大小",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "Phase 3 自我改善回路的記憶體大小（步數）。儲存 AI 成功回合用於後續模仿。設較大值保留更多歷史成功案例。",
     },
     "training.policy_demo_weight": {
         "label": "Policy Demo Soft BC 權重",
@@ -678,6 +884,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 2.0,
         "reload_required": True,
         "description": "Phase 3 中 policy demo soft BC loss 的係數",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "Phase 3 中 AI 模仿自己過去成功步驟的加權係數。調高讓 AI 更傾向重複成功模式；調低讓 PPO 自由探索。",
     },
     "training.success_bonus": {
         "label": "成功額外獎勵",
@@ -688,6 +897,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 1000.0,
         "reload_required": True,
         "description": "成功解題時疊加的額外獎勵",
+        "tab_group": "ai",
+        "visibility": "advanced",
+        "tooltip_zh": "成功解題後額外疊加的獎勵數值。調高讓 AI 更強烈追求完成題目；調低讓 AI 更注重每步的品質。",
     },
     "training.dead_end_penalty": {
         "label": "死局額外懲罰",
@@ -698,6 +910,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 0.0,
         "reload_required": True,
         "description": "無合法動作時疊加的額外懲罰（通常設 0）",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "遇到死局（無合法動作）時的額外懲罰（負數）。設較強懲罰讓 AI 更積極避免死局。設 0 只靠自然回合失敗信號學習。",
     },
     "training.bc_coef": {
         "label": "BC Loss 係數",
@@ -708,6 +923,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "max": 5.0,
         "reload_required": True,
         "description": "Behavior Cloning 損失權重（MRV 專家示範的模仿強度）",
+        "tab_group": "ai",
+        "visibility": "debug",
+        "tooltip_zh": "Behavior Cloning 損失的加權係數。控制 AI 模仿 MRV 專家的強度。調高初期學得快，但自主性較低。",
     },
 
     # ── 模型儲存（需重啟）──────────────────────────────────────────────
@@ -718,6 +936,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": "models",
         "reload_required": True,
         "description": "儲存模型 .pt 檔案的目錄",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "模型檔案的儲存目錄。請確保目錄已存在。",
     },
     "model.path": {
         "label": "模型路徑",
@@ -726,6 +947,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": "models/sudoku_policy_latest.pt",
         "reload_required": True,
         "description": "模型 checkpoint 的完整路徑",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "模型 checkpoint 的完整路徑。自動儲存和手動儲存都寫入此路徑；啟動時也從這裡載入。",
     },
     "model.auto_load": {
         "label": "啟動時自動載入模型",
@@ -734,6 +958,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": True,
         "reload_required": True,
         "description": "有現有模型時自動繼續訓練",
+        "tab_group": "general",
+        "visibility": "core",
+        "tooltip_zh": "啟動時若此路徑有模型，自動載入繼續訓練。關閉後每次啟動都是全新訓練，適合對照實驗。",
     },
     "model.reset_optimizer_on_load": {
         "label": "載入時重設優化器",
@@ -742,6 +969,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": False,
         "reload_required": True,
         "description": "載入 checkpoint 時是否重設優化器狀態",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "載入 checkpoint 時清空優化器的動量等內部狀態，從零開始優化。適合切換學習率或遷移學習。",
     },
     "model.reset_counters_on_load": {
         "label": "載入時重設計數器",
@@ -750,6 +980,9 @@ CONFIG_SCHEMA: dict[str, dict] = {
         "default": False,
         "reload_required": True,
         "description": "載入 checkpoint 時是否重設回合/更新計數",
+        "tab_group": "general",
+        "visibility": "advanced",
+        "tooltip_zh": "載入 checkpoint 時將回合計數器和 PPO 更新計數器歸零，統計數據從頭算。一般繼續訓練不需開啟。",
     },
 }
 
