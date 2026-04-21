@@ -4,8 +4,10 @@
 import numpy as np
 
 
+_VALID_GROUP = frozenset(range(1, 10))
+
 def _is_group_valid(nums):
-    return sorted(int(x) for x in nums) == [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    return {int(x) for x in nums} == _VALID_GROUP
 
 
 def validate_completed_board(board, fixed=None, base_board=None):

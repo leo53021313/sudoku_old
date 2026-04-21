@@ -71,7 +71,8 @@ class BoardGridPanel(QFrame):
     ) -> None:
         """Episode 結束：更新 slot 0 的最終狀態標記。"""
         status = "success" if success else "failed"
-        self._widgets[0].update_state(board, fixed, None, status, episode)
+        w = self._widgets[0]
+        w.update_state(board, fixed, None, status, episode, w._level)
 
     def reset_all(self) -> None:
         for w in self._widgets:

@@ -14,7 +14,7 @@
   "training.save_every_episodes": 100,
   "training.device": "cuda",
   "training.use_fp16": true,
-  "training.level_dist": "{\"1\": 0.0, \"2\": 0.0, \"3\": 0.3}",
+  "training.level_dist": "{\"1\": 0.25, \"2\": 0.25, \"3\": 0.25, \"4\":0.25}",
   "training.agent_type": "torch",
   "training.train_policy_mode": "sample",
   "training.eval_policy_mode": "greedy",
@@ -70,5 +70,13 @@
   "model.reset_optimizer_on_load": false,
   "model.reset_counters_on_load": false,
   "db.path": "data/puzzle_pool.db",
-  "db.worker_name": "trainer_main"
+  "db.worker_name": "trainer_main",
+  "training.phase1_steps": 30000,
+  "training.phase2_steps": 90000,
+  "training.phase1_tau": 0.3,
+  "training.phase2_tau": 0.65,
+  "training.teacher_max_cand": 4,
+  "training.policy_demo_capacity": 2048,
+  "training.policy_demo_weight": 0.3,
+  "training.bc_coef": 1.0
 }

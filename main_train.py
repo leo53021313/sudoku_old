@@ -219,12 +219,19 @@ def create_agent():
             mrv_mix_prob=config.get("training.mrv_mix_prob"),
             mrv_decay_steps=config.get("training.mrv_decay_steps"),
             mrv_min_prob=config.get("training.mrv_min_prob"),
-            bc_coef=1.0,
+            bc_coef=config.get("training.bc_coef"),
             use_fp16=config.get("training.use_fp16"),
             model_path=model_path,
             reset_optimizer_on_load=config.get("model.reset_optimizer_on_load"),
             reset_counters_on_load=config.get("model.reset_counters_on_load"),
             print_update_log=config.get("logging.print_agent_update_log"),
+            phase1_steps=config.get("training.phase1_steps"),
+            phase2_steps=config.get("training.phase2_steps"),
+            phase1_tau=config.get("training.phase1_tau"),
+            phase2_tau=config.get("training.phase2_tau"),
+            teacher_max_cand=config.get("training.teacher_max_cand"),
+            policy_demo_capacity=config.get("training.policy_demo_capacity"),
+            policy_demo_weight=config.get("training.policy_demo_weight"),
         )
 
     raise ValueError(f"不支援 training.agent_type：{agent_type}")
@@ -615,6 +622,11 @@ def run():
     all_results    = []
     success_count  = 0
     episode_idx    = 0
+    _n_results     = 0    # 累計已完成的 episode 數（all_results 被 trim 後仍有效）
+    _run_steps     = 0
+    _run_reward    = 0.0
+    _run_empty     = 0
+    _run_completed = 0
     total_episodes = get_effective_episode_count()
     agent          = create_agent()
 
@@ -674,6 +686,7 @@ def run():
 
             if int(row.get("tries", 0)) >= _max_tries:
                 db.mark_puzzle_skipped(row["id"])
+                episode_idx -= 1  # 跳過題目不計入有效回合
                 continue
 
             # GUI：新 episode 開始
@@ -722,6 +735,15 @@ def run():
                     )
 
             all_results.append(result)
+            _n_results     += 1
+            _run_steps     += result["steps"]
+            _run_reward    += result["total_reward"]
+            _run_empty     += result["empty_cells"]
+            _run_completed += int(result["completed"])
+            # 只保留最近一個 rolling window，防止長時間訓練時 numpy array 累積耗盡記憶體
+            _win = config.get("logging.rolling_stats_window")
+            if len(all_results) > _win:
+                del all_results[:-_win]
 
             # GUI：episode 結束
             _raw_board = result.get("final_board")
@@ -764,11 +786,9 @@ def run():
                         verify_status=result["verify_status"],
                     )
 
-            if (
-                config.get("logging.print_rolling_stats")
-                and episode_idx % config.get("logging.print_every_episodes") == 0
-            ):
-                print_rolling_stats(all_results, episode_idx, db)
+            if episode_idx % config.get("logging.print_every_episodes") == 0:
+                if config.get("logging.print_rolling_stats"):
+                    print_rolling_stats(all_results, episode_idx, db)
                 if isinstance(agent, TorchAgent):
                     gui_bus.put(
                         "stats_update",
@@ -776,8 +796,8 @@ def run():
                         total_episodes=total_episodes or 0,
                         update_count=agent.update_counter,
                         mrv_prob=agent._effective_mrv_prob() if hasattr(agent, "_effective_mrv_prob") else 0.0,
-                        entropy=getattr(agent, "last_entropy_value", 0.0),
-                        loss=getattr(agent, "last_loss_value", 0.0),
+                        entropy=agent.last_entropy_value,
+                        loss=agent.last_loss_value,
                         rollout_size=agent.rollout_buf.size() if hasattr(agent, "rollout_buf") else 0,
                         rollout_cap=config.get("training.rollout_steps"),
                     )
@@ -830,12 +850,12 @@ def run():
         print("\n" + "=" * 60)
         print(f"{config.get('run.mode').upper()} 結束")
         print("=" * 60)
-        n = len(all_results)
+        n = _n_results
         if n > 0:
-            avg_steps  = sum(r["steps"] for r in all_results) / n
-            avg_reward = sum(r["total_reward"] for r in all_results) / n
-            avg_empty  = sum(r["empty_cells"] for r in all_results) / n
-            comp_rate  = sum(1 for r in all_results if r["completed"]) / n
+            avg_steps  = _run_steps / n
+            avg_reward = _run_reward / n
+            avg_empty  = _run_empty / n
+            comp_rate  = _run_completed / n
             succ_rate  = success_count / n
         else:
             avg_steps = avg_reward = avg_empty = comp_rate = succ_rate = 0.0

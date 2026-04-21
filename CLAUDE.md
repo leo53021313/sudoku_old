@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A reinforcement learning (PPO) agent that learns to solve Sudoku puzzles. Puzzles are fetched from websudoku.com via `requests` (no browser), stored in SQLite, and the agent trains using a curriculum that mixes MRV heuristic demonstrations with learned policy rollouts.
+A reinforcement learning (PPO) agent that learns to solve Sudoku puzzles. Puzzles are fetched from websudoku.com via `requests` (no browser), stored in SQLite, and the agent trains using a three-phase curriculum that mixes deterministic MRV teacher demonstrations with learned policy rollouts.
 
 ## Running
 
@@ -39,7 +39,10 @@ Optional: `PySocks` for SOCKS proxy support. `playwright` retained for fallback 
 - [app/gui/board_widget.py](app/gui/board_widget.py) — `SudokuBoardWidget`: custom QPainter 9×9 board with two-row title (status + difficulty stars)
 - [app/gui/board_grid_panel.py](app/gui/board_grid_panel.py) — responsive multi-board grid; slot 0 = active, slots 1..N = history
 - [app/sudoku/env.py](app/sudoku/env.py) — `SudokuEnv`: 9×9 board, 8-channel observation, 729-action space (row×col×num), shaped reward system
-- [app/sudoku/torch_agent.py](app/sudoku/torch_agent.py) — `SudokuPPONet` (cell embedding + ConstraintHead per row/col/box), `RolloutBuffer`, PPO+GAE update, behavior cloning loss, adaptive entropy
+- [app/sudoku/torch_agent.py](app/sudoku/torch_agent.py) — `SudokuPPONet` (cell embedding + ConstraintHead per row/col/box), `RolloutBuffer`, PPO+GAE update, quality-weighted BC loss, adaptive entropy, PolicyDemoStore integration
+- [app/sudoku/phase_manager.py](app/sudoku/phase_manager.py) — `PhaseManager`: three-phase curriculum with piecewise cosine MRV decay and dual-trigger transitions
+- [app/sudoku/teacher_engine.py](app/sudoku/teacher_engine.py) — `TeacherEngine`: deterministic 4-level quality pyramid MRV teacher
+- [app/sudoku/policy_demo_store.py](app/sudoku/policy_demo_store.py) — `PolicyDemoStore`: Phase 3 self-improvement ring buffer
 - [app/sudoku/agents.py](app/sudoku/agents.py) — `MRVAgent` (minimum remaining values heuristic, used as BC expert), `RandomAgent`
 - [app/sudoku/validator.py](app/sudoku/validator.py) — validates completed boards against Sudoku rules
 - [app/data/pool_db.py](app/data/pool_db.py) — thread-safe SQLite pool: puzzle locking, attempt tracking, solution storage
@@ -50,7 +53,14 @@ Optional: `PySocks` for SOCKS proxy support. `playwright` retained for fallback 
 
 **Reward shaping** (tuned values in `env.py`): naked single +3.0, hidden single +1.5, unit complete +5.0, board done +15.0, dead-end −30.0, invalid −3.0.
 
-**Curriculum**: MRV mixing ratio decays from 90% → 30% over `training.mrv_decay_steps` steps. Behavior cloning loss (`bc_coef`) trains the policy to imitate MRV decisions. Difficulty distribution configurable via `training.level_dist` (JSON string, default L1=60%, L2=30%, L3=10%).
+**Three-phase curriculum** (`phase_manager.py`):
+- **Phase 1 (Bootstrap)**: MRV 0.90→0.40 cosine decay over `phase1_steps`; BC exponent β=0.5 (BC decays slower than MRV)
+- **Phase 2 (Transfer)**: MRV 0.40→0.10 cosine decay over `phase2_steps`; BC exponent β=1.0 (BC and MRV co-decay)
+- **Phase 3 (RL-only)**: MRV fixed at `mrv_min_prob` floor (0.05); BC exponent β=999 (effectively zero); `PolicyDemoStore` self-improvement flywheel activates
+- Transition trigger: `success_rate >= tau` (performance, rolling 100 episodes) **OR** `mrv_step >= T` (time backstop), whichever comes first
+- Effective BC: `eff_bc = bc_coef × (mrv_prob / mrv_init)^β` — coupled to MRV decay, never jumps abruptly
+
+Difficulty distribution configurable via `training.level_dist` (JSON string, default L1=60%, L2=30%, L3=10%).
 
 **Model**: `models/sudoku_policy_latest.pt` (PyTorch checkpoint). Puzzles: `data/puzzle_pool.db` (SQLite).
 
@@ -68,6 +78,15 @@ All hardcoded constants have been moved to `app/config/schema.py` (v7). Access v
 - **`logging.print_producer_success = False`**: 20 producers inserting puzzles generates too much noise; toggle in settings to debug scraper issues.
 - **`locked_by`/`locked_at`**: Informational only; `fetch_one_puzzle_for_training` selects by status, not lock state.
 - **Board title is two rows** (`TITLE_H = _TITLE_ROW1 + _TITLE_ROW2 = 38px`): top row = episode/status + difficulty badge; bottom row = star rating (★★☆☆). Do NOT add a bare `TITLE_H = 22` after the `_C` color dict — that was a bug that overwrote the correct value.
-- **`on_board_update` passes `w._level`**: intermediate board updates preserve the difficulty level from episode start so the badge doesn't disappear mid-episode.
+- **`on_board_update` AND `on_episode_end` both pass `w._level`**: Both intermediate updates and the final episode-end call must preserve difficulty level. Missing `w._level` in either one silently resets the badge to 0. Pattern: `w = self._widgets[0]; w.update_state(..., w._level)`.
 - **`proxy.validate_count = -1`**: sentinel for "validate all"; converted to `None` in `run()` before passing to `start_background_validation()`.
 - **`training.level_dist` is a JSON string**: stored as `'{"1": 0.6, "2": 0.3, "3": 0.1}'` (JSON only supports string keys); parse with `{int(k): v for k, v in json.loads(raw).items()}`.
+- **TeacherEngine is fully deterministic**: uses `min(candidates)` not `random.choice`. Same state always gives the same label, keeping BC gradient direction consistent. Level 5 (quality=0.0) means teacher abstains — no BC loss generated, action falls through to policy.
+- **PhaseManager cosine bases are NOT `mrv_floor`**: Phase 1 formula is `0.40 + (mrv_init - 0.40) * cos_w`; Phase 2 is `0.10 + 0.30 * cos_w`. Using `mrv_floor` as the cosine base caused a critical bug (Phase 1 started at 0.55 instead of 0.90). The floor is only used as the Phase 3 fixed value.
+- **`_mrv_ratio` denominator is always `self.mrv_mix_prob` (initial value)**: `eff_bc = bc_coef × (mrv_prob / mrv_mix_prob)^β`. The decay is intentionally anchored to the original init — do not change the denominator to a phase-relative value.
+- **`last_entropy_value` / `last_loss_value` must be initialized to `0.0` not `None`**: `getattr(agent, attr, 0.0)` silently returns `None` when the attribute exists with value `None`. The GUI format string `f"{entropy:.4f}"` TypeError-crashes on None. Always initialize numeric fields to a number.
+- **`stats_update` GUI event must NOT be gated by `logging.print_rolling_stats`**: User logging flags control terminal output only. GUI refresh depends solely on the `print_every_episodes` interval. Mixing these two conditions freezes the GUI panel when text logging is disabled.
+- **Skipped puzzles (`tries >= max_tries`) must decrement `episode_idx` before `continue`**: They never run an actual episode so must not consume an episode slot in the counter.
+- **`ConfigManager._save()` is always called outside `_lock`**: Take a `snapshot = dict(self._user)` inside the lock, release, then call `_save(snapshot)`. This applies to both `set()` and `reset_to_default()`. Doing file I/O inside the lock causes unnecessary hold time when 20 producer threads call concurrently.
+- **`PolicyDemoStore.try_add_episode()` requires policy ratio ≥ `min_ratio` (0.50)**: Episodes dominated by the MRV teacher are rejected — they don't represent policy capability and would pollute the Phase 3 self-improvement signal.
+- **Phase transitions only happen at episode boundaries**: `phase_manager.record_episode()` is called only in `finish_episode()`. Within a single episode the phase never changes, so `_demo_states` / `_demo_total_steps` are always consistent with the phase they were collected under.

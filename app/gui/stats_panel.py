@@ -153,7 +153,6 @@ class StatsPanel(QFrame):
         self._ent_val.setText(f"{entropy:.4f}")
         self._loss_val.setText(f"{loss:.4f}")
 
-        pct = int(rollout_size / max(rollout_cap, 1) * 100)
         self._buf_bar.setRange(0, rollout_cap)
         self._buf_bar.setValue(rollout_size)
         self._buf_bar.setFormat(f"{rollout_size} / {rollout_cap}")

@@ -11,6 +11,10 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 from torch.amp import GradScaler, autocast
 
+from app.sudoku.phase_manager import PhaseManager, PhaseConfig
+from app.sudoku.teacher_engine import TeacherEngine
+from app.sudoku.policy_demo_store import PolicyDemoStore
+
 
 class RunningMeanStd:
     def __init__(self, epsilon: float = 1e-4):
@@ -116,28 +120,28 @@ class RolloutBuffer:
         self._full       = False
         self.last_value  = 0.0  
 
-        self.states    = torch.zeros(capacity, in_channels, 9, 9, dtype=torch.float32)
-        self.actions   = torch.zeros(capacity, dtype=torch.long)
-        self.log_probs = torch.zeros(capacity, dtype=torch.float32)
-        self.values    = torch.zeros(capacity, dtype=torch.float32)
-        self.rewards   = torch.zeros(capacity, dtype=torch.float32)
-        self.dones     = torch.zeros(capacity, dtype=torch.float32)
-        
-        # 新增 is_mrv 標籤，用於標記專家動作以便後續 BC Loss 使用
-        self.is_mrvs   = torch.zeros(capacity, dtype=torch.bool)
+        self.states          = torch.zeros(capacity, in_channels, 9, 9, dtype=torch.float32)
+        self.actions         = torch.zeros(capacity, dtype=torch.long)
+        self.log_probs       = torch.zeros(capacity, dtype=torch.float32)
+        self.values          = torch.zeros(capacity, dtype=torch.float32)
+        self.rewards         = torch.zeros(capacity, dtype=torch.float32)
+        self.dones           = torch.zeros(capacity, dtype=torch.float32)
+        self.is_mrvs         = torch.zeros(capacity, dtype=torch.bool)
+        self.quality_weights = torch.zeros(capacity, dtype=torch.float32)
 
-    def push(self, state, action, log_prob, value, reward, done, is_mrv):
+    def push(self, state, action, log_prob, value, reward, done, is_mrv, quality: float = 1.0):
         if self._full:
             return
 
         i = self._ptr
-        self.states[i]    = state.cpu()
-        self.actions[i]   = action
-        self.log_probs[i] = float(log_prob)
-        self.values[i]    = float(value)
-        self.rewards[i]   = float(reward)
-        self.dones[i]     = float(done)
-        self.is_mrvs[i]   = bool(is_mrv)
+        self.states[i]          = state.cpu()
+        self.actions[i]         = action
+        self.log_probs[i]       = float(log_prob)
+        self.values[i]          = float(value)
+        self.rewards[i]         = float(reward)
+        self.dones[i]           = float(done)
+        self.is_mrvs[i]         = bool(is_mrv)
+        self.quality_weights[i] = float(quality)
         self._ptr += 1
         if self._ptr >= self.capacity:
             self._full = True
@@ -222,7 +226,8 @@ class RolloutBuffer:
             self.actions[:T],
             self.log_probs[:T],
             self.values[:T],
-            self.is_mrvs[:T]
+            self.is_mrvs[:T],
+            self.quality_weights[:T],
         )
 
 
@@ -260,16 +265,21 @@ class TorchAgent:
         mrv_mix_prob: float = 0.0,
         mrv_decay_steps: int = 5000,
         mrv_min_prob: float = 0.0,
-        bc_coef: float = 1.0,  # ★ 新增：專家示範 (MRV) 的 Behavior Cloning 權重
+        bc_coef: float = 1.0,
         model_path: str = None,
         reset_optimizer_on_load: bool = False,
         reset_counters_on_load: bool = False,
         print_update_log: bool = True,
         use_fp16: bool = True,
-        batch_episodes: int = 1,
-        hidden: int = 128,
-        n_res: int = 4,
         normalize_advantages: bool = True,
+        # ── Phase / Teacher / Demo 參數 ──────────────────────────────────
+        phase1_steps: int        = 30_000,
+        phase2_steps: int        = 90_000,
+        phase1_tau: float        = 0.30,
+        phase2_tau: float        = 0.65,
+        teacher_max_cand: int    = 4,
+        policy_demo_capacity: int  = 2048,
+        policy_demo_weight: float  = 0.30,
     ):
         if device == "cuda" and not torch.cuda.is_available():
             device = "cpu"
@@ -344,12 +354,35 @@ class TorchAgent:
         self._pending_log_prob = None
         self._pending_value    = None
         self._pending_is_mrv   = False
+        self._pending_quality  = 0.0
 
         self.episode_counter     = 0
         self.update_counter      = 0
-        self.last_loss_value     = None
-        self.last_entropy_value  = None
-        self.last_advantage_mean = None
+        self.last_loss_value     = 0.0
+        self.last_entropy_value  = 0.0
+        self.last_advantage_mean = 0.0
+
+        # ── Phase / Teacher / Demo ────────────────────────────────────────
+        _phase_cfg = PhaseConfig(
+            phase1_steps = phase1_steps,
+            phase2_steps = phase2_steps,
+            tau1         = phase1_tau,
+            tau2         = phase2_tau,
+            mrv_init     = float(mrv_mix_prob),
+            mrv_floor    = float(mrv_min_prob),
+        )
+        self.phase_manager    = PhaseManager(_phase_cfg)
+        self.teacher_engine   = TeacherEngine(max_candidates=teacher_max_cand)
+        self.policy_demo_store = PolicyDemoStore(
+            capacity    = policy_demo_capacity,
+            in_channels = self.in_channels,
+            demo_weight = policy_demo_weight,
+        )
+
+        # episode 級別的 policy demo 暫存（Phase 3 用）
+        self._demo_states:  list[torch.Tensor] = []
+        self._demo_actions: list[int]           = []
+        self._demo_total_steps: int             = 0
 
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
@@ -397,27 +430,8 @@ class TorchAgent:
         return torch.from_numpy(np.stack(ch, 0).astype(np.float32)).to(self.device, non_blocking=True)
 
     def _effective_mrv_prob(self) -> float:
-        if self.mrv_decay_steps <= 0:
-            return self.mrv_min_prob
-        frac = min(1.0, self._mrv_step / self.mrv_decay_steps)
-        return self.mrv_mix_prob * (1.0 - frac) + self.mrv_min_prob * frac
-
-    def _mrv_action(self, env):
-        if not hasattr(env, "candidate_count_grid"):
-            acts = env.get_valid_actions()
-            return random.choice(acts) if acts else None
-        best, min_cnt =[], None
-        for r in range(9):
-            for c in range(9):
-                if env.board[r, c] != 0: continue
-                cnt = int(env.candidate_count_grid[r, c])
-                if cnt <= 0: continue
-                if min_cnt is None or cnt < min_cnt: min_cnt, best = cnt, [(r, c)]
-                elif cnt == min_cnt: best.append((r, c))
-        if not best: return None
-        r, c = random.choice(best)
-        cands = sorted(env.candidates_cache[r][c])
-        return (r, c, random.choice(cands)) if cands else None
+        """PhaseManager 的餘弦分段衰減曲線，供外部 logging 使用。"""
+        return self.phase_manager.mrv_prob(self._mrv_step)
 
     def start_episode(self):
         self.episode_counter += 1
@@ -426,12 +440,16 @@ class TorchAgent:
         self._pending_log_prob = None
         self._pending_value    = None
         self._pending_is_mrv   = False
-
-    def record_reward(self, reward: float): pass
+        self._pending_quality  = 0.0
+        # Phase 3: 每個 episode 重新開始收集 policy steps
+        self._demo_states       = []
+        self._demo_actions      = []
+        self._demo_total_steps  = 0
 
     def commit_step(self, reward: float, done: bool):
         if self._pending_state is None:
             return
+
         self.rollout_buf.push(
             self._pending_state,
             self._pending_action,
@@ -440,9 +458,20 @@ class TorchAgent:
             reward,
             done,
             self._pending_is_mrv,
+            self._pending_quality,
         )
-        self._pending_state = None
-        self._pending_is_mrv = False
+
+        # Phase 3：收集 policy-only steps，成功時存入 PolicyDemoStore
+        if (self.phase_manager.phase == PhaseManager.PHASE_3
+                and not self._pending_is_mrv
+                and self._pending_state is not None):
+            self._demo_states.append(self._pending_state.clone())
+            self._demo_actions.append(int(self._pending_action))
+
+        self._demo_total_steps += 1
+        self._pending_state    = None
+        self._pending_is_mrv   = False
+        self._pending_quality  = 0.0
 
     def finish_episode(
         self,
@@ -452,6 +481,19 @@ class TorchAgent:
         rewards: list = None,
         dones: list = None,
     ):
+        # Phase 3 自我改善：成功且 policy 主導 → 存入 PolicyDemoStore
+        if success and self.phase_manager.phase == PhaseManager.PHASE_3:
+            added = self.policy_demo_store.try_add_episode(
+                self._demo_states,
+                self._demo_actions,
+                self._demo_total_steps,
+            )
+            if added > 0 and self.print_update_log:
+                print(f"[Demo] 存入 {added} 步  store={self.policy_demo_store.size}")
+
+        # Phase 轉換偵測（每 episode 觸發一次）
+        self.phase_manager.record_episode(success, self._mrv_step)
+
         if do_update and self.policy_mode == "sample":
             if self.rollout_buf.is_ready:
                 self._set_bootstrap_value()
@@ -459,12 +501,14 @@ class TorchAgent:
                 if info and self.print_update_log:
                     print(
                         f"[PPO {self.update_counter:5d}] "
+                        f"ph={self.phase_manager.phase} "
                         f"p={info['policy_loss']:.4f} "
                         f"v={info['value_loss']:.4f} "
                         f"ent={info['entropy']:.4f} "
                         f"adv_std={info['adv_std']:.4f} "
-                        f"T={info['T']} "
-                        f"mrv={self._effective_mrv_prob():.3f} "
+                        f"mrv={info['mrv_ratio']:.2f} "
+                        f"bc={info['bc_loss']:.4f} "
+                        f"bc/p={info['bc_ppo_ratio']:.2f} "
                         f"ent_c={self.entropy_coef:.5f}"
                     )
 
@@ -496,9 +540,10 @@ class TorchAgent:
 
         if is_train and self._effective_mrv_prob() > 0.0:
             if random.random() < self._effective_mrv_prob():
-                action = self._mrv_action(env)
+                # TeacherEngine：確定性，回傳 (action, quality) 或 (None, 0.0)
+                action, quality = self.teacher_engine(env)
                 if action is not None:
-                    x = self._board_to_tensor(state, env=env)
+                    x    = self._board_to_tensor(state, env=env)
                     mask = self._get_mask(env)
 
                     with torch.no_grad():
@@ -513,9 +558,11 @@ class TorchAgent:
 
                     action_idx = self._action_to_index(*action)
                     if not mask[action_idx]:
-                        legal = torch.where(mask)[0]
+                        # teacher action 不在合法 mask（理論上不應發生），fallback 到 policy
+                        legal      = torch.where(mask)[0]
                         action_idx = legal[torch.randint(len(legal), (1,))].item()
-                        action = self._index_to_action(action_idx)
+                        action     = self._index_to_action(action_idx)
+                        quality    = 0.0   # fallback 不算 teacher
 
                     lp = torch.log(probs[action_idx].clamp(min=1e-8))
 
@@ -523,8 +570,10 @@ class TorchAgent:
                     self._pending_action   = action_idx
                     self._pending_log_prob = lp.item()
                     self._pending_value    = value.item()
-                    self._pending_is_mrv   = True
+                    self._pending_is_mrv   = (quality > 0.0)
+                    self._pending_quality  = quality
                     return action
+                # Teacher 放棄（Level 5 信度不足）→ fall through to policy
 
         x = self._board_to_tensor(state, env=env)
         mask = self._get_mask(env)
@@ -577,18 +626,30 @@ class TorchAgent:
             normalize_returns=self.normalize_returns,
         )
 
-        states, actions, old_log_probs, _, is_mrvs = self.rollout_buf.get_tensors()
+        states, actions, old_log_probs, _, is_mrvs, quality_weights = \
+            self.rollout_buf.get_tensors()
 
-        states        = states.to(self.device, non_blocking=True)
-        actions       = actions.to(self.device, non_blocking=True)
-        old_log_probs = old_log_probs.to(self.device, non_blocking=True)
-        advantages    = advantages.to(self.device, non_blocking=True)
-        returns       = returns.to(self.device, non_blocking=True)
-        is_mrvs       = is_mrvs.to(self.device, non_blocking=True)
+        states         = states.to(self.device, non_blocking=True)
+        actions        = actions.to(self.device, non_blocking=True)
+        old_log_probs  = old_log_probs.to(self.device, non_blocking=True)
+        advantages     = advantages.to(self.device, non_blocking=True)
+        returns        = returns.to(self.device, non_blocking=True)
+        is_mrvs        = is_mrvs.to(self.device, non_blocking=True)
+        quality_weights = quality_weights.to(self.device, non_blocking=True)
 
         adv_std = float(advantages.std().item())
 
-        total_p, total_v, total_ent, n_upd = 0.0, 0.0, 0.0, 0
+        # 計算本次 update 的有效 bc_coef
+        # eff_bc = bc_coef × (mrv_prob / mrv_init)^β
+        #   Phase 1: β=0.5  → BC 衰減比 MRV 慢（保持 imitation 主導）
+        #   Phase 2: β=1.0  → BC 與 MRV 同速
+        #   Phase 3: β=999  → BC ≈ 0（phase_manager 確保 mrv_prob ≤ floor）
+        _cur_mrv_prob = self._effective_mrv_prob()
+        _bc_exp       = self.phase_manager.bc_exponent()
+        _mrv_ratio    = _cur_mrv_prob / max(self.mrv_mix_prob, 1e-8)
+        eff_bc        = self.bc_coef * (_mrv_ratio ** min(_bc_exp, 10.0))
+
+        total_p, total_v, total_ent, total_bc, n_upd = 0.0, 0.0, 0.0, 0.0, 0
 
         for _epoch in range(self.ppo_epochs):
             perm = torch.randperm(T, device=self.device)
@@ -597,12 +658,13 @@ class TorchAgent:
                 if len(idx) == 0:
                     continue
 
-                mb_s   = states[idx]
-                mb_a   = actions[idx]
-                mb_olp = old_log_probs[idx]
-                mb_adv = advantages[idx]
-                mb_ret = returns[idx]
-                mb_is_mrv = is_mrvs[idx]
+                mb_s       = states[idx]
+                mb_a       = actions[idx]
+                mb_olp     = old_log_probs[idx]
+                mb_adv     = advantages[idx]
+                mb_ret     = returns[idx]
+                mb_is_mrv  = is_mrvs[idx]
+                mb_quality = quality_weights[idx]
 
                 with autocast('cuda', enabled=self._use_fp16):
                     logits, vals = self.model(mb_s)
@@ -613,22 +675,33 @@ class TorchAgent:
                     new_lp  = dist.log_prob(mb_a)
                     entropy = dist.entropy().mean()
 
-                    # 正常的 PPO Actor Loss
-                    ratio = torch.exp(new_lp - mb_olp)
-                    s1    = ratio * mb_adv
-                    s2    = ratio.clamp(1 - self.ppo_clip_eps, 1 + self.ppo_clip_eps) * mb_adv
+                    ratio  = torch.exp(new_lp - mb_olp)
+                    s1     = ratio * mb_adv
+                    s2     = ratio.clamp(1 - self.ppo_clip_eps, 1 + self.ppo_clip_eps) * mb_adv
                     p_loss = -torch.min(s1, s2).mean()
-                    
-                    # 正常的 PPO Critic Loss
                     v_loss = F.mse_loss(vals, mb_ret)
+                    loss   = p_loss + self.value_coef * v_loss - self.entropy_coef * entropy
 
-                    # 總損失
-                    loss = p_loss + self.value_coef * v_loss - self.entropy_coef * entropy
+                    # Quality-weighted BC loss（只對 teacher steps）
+                    bc_loss_val = 0.0
+                    if mb_is_mrv.any() and eff_bc > 1e-6:
+                        w        = mb_quality[mb_is_mrv].clamp(0.0, 1.0)
+                        bc_raw   = -(new_lp[mb_is_mrv] * w).sum() / (w.sum() + 1e-8)
+                        bc_loss_val = bc_raw.item()
+                        loss    += eff_bc * bc_raw
 
-                    # ★ Bug Fix：利用 Behavior Cloning 強制學習 MRV 動作，繞過 PPO Clip 限制
-                    if mb_is_mrv.any():
-                        bc_loss = -new_lp[mb_is_mrv].mean()
-                        loss += self.bc_coef * bc_loss
+                    # Phase 3 PolicyDemoStore soft BC（在外層 autocast 內，不需再包一層）
+                    if self.phase_manager.phase == PhaseManager.PHASE_3:
+                        demo = self.policy_demo_store.sample(
+                            min(self.ppo_minibatch, 64), self.device
+                        )
+                        if demo is not None:
+                            demo_s, demo_a = demo
+                            demo_logits, _ = self.model(demo_s)
+                            demo_probs = F.softmax(demo_logits.float(), dim=-1)
+                            demo_lp    = Categorical(probs=demo_probs).log_prob(demo_a)
+                            pd_loss = -demo_lp.mean()
+                            loss   += self.policy_demo_store.demo_weight * pd_loss
 
                 self.optimizer.zero_grad()
                 self.scaler.scale(loss).backward()
@@ -650,6 +723,7 @@ class TorchAgent:
                 total_p   += p_loss.item()
                 total_v   += v_loss.item()
                 total_ent += entropy.item()
+                total_bc  += bc_loss_val
                 n_upd     += 1
 
         if not self.adaptive_entropy and self.entropy_decay < 1.0:
@@ -662,11 +736,16 @@ class TorchAgent:
         self.last_advantage_mean = float(adv_mean)
 
         return {
-            "policy_loss": total_p / max(n_upd, 1),
-            "value_loss":  total_v / max(n_upd, 1),
-            "entropy":     total_ent / max(n_upd, 1),
-            "adv_std":     adv_std,
-            "T":           T,
+            "policy_loss":  total_p / max(n_upd, 1),
+            "value_loss":   total_v / max(n_upd, 1),
+            "entropy":      total_ent / max(n_upd, 1),
+            "adv_std":      adv_std,
+            "T":            T,
+            "mrv_ratio":    is_mrvs.float().mean().item(),
+            "bc_loss":      total_bc / max(n_upd, 1),
+            "bc_ppo_ratio": (total_bc / total_p) if total_p > 1e-8 else 0.0,
+            "eff_bc":       eff_bc,
+            "phase":        self.phase_manager.phase,
         }
 
     def save_model(self, path: str):
@@ -711,6 +790,8 @@ class TorchAgent:
             "use_box_fill_channel":         self.use_box_fill_channel,
             "use_candidate_count_channel":  self.use_candidate_count_channel,
             "use_single_candidate_channel": self.use_single_candidate_channel,
+            "phase_manager":                self.phase_manager.state_dict(),
+            "policy_demo_store":            self.policy_demo_store.state_dict(),
         }, path)
         print(f"[TorchAgent v4] 已儲存：{path}")
 
@@ -747,5 +828,12 @@ class TorchAgent:
             for attr in ("episode_counter","update_counter","_mrv_step",
                          "last_loss_value","last_entropy_value","last_advantage_mean"):
                 if attr in p: setattr(self, attr, p[attr])
+
+        if "phase_manager" in p:
+            try: self.phase_manager.load_state_dict(p["phase_manager"])
+            except Exception as e: print(f"[TorchAgent] phase_manager 載入失敗：{e}")
+        if "policy_demo_store" in p:
+            try: self.policy_demo_store.load_state_dict(p["policy_demo_store"])
+            except Exception as e: print(f"[TorchAgent] policy_demo_store 載入失敗：{e}")
 
         print(f"[TorchAgent v4] 已載入：{path} (arch={arch}, ep={self.episode_counter})")

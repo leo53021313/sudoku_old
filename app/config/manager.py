@@ -43,7 +43,8 @@ class ConfigManager:
         value = self._coerce(key, value)
         with self._lock:
             self._user[key] = value
-            self._save()
+            snapshot = dict(self._user)
+        self._save(snapshot)  # I/O 在鎖外，避免 20 個 producer 執行緒造成串行等待
         hot_reload = not self._schema[key]["reload_required"]
         if hot_reload:
             for cb in self._callbacks.get(key, []):
@@ -69,7 +70,8 @@ class ConfigManager:
     def reset_to_default(self, key: str) -> None:
         with self._lock:
             self._user.pop(key, None)
-            self._save()
+            snapshot = dict(self._user)
+        self._save(snapshot)
 
     # ── 私有 ──────────────────────────────────────────────────────────
 
@@ -94,7 +96,10 @@ class ConfigManager:
             except (json.JSONDecodeError, OSError):
                 self._user = {}
 
-    def _save(self) -> None:
+    def _save(self, data: dict | None = None) -> None:
+        if data is None:
+            with self._lock:
+                data = dict(self._user)
         os.makedirs(os.path.dirname(self._path) or ".", exist_ok=True)
         with open(self._path, "w", encoding="utf-8") as f:
-            json.dump(self._user, f, indent=2, ensure_ascii=False)
+            json.dump(data, f, indent=2, ensure_ascii=False)
