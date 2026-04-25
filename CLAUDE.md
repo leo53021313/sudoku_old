@@ -5,68 +5,95 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > **重大變更紀錄**：查看 [HISTORY.md](HISTORY.md) 了解各版本的設計決策與 Bug Fix 背景。
 > 若不確定某段邏輯為何這樣寫，HISTORY.md 是第一個查詢點。
 
-## Overview
+## Project Structure
 
-A reinforcement learning (PPO) agent that learns to solve Sudoku puzzles. Puzzles are fetched from websudoku.com via `requests` (no browser), stored in SQLite, and the agent trains using a three-phase curriculum that mixes deterministic MRV teacher demonstrations with learned policy rollouts.
+This repo contains **two independent training systems** in separate subfolders:
+
+```
+sudoku_old/
+├── data/puzzle_pool.db        ← shared puzzle database (both versions)
+├── legacy/                    ← archived PyTorch PPO + PyQt6 GUI version
+└── sb3/                       ← active SB3 MaskablePPO version (main development)
+```
+
+**Shared database**: `data/puzzle_pool.db` at repo root. Both versions reference it as `"../data/puzzle_pool.db"` (run from inside their subfolder). This value is set in `legacy/data/user_config.json` (`db.path`) and `sb3/train_sb3.py` (`DB_PATH`).
 
 ## Running
 
 ```bash
-# Start training (fetches puzzles from websudoku.com + runs PPO loop)
-python main_train.py
+# Active version (SB3 MaskablePPO)
+cd sb3
+python train_sb3.py
+python train_sb3.py --timesteps 2000000 --n-envs 8
+python train_sb3.py --load-model models/sudoku_sb3_ckpt_XXXXX_steps.zip   # resume
 
-# Runtime hotkeys during training
-# F8 = pause/resume, F9 = stop (also stops proxy validation thread), F10 = force model save
+# Legacy version (archived PyTorch PPO + GUI)
+cd legacy
+python main_train.py
+# F8 = pause/resume, F9 = stop, F10 = force model save
 ```
 
-Dependencies listed in `requirements.txt`. Core: `torch` (CUDA), `requests`, `numpy`, `PyQt6`, `keyboard`.
-Optional: `PySocks` for SOCKS proxy support. `playwright` retained for fallback only.
+---
 
-## Architecture
+## sb3/ — Active SB3 Training System
 
 **Data flow:**
-1. 20 producer threads fetch puzzles from `east.websudoku.com` via `requests` → `app/data/pool_db.py` (SQLite, WAL mode)
-2. Main loop fetches puzzles from DB (all difficulties, natural curriculum) → creates `SudokuEnv` → runs episodes with agent
+1. `SudokuGymEnv.reset()` fetches puzzle from DB → solves with backtracking solver → builds 9-channel observation
+2. `SudokuMaskablePPO` collects 512-step rollouts across 8 SubprocVecEnv workers (4,096 steps/update)
+3. `TeacherEngine` runs inside each subprocess → returns `(teacher_action, teacher_quality)` via info dict
+4. PPO update + separate BC loss pass; `CurriculumCallback` escalates difficulty in 4 stages
+
+**Key files (`sb3/`):**
+- [sb3/train_sb3.py](sb3/train_sb3.py) — entry point; argparse for timesteps, n-envs, device, load-model, no-teacher
+- [sb3/app/rl/envs/sudoku_gym_env.py](sb3/app/rl/envs/sudoku_gym_env.py) — `SudokuGymEnv`: Gymnasium env, `action_masks()`, `set_difficulty_distribution()`
+- [sb3/app/rl/envs/sudoku_solver.py](sb3/app/rl/envs/sudoku_solver.py) — backtracking solver with MRV heuristic; pre-solves puzzle at `reset()`
+- [sb3/app/rl/envs/reward_computer.py](sb3/app/rl/envs/reward_computer.py) — `RewardComputer`: naked single +3, hidden single +2, cascade +0.5, unit +5, done +20, wrong −3
+- [sb3/app/rl/models/features_extractor.py](sb3/app/rl/models/features_extractor.py) — `SudokuFeaturesExtractor` (BaseFeaturesExtractor): 27 ConstraintHeads → mean pool → (batch, 192)
+- [sb3/app/rl/models/sudoku_ppo.py](sb3/app/rl/models/sudoku_ppo.py) — `SudokuMaskablePPO`: BC loss as separate optimizer pass; teacher data via callback monkey-patch
+- [sb3/app/rl/curriculum/callback.py](sb3/app/rl/curriculum/callback.py) — `CurriculumCallback`: 4-stage dist escalation, backstop/threshold-based advance, entropy warning
+
+**Observation space** (9 channels, shape `(9,9,9)` channels-first): board/9, fixed, empty, row/col/box fill ratio, candidate count/9, naked-single flag, hidden-single flag.
+
+**Action space**: `Discrete(729)` = `row*81 + col*9 + (val-1)`. `action_masks()` masks illegal fills.
+
+**4-stage curriculum** (`CurriculumCallback`):
+
+| Stage | Mix | MRV prob | Advance when |
+|-------|-----|----------|--------------|
+| 1 | L1: 100% | 0.80 | L1 success ≥ 75% or 5k eps |
+| 2 | L1:60% L2:40% | 0.40 | L2 success ≥ 65% or 15k eps |
+| 3 | L1:20% L2:40% L3:40% | 0.20 | L3 success ≥ 55% or 30k eps |
+| 4 | L1:10% L2:20% L3:35% L4:35% | 0.05 | final stage |
+
+**SB3 API note**: `linear_schedule` removed in SB3 2.8 → use `LinearSchedule(start, end, end_fraction=1.0)` from `stable_baselines3.common.utils`. TensorBoard must be installed separately (`pip install tensorboard`).
+
+---
+
+## legacy/ — Archived PPO Training System
+
+**Data flow:**
+1. 20 producer threads fetch puzzles from `east.websudoku.com` via `requests` → SQLite (WAL mode)
+2. Main loop fetches puzzles from DB → creates `SudokuEnv` → runs episodes with agent
 3. Agent collects 512-step rollouts → PPO update every rollout
 4. Validated solutions written back to DB; model saved every N episodes
 
-**Key files:**
-- [main_train.py](main_train.py) — training loop, hotkey controller, producer threads; all hyperparameters live in `app/config/schema.py`
-- [app/config/schema.py](app/config/schema.py) — `CONFIG_SCHEMA` dict with all settings (label, type, default, reload_required, etc.)
-- [app/config/manager.py](app/config/manager.py) — `ConfigManager`: thread-safe get/set, JSON persistence (`data/user_config.json`), hot-reload callbacks
-- [app/gui/training_gui.py](app/gui/training_gui.py) — `TrainingWindow` (QMainWindow), QSystemTrayIcon for hide/show, ⚙ 設定 button
-- [app/gui/settings_dialog.py](app/gui/settings_dialog.py) — schema-driven settings dialog (dynamic widget generation per type)
-- [app/gui/board_widget.py](app/gui/board_widget.py) — `SudokuBoardWidget`: custom QPainter 9×9 board with two-row title (status + difficulty stars)
-- [app/gui/board_grid_panel.py](app/gui/board_grid_panel.py) — responsive multi-board grid; slot 0 = active, slots 1..N = history
-- [app/sudoku/env.py](app/sudoku/env.py) — `SudokuEnv`: 9×9 board, 8-channel observation, 729-action space (row×col×num), shaped reward system
-- [app/sudoku/torch_agent.py](app/sudoku/torch_agent.py) — `SudokuPPONet` (cell embedding + ConstraintHead per row/col/box), `RolloutBuffer`, PPO+GAE update, quality-weighted BC loss, adaptive entropy, PolicyDemoStore integration
-- [app/sudoku/phase_manager.py](app/sudoku/phase_manager.py) — `PhaseManager`: three-phase curriculum with piecewise cosine MRV decay and dual-trigger transitions
-- [app/sudoku/teacher_engine.py](app/sudoku/teacher_engine.py) — `TeacherEngine`: deterministic 4-level quality pyramid MRV teacher
-- [app/sudoku/policy_demo_store.py](app/sudoku/policy_demo_store.py) — `PolicyDemoStore`: Phase 3 self-improvement ring buffer
-- [app/sudoku/agents.py](app/sudoku/agents.py) — `MRVAgent` (minimum remaining values heuristic, used as BC expert), `RandomAgent`
-- [app/sudoku/validator.py](app/sudoku/validator.py) — validates completed boards against Sudoku rules
-- [app/data/pool_db.py](app/data/pool_db.py) — thread-safe SQLite pool: puzzle locking, attempt tracking, solution storage
-- [app/web/reader.py](app/web/reader.py) — `fetch_puzzle_via_requests()` (primary scraper), `WebSudokuReader` (Playwright fallback)
-- [app/web/proxy_manager.py](app/web/proxy_manager.py) — downloads proxy lists, background validation with graceful stop via `stop_validation()`
+**Key files (`legacy/`):**
+- [legacy/main_train.py](legacy/main_train.py) — entry point (thin wrapper); training logic in `app/training/`
+- [legacy/app/config/schema.py](legacy/app/config/schema.py) — `CONFIG_SCHEMA` dict with all settings
+- [legacy/app/config/manager.py](legacy/app/config/manager.py) — `ConfigManager`: thread-safe get/set, JSON persistence, hot-reload callbacks
+- [legacy/app/gui/training_gui.py](legacy/app/gui/training_gui.py) — `TrainingWindow` (QMainWindow), QSystemTrayIcon
+- [legacy/app/sudoku/env.py](legacy/app/sudoku/env.py) — `SudokuEnv`: 8-channel obs, 729-action space, shaped reward
+- [legacy/app/sudoku/torch_agent.py](legacy/app/sudoku/torch_agent.py) — `SudokuPPONet`, `RolloutBuffer`, PPO+GAE, quality-weighted BC loss
+- [legacy/app/sudoku/phase_manager.py](legacy/app/sudoku/phase_manager.py) — `PhaseManager`: 3-phase cosine MRV decay, dual-trigger transitions
+- [legacy/app/sudoku/teacher_engine.py](legacy/app/sudoku/teacher_engine.py) — `TeacherEngine`: deterministic 4-level quality pyramid
+- [legacy/app/data/pool_db.py](legacy/app/data/pool_db.py) — thread-safe SQLite pool
+- [legacy/app/web/reader.py](legacy/app/web/reader.py) — `fetch_puzzle_via_requests()` (primary scraper)
 
-**Observation space** (`env.py`): 8-channel 9×9 tensor — fixed cells, empty cells, row/col/box fill ratio, candidate counts, naked-single flags.
+**Model**: `legacy/models/sudoku_policy_latest.pt`. Config: `legacy/data/user_config.json`. Puzzles: `../data/puzzle_pool.db`.
 
-**Reward shaping** (tuned values in `env.py`): naked single +3.0, hidden single +1.5, unit complete +5.0, board done +15.0, dead-end −30.0, invalid −3.0.
+## Config System (legacy/ only)
 
-**Three-phase curriculum** (`phase_manager.py`):
-- **Phase 1 (Bootstrap)**: MRV 0.90→0.40 cosine decay over `phase1_steps`; BC exponent β=0.5 (BC decays slower than MRV)
-- **Phase 2 (Transfer)**: MRV 0.40→0.10 cosine decay over `phase2_steps`; BC exponent β=1.0 (BC and MRV co-decay)
-- **Phase 3 (RL-only)**: MRV fixed at `mrv_min_prob` floor (0.05); BC exponent β=999 (effectively zero); `PolicyDemoStore` self-improvement flywheel activates
-- Transition trigger: `success_rate >= tau` (performance, rolling 100 episodes) **OR** `mrv_step >= T` (time backstop), whichever comes first
-- Effective BC: `eff_bc = bc_coef × (mrv_prob / mrv_init)^β` — coupled to MRV decay, never jumps abruptly
-
-Difficulty distribution configurable via `training.level_dist` (JSON string, default L1=60%, L2=30%, L3=10%).
-
-**Model**: `models/sudoku_policy_latest.pt` (PyTorch checkpoint). Puzzles: `data/puzzle_pool.db` (SQLite).
-
-## Config System
-
-All hardcoded constants have been moved to `app/config/schema.py` (v7). Access via `config.get("key")`. User overrides persist in `data/user_config.json` (auto-created). Settings UI: ⚙ 設定 button in the toolbar.
+All hardcoded constants in `legacy/app/config/schema.py`. Access via `config.get("key")`. User overrides persist in `legacy/data/user_config.json`. Settings UI: ⚙ 設定 button in the toolbar.
 
 - `reload_required: False` → hot-reload (callback triggered immediately on Apply)
 - `reload_required: True` → requires training restart; settings are saved but take effect next run
@@ -91,9 +118,9 @@ All hardcoded constants have been moved to `app/config/schema.py` (v7). Access v
 - **`PolicyDemoStore.try_add_episode()` requires policy ratio ≥ `min_ratio` (0.50)**: Episodes dominated by the MRV teacher are rejected — they don't represent policy capability and would pollute the Phase 3 self-improvement signal.
 - **Phase transitions only happen at episode boundaries**: `phase_manager.record_episode()` is called only in `finish_episode()`. Within a single episode the phase never changes, so `_demo_states` / `_demo_total_steps` are always consistent with the phase they were collected under.
 
-## Config Overrides (data/user_config.json vs schema defaults)
+## Config Overrides (legacy/data/user_config.json vs schema defaults)
 
-The following keys in `data/user_config.json` intentionally deviate from the schema defaults. This is a "pure RL" training configuration — minimal teacher guidance, aggressive phase thresholds:
+The following keys in `legacy/data/user_config.json` intentionally deviate from the schema defaults. This is a "pure RL" training configuration — minimal teacher guidance, aggressive phase thresholds:
 
 | Key | Schema Default | Runtime Value | Reason |
 |-----|---------------|---------------|--------|
@@ -105,17 +132,9 @@ The following keys in `data/user_config.json` intentionally deviate from the sch
 | `crawler.producer_workers` | 20 | 1 | Single-worker crawl (low-network environment) |
 | `training.dead_end_penalty` | 0.0 | -5.0 | Explicit dead-end penalty enabled |
 
-## SB3 Training System (train_sb3.py)
+## Key Design Decisions (sb3/)
 
-A second training entry point alongside `main_train.py`:
-- **`train_sb3.py`** — SB3 MaskablePPO entry point (8× SubprocVecEnv, 4-stage curriculum, dense reward)
-- **`app/rl/`** — SB3-specific modules:
-  - `envs/sudoku_gym_env.py` — Gymnasium env with `action_masks()`, TeacherEngine runs inside subprocess
-  - `envs/sudoku_solver.py` — Backtracking solver with MRV heuristic (pre-solves puzzle at `reset()`)
-  - `envs/reward_computer.py` — Dense reward: naked single +3, hidden single +2, cascade +0.5, unit +5, done +20, wrong −3
-  - `models/features_extractor.py` — `SudokuFeaturesExtractor` (BaseFeaturesExtractor), ports constraint-head from `torch_agent.py`
-  - `models/sudoku_ppo.py` — `SudokuMaskablePPO`: BC loss as separate optimizer pass after PPO; teacher data captured via callback monkey-patch in `collect_rollouts()`
-  - `curriculum/callback.py` — `CurriculumCallback`: 4-stage difficulty escalation; backstop or per-difficulty success-rate threshold triggers stage advance
-- **SB3 API**: `linear_schedule` removed in SB3 2.8 → use `LinearSchedule(start, end, end_fraction=1.0)` from `stable_baselines3.common.utils`
-- **TensorBoard**: must be installed separately (`pip install tensorboard`); not bundled with SB3
-- **Resume**: `python train_sb3.py --load-model models/sudoku_sb3_ckpt_XXXXX_steps.zip`
+- **TeacherEngine in subprocess**: pure numpy → safe inside SubprocVecEnv. Results passed via `info` dict from `step()`, read by `collect_rollouts()` monkey-patch.
+- **BC buffer alignment**: after `super().train()`, `rollout_buffer.observations` is `swap_and_flatten`ed to `(n_envs * n_steps, *obs_shape)`. Teacher arrays `(n_steps, n_envs)` must use `.T.flatten()` to align.
+- **BC as separate pass**: `_bc_pass()` runs after `super().train()` with its own `optimizer.step()`. Keeps BC gradient separate from PPO to avoid interference.
+- **`db.path` in user_config.json overrides schema default**: if `legacy/data/user_config.json` has an explicit `db.path` key, the schema default is ignored. Both must be `"../data/puzzle_pool.db"` after the project split.

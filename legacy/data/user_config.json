@@ -69,7 +69,7 @@
   "model.auto_load": true,
   "model.reset_optimizer_on_load": false,
   "model.reset_counters_on_load": false,
-  "db.path": "data/puzzle_pool.db",
+  "db.path": "../data/puzzle_pool.db",
   "db.worker_name": "trainer_main",
   "training.phase1_steps": 30000,
   "training.phase2_steps": 90000,

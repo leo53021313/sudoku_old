@@ -2,6 +2,52 @@
 
 ---
 
+## [v9] 專案拆分：legacy/ + sb3/ + SB3 MaskablePPO 訓練系統（2026-04-25）
+
+### Added
+
+- **`sb3/`**（新增）— 主力 SB3 訓練系統，完全獨立於 legacy/ 版本
+  - `sb3/train_sb3.py` — 新入口；argparse 支援 `--timesteps`、`--n-envs`、`--device`、`--load-model`、`--no-teacher`、`--no-vecnorm`
+  - `sb3/app/rl/envs/sudoku_gym_env.py` — `SudokuGymEnv`：Gymnasium env，`action_masks()`，`set_difficulty_distribution()`，9-channel obs（新增 hidden-single channel）
+  - `sb3/app/rl/envs/sudoku_solver.py` — backtracking solver with MRV heuristic；`reset()` 時預先解出唯一解
+  - `sb3/app/rl/envs/reward_computer.py` — `RewardComputer`：dense solution-guided reward（naked single +3, hidden single +2, cascade +0.5, unit +5, done +20, wrong −3）
+  - `sb3/app/rl/models/features_extractor.py` — `SudokuFeaturesExtractor`（BaseFeaturesExtractor）：27 ConstraintHeads → mean pool → (batch, 192)；ported from torch_agent.py
+  - `sb3/app/rl/models/sudoku_ppo.py` — `SudokuMaskablePPO`：BC loss 作為獨立 optimizer pass；teacher data 透過 `collect_rollouts()` monkey-patch 從 info dict 取得
+  - `sb3/app/rl/curriculum/callback.py` — `CurriculumCallback`：4-stage 難度遞增，threshold 或 backstop 觸發 stage advance，entropy < 0.3 nats 警告
+  - `sb3/requirements.txt` — 獨立依賴（torch, stable-baselines3, sb3-contrib, gymnasium, tensorboard, pytest）
+
+- **`.gitignore`**（新增）— 排除 `__pycache__/`、`*.pyc`、`runs/`、`*.pt.old`、`*.db.old`
+
+### Changed
+
+- **專案根目錄重組**：所有程式碼移入子資料夾
+  - `legacy/` — 封存舊版 `main_train.py` + PyQt6 GUI 系統（完全不修改）
+  - `sb3/` — 主力 SB3 版本（持續開發）
+  - `data/puzzle_pool.db` — 保留於根目錄，兩版本共用
+
+- **DB 路徑修正**（專案拆分後的關鍵 bug fix）：
+  - `sb3/train_sb3.py`：`DB_PATH = "../data/puzzle_pool.db"`
+  - `legacy/app/config/schema.py`：`db.path` default → `"../data/puzzle_pool.db"`
+  - `legacy/data/user_config.json`：`"db.path"` → `"../data/puzzle_pool.db"`（**最重要**：user_config 的明確值會覆蓋 schema default，兩者都必須改）
+
+### Root Cause Fixed
+
+- **Legacy 爬蟲存取錯誤**：`legacy/data/user_config.json` 有明確的 `"db.path": "data/puzzle_pool.db"`，覆蓋了 schema default，導致爬蟲試圖讀取 `legacy/data/puzzle_pool.db`（不存在）。修正：同時更新 schema default 和 user_config 的值。
+
+### Architecture
+
+| | legacy/ | sb3/ |
+|--|---------|------|
+| RL framework | 自製 PPO (torch) | SB3 MaskablePPO |
+| Env | SudokuEnv (gym-like) | SudokuGymEnv (gymnasium) |
+| Curriculum | 3-phase cosine decay | 4-stage dist escalation |
+| Reward | sparse + shaping | dense solution-guided |
+| BC | quality-weighted, inline | quality-weighted, separate pass |
+| Parallelism | single env | 8× SubprocVecEnv |
+| GUI | PyQt6 | 無（TensorBoard） |
+
+---
+
 ## [v8] 學習框架重設計 + 全專案 Critical Review（2026-04-21）
 
 ### Added
