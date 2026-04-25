@@ -19,7 +19,7 @@ python main_train.py
 # F8 = pause/resume, F9 = stop (also stops proxy validation thread), F10 = force model save
 ```
 
-No package.json or requirements.txt. Dependencies: `torch` (CUDA), `requests`, `numpy`, `keyboard`.
+Dependencies listed in `requirements.txt`. Core: `torch` (CUDA), `requests`, `numpy`, `PyQt6`, `keyboard`.
 Optional: `PySocks` for SOCKS proxy support. `playwright` retained for fallback only.
 
 ## Architecture
@@ -90,3 +90,32 @@ All hardcoded constants have been moved to `app/config/schema.py` (v7). Access v
 - **`ConfigManager._save()` is always called outside `_lock`**: Take a `snapshot = dict(self._user)` inside the lock, release, then call `_save(snapshot)`. This applies to both `set()` and `reset_to_default()`. Doing file I/O inside the lock causes unnecessary hold time when 20 producer threads call concurrently.
 - **`PolicyDemoStore.try_add_episode()` requires policy ratio ≥ `min_ratio` (0.50)**: Episodes dominated by the MRV teacher are rejected — they don't represent policy capability and would pollute the Phase 3 self-improvement signal.
 - **Phase transitions only happen at episode boundaries**: `phase_manager.record_episode()` is called only in `finish_episode()`. Within a single episode the phase never changes, so `_demo_states` / `_demo_total_steps` are always consistent with the phase they were collected under.
+
+## Config Overrides (data/user_config.json vs schema defaults)
+
+The following keys in `data/user_config.json` intentionally deviate from the schema defaults. This is a "pure RL" training configuration — minimal teacher guidance, aggressive phase thresholds:
+
+| Key | Schema Default | Runtime Value | Reason |
+|-----|---------------|---------------|--------|
+| `training.mrv_mix_prob` | 0.9 | 0.0 | Pure RL mode — no teacher demonstrations |
+| `training.mrv_min_prob` | 0.05 | 0.0 | No teacher floor in Phase 3 |
+| `training.phase1_tau` | 0.30 | 0.65 | Aggressive phase advance threshold |
+| `training.phase2_tau` | 0.65 | 0.90 | Aggressive phase advance threshold |
+| `training.level_dist` | `{"1":0.6,"2":0.3,"3":0.1}` | `{"1":0.25,"2":0.25,"3":0.25,"4":0.25}` | Uniform across all 4 difficulties |
+| `crawler.producer_workers` | 20 | 1 | Single-worker crawl (low-network environment) |
+| `training.dead_end_penalty` | 0.0 | -5.0 | Explicit dead-end penalty enabled |
+
+## SB3 Training System (train_sb3.py)
+
+A second training entry point alongside `main_train.py`:
+- **`train_sb3.py`** — SB3 MaskablePPO entry point (8× SubprocVecEnv, 4-stage curriculum, dense reward)
+- **`app/rl/`** — SB3-specific modules:
+  - `envs/sudoku_gym_env.py` — Gymnasium env with `action_masks()`, TeacherEngine runs inside subprocess
+  - `envs/sudoku_solver.py` — Backtracking solver with MRV heuristic (pre-solves puzzle at `reset()`)
+  - `envs/reward_computer.py` — Dense reward: naked single +3, hidden single +2, cascade +0.5, unit +5, done +20, wrong −3
+  - `models/features_extractor.py` — `SudokuFeaturesExtractor` (BaseFeaturesExtractor), ports constraint-head from `torch_agent.py`
+  - `models/sudoku_ppo.py` — `SudokuMaskablePPO`: BC loss as separate optimizer pass after PPO; teacher data captured via callback monkey-patch in `collect_rollouts()`
+  - `curriculum/callback.py` — `CurriculumCallback`: 4-stage difficulty escalation; backstop or per-difficulty success-rate threshold triggers stage advance
+- **SB3 API**: `linear_schedule` removed in SB3 2.8 → use `LinearSchedule(start, end, end_fraction=1.0)` from `stable_baselines3.common.utils`
+- **TensorBoard**: must be installed separately (`pip install tensorboard`); not bundled with SB3
+- **Resume**: `python train_sb3.py --load-model models/sudoku_sb3_ckpt_XXXXX_steps.zip`
