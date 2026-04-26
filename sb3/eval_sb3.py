@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -22,8 +23,8 @@ from app.rl.models.sudoku_ppo import SudokuMaskablePPO
 from app.rl.eval.puzzle_set import EvalPuzzleSet
 from app.data.pool_db import PuzzlePoolDB
 
-DB_PATH       = "../data/puzzle_pool.db"
-RESERVED_PATH = "data/eval_puzzles.json"
+DB_PATH       = str(Path(__file__).parent.parent / "data" / "puzzle_pool.db")
+RESERVED_PATH = str(Path(__file__).parent / "data" / "eval_puzzles.json")
 
 
 def parse_args() -> argparse.Namespace:
