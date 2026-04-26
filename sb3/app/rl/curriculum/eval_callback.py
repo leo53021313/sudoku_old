@@ -81,10 +81,12 @@ class SudokuEvalCallback(BaseCallback):
 
                 rate = float(np.mean(successes))
                 level_rates[diff] = rate
-                self.logger.record(f"eval/success_rate_L{diff}", rate)
                 total_s += sum(successes)
                 total_n += len(successes)
 
+            # All difficulties succeeded — log atomically so TensorBoard records are complete
+            for diff in self._difficulties:
+                self.logger.record(f"eval/success_rate_L{diff}", level_rates[diff])
             overall = total_s / max(total_n, 1)
             self.logger.record("eval/success_rate_overall", overall)
 
