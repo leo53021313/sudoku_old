@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import random
 import time
+import traceback as _traceback
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -82,7 +83,7 @@ class CrawlerWorker(QThread):
             except Exception as exc:
                 self.event_signal.emit({
                     "type": "error",
-                    "msg": str(exc)[:120],
+                    "msg": f"{exc}\n{_traceback.format_exc()}",
                     "worker_id": self.worker_id,
                 })
 
