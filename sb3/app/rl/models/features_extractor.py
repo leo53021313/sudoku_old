@@ -120,9 +120,10 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
             box_cells = emb_[:, br:br+3, bc:bc+3, :].reshape(B, 9, self.cell_dim)
             box_results.append(self.box_heads[b](box_cells).reshape(B, 3, 3, self.head_dim))
 
-        # (B, 9, 3, 3, head_dim) → reshape → (B, 3, 3, 3, 3, head_dim)
-        # permute (0,1,3,2,4,5) → (B, box_row, local_row, box_col, local_col, head_dim)
-        # reshape → (B, 9, 9, head_dim) with correct spatial layout
+        # stack: (B, 9, 3, 3, head_dim); box index b = box_row*3+box_col, so reshape splits it:
+        # reshape → (B, box_row, box_col, local_row, local_col, head_dim)
+        # permute(0,1,3,2,4,5) → (B, box_row, local_row, box_col, local_col, head_dim)
+        # reshape → (B, 9, 9, head_dim): row = box_row*3+local_row, col = box_col*3+local_col
         box_out = (
             torch.stack(box_results, dim=1)
             .reshape(B, 3, 3, 3, 3, self.head_dim)
