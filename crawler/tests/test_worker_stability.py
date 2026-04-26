@@ -55,3 +55,30 @@ def test_error_signal_contains_traceback(qapp, worker, monkeypatch):
         f"Expected traceback in msg, got: {error_events[0]['msg']!r}"
     assert "connection reset" in error_events[0]["msg"], \
         f"Expected 'connection reset' in msg, got: {error_events[0]['msg']!r}"
+
+
+def test_straggler_threads_are_terminated(qapp, tmp_path, monkeypatch):
+    """Threads that don't stop within 5s must have terminate() called on them."""
+    from app.gui.main_window import MainWindow
+    from app.web.proxy_manager import ProxyManager
+    from app.db.pool_db import PuzzlePoolDB
+    from app.core.worker import CrawlerWorker
+    from config import CrawlerConfig
+    from unittest.mock import patch, MagicMock
+
+    db = PuzzlePoolDB(str(tmp_path / "test.db"))
+    config = CrawlerConfig(num_workers=1)
+    proxy = ProxyManager()
+
+    win = MainWindow(config, proxy, db)
+
+    # Create a mock worker that never stops
+    mock_worker = MagicMock(spec=CrawlerWorker)
+    mock_worker.isRunning.return_value = True  # always appears running
+
+    win._workers = [mock_worker]
+
+    win._on_stop()
+
+    # terminate() must be called on the straggler
+    mock_worker.terminate.assert_called_once()
