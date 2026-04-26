@@ -313,6 +313,22 @@ class PuzzlePoolDB:
                 ).fetchone()
             )
 
+    def fetch_random_puzzles(
+        self,
+        level: int,
+        n: int,
+    ) -> list[dict]:
+        """Read-only random sample of N puzzles for eval (no status locking)."""
+        with self.transaction() as conn:
+            rows = conn.execute(
+                "SELECT puzzle FROM puzzles"
+                " WHERE level=?"
+                " ORDER BY RANDOM()"
+                " LIMIT ?",
+                (int(level), int(n)),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
     def mark_puzzle_attempt(
         self,
         puzzle_id: int,
