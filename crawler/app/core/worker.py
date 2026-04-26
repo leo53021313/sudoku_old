@@ -83,7 +83,7 @@ class CrawlerWorker(QThread):
             except Exception as exc:
                 self.event_signal.emit({
                     "type": "error",
-                    "msg": f"{exc}\n{_traceback.format_exc()}",
+                    "msg": _traceback.format_exc(),
                     "worker_id": self.worker_id,
                 })
 

@@ -2,8 +2,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from unittest.mock import MagicMock, patch
-from PyQt6.QtCore import QCoreApplication
+from unittest.mock import MagicMock
 import pytest
 
 
@@ -31,8 +30,7 @@ def test_error_signal_contains_traceback(qapp, worker, monkeypatch):
     def on_event(d):
         emitted.append(d)
         # Stop the worker after first event to prevent infinite loop
-        if emitted:
-            worker._stop = True
+        worker._stop = True
 
     worker.event_signal.connect(on_event)
 
@@ -53,5 +51,7 @@ def test_error_signal_contains_traceback(qapp, worker, monkeypatch):
 
     error_events = [e for e in emitted if e.get("type") == "error"]
     assert error_events, "No error event emitted"
-    assert "Traceback" in error_events[0]["msg"] or "ValueError" in error_events[0]["msg"], \
+    assert "Traceback (most recent call last)" in error_events[0]["msg"], \
         f"Expected traceback in msg, got: {error_events[0]['msg']!r}"
+    assert "connection reset" in error_events[0]["msg"], \
+        f"Expected 'connection reset' in msg, got: {error_events[0]['msg']!r}"
