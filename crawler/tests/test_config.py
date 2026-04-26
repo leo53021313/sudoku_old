@@ -1,10 +1,9 @@
 import pytest
+import config as config_mod
+from config import CrawlerConfig
 
 
-def test_defaults(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "data").mkdir()
-    from config import CrawlerConfig
+def test_defaults():
     cfg = CrawlerConfig()
     assert cfg.num_workers == 10
     assert cfg.max_pool_size == 50_000
@@ -18,20 +17,17 @@ def test_defaults(tmp_path, monkeypatch):
 
 
 def test_save_and_load(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "data").mkdir()
-    from config import CrawlerConfig
+    config_path = tmp_path / "data" / "config.json"
+    monkeypatch.setattr(config_mod, "_CONFIG_PATH", config_path)
     cfg = CrawlerConfig(num_workers=5, max_pool_size=1000)
     cfg.save()
-    assert (tmp_path / "data" / "config.json").exists()
+    assert config_path.exists()
     cfg2 = CrawlerConfig.load()
     assert cfg2.num_workers == 5
     assert cfg2.max_pool_size == 1000
 
 
 def test_load_falls_back_to_defaults(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "data").mkdir()
-    from config import CrawlerConfig
+    monkeypatch.setattr(config_mod, "_CONFIG_PATH", tmp_path / "data" / "config.json")
     cfg = CrawlerConfig.load()
     assert cfg.num_workers == 10

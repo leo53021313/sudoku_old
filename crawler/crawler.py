@@ -9,6 +9,7 @@ Usage:
 """
 import sys
 import threading
+from pathlib import Path
 
 from PyQt6.QtWidgets import QApplication
 
@@ -17,7 +18,7 @@ from app.web.proxy_manager import ProxyManager
 from app.db.pool_db import PuzzlePoolDB
 from app.gui.main_window import MainWindow
 
-DB_PATH = "../data/puzzle_pool.db"
+DB_PATH = str(Path(__file__).parent.parent / "data" / "puzzle_pool.db")
 
 
 def _init_proxy(proxy_manager: ProxyManager, config: CrawlerConfig) -> None:

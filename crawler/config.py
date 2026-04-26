@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
-_CONFIG_PATH = Path("data/config.json")
+_CONFIG_PATH = Path(__file__).parent / "data" / "config.json"
 
 
 @dataclass
