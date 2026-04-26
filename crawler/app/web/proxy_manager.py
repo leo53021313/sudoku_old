@@ -255,7 +255,7 @@ class ProxyManager:
                             f"  有效={self.size()}"
                         )
             finally:
-                executor.shutdown(wait=False, cancel_futures=True)
+                executor.shutdown(wait=True, cancel_futures=True)
 
             if not stop.is_set():
                 with self._lock:
