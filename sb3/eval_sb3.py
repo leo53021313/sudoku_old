@@ -181,8 +181,9 @@ def main() -> None:
         avg_steps  = sum(r["steps"]  for r in res) / max(n, 1)
         avg_reward = sum(r["reward"] for r in res) / max(n, 1)
         pct = 100 * s // max(n, 1)
+        success_str = f"{s}/{n}"
         print(
-            f"L{d:<11} {s}/{n}  {pct:>3}%   "
+            f"L{d:<11} {success_str:<6} {pct:>3}%   "
             f"{avg_steps:>8.1f}   {avg_reward:>10.1f}"
         )
         total_success += s
