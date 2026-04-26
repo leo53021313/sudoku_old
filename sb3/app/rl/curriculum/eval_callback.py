@@ -58,40 +58,45 @@ class SudokuEvalCallback(BaseCallback):
             return True
         self._last_eval = self.num_timesteps
 
-        total_s, total_n = 0, 0
-        level_rates: dict[int, float] = {}
+        try:
+            total_s, total_n = 0, 0
+            level_rates: dict[int, float] = {}
 
-        for diff in self._difficulties:
-            self._eval_env.set_difficulty_distribution({diff: 1.0})
-            successes = []
-            for _ in range(self._n_episodes):
-                obs, _ = self._eval_env.reset()
-                done = False
-                while not done:
-                    masks = self._eval_env.action_masks()[np.newaxis]          # (1, 729)
-                    action, _ = self.model.predict(
-                        obs[np.newaxis],                             # (1, C, 9, 9)
-                        action_masks=masks,
-                        deterministic=True,
-                    )
-                    obs, _, terminated, truncated, info = self._eval_env.step(int(action[0]))
-                    done = terminated or truncated
-                successes.append(info["is_success"])
+            for diff in self._difficulties:
+                self._eval_env.set_difficulty_distribution({diff: 1.0})
+                successes = []
+                for _ in range(self._n_episodes):
+                    obs, _ = self._eval_env.reset()
+                    done = False
+                    while not done:
+                        masks = self._eval_env.action_masks()[np.newaxis]          # (1, 729)
+                        action, _ = self.model.predict(
+                            obs[np.newaxis],                             # (1, C, 9, 9)
+                            action_masks=masks,
+                            deterministic=True,
+                        )
+                        obs, _, terminated, truncated, info = self._eval_env.step(int(action[0]))
+                        done = terminated or truncated
+                    successes.append(info["is_success"])
 
-            rate = float(np.mean(successes))
-            level_rates[diff] = rate
-            self.logger.record(f"eval/success_rate_L{diff}", rate)
-            total_s += sum(successes)
-            total_n += len(successes)
+                rate = float(np.mean(successes))
+                level_rates[diff] = rate
+                self.logger.record(f"eval/success_rate_L{diff}", rate)
+                total_s += sum(successes)
+                total_n += len(successes)
 
-        overall = total_s / max(total_n, 1)
-        self.logger.record("eval/success_rate_overall", overall)
+            overall = total_s / max(total_n, 1)
+            self.logger.record("eval/success_rate_overall", overall)
 
-        if self.verbose >= 1:
-            parts = ", ".join(f"L{d}={level_rates[d]:.0%}" for d in self._difficulties)
-            print(
-                f"[Eval] Step {self.num_timesteps:,}: "
-                f"overall={overall:.2%}  ({total_s}/{total_n})  [{parts}]"
-            )
+            if self.verbose >= 1:
+                parts = ", ".join(f"L{d}={level_rates[d]:.0%}" for d in self._difficulties)
+                print(
+                    f"[Eval] Step {self.num_timesteps:,}: "
+                    f"overall={overall:.2%}  ({total_s}/{total_n})  [{parts}]"
+                )
+
+        except Exception as e:
+            if self.verbose >= 1:
+                print(f"[SudokuEvalCallback] eval failed at step {self.num_timesteps}: {e}")
 
         return True
