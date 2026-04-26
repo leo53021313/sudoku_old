@@ -49,7 +49,7 @@ class PuzzlePoolDB:
         return conn
 
     def close(self) -> None:
-        """Close the per-thread DB connection if open."""
+        """Close this thread's DB connection if open."""
         conn = getattr(self._local, "conn", None)
         if conn is not None:
             conn.close()

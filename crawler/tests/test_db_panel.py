@@ -43,3 +43,5 @@ def test_refresh_resets_error_flag_on_success(qapp, tmp_path):
 
     panel.refresh()
     assert panel._refresh_error_shown is False
+    assert "總計" in panel._total_lbl.text(), \
+        f"Expected success label, got: {panel._total_lbl.text()!r}"

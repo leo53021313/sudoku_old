@@ -111,9 +111,8 @@ class DbPanel(QWidget):
             per_level = [self.db.get_pool_stats(level=i) for i in range(1, 5)]
             grand = self.db.get_pool_stats()
         except Exception as e:
-            if not self._refresh_error_shown:
-                self._refresh_error_shown = True
-                self._total_lbl.setText(f"DB 錯誤: {e}")
+            self._refresh_error_shown = True
+            self._total_lbl.setText(f"DB 錯誤: {e}")
             return
 
         self._refresh_error_shown = False
