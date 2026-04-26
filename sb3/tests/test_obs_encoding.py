@@ -66,6 +66,54 @@ def test_fixed_channel():
     print("test_fixed_channel: PASS")
 
 
+def test_empty_channel():
+    """Channel 19: complement of filled cells."""
+    env, obs = get_env_and_obs()
+    expected = (env.board == 0).astype(np.float32)
+    np.testing.assert_array_equal(obs[19], expected)
+    env.close()
+    print("test_empty_channel: PASS")
+
+
+def test_fill_ratio_channels():
+    """Channels 20-22: row/col/box fill ratios in [0,1]."""
+    env, obs = get_env_and_obs()
+    # Check row ratios (ch 20): each row value should equal filled_count/9
+    for r in range(9):
+        expected_ratio = float(np.count_nonzero(env.board[r, :] != 0)) / 9.0
+        np.testing.assert_allclose(obs[20, r, :], expected_ratio, atol=1e-6,
+            err_msg=f"Row {r} fill ratio mismatch")
+    # Check col ratios (ch 21)
+    for c in range(9):
+        expected_ratio = float(np.count_nonzero(env.board[:, c] != 0)) / 9.0
+        np.testing.assert_allclose(obs[21, :, c], expected_ratio, atol=1e-6,
+            err_msg=f"Col {c} fill ratio mismatch")
+    # Bounds check
+    assert obs[20].min() >= 0.0 and obs[20].max() <= 1.0
+    assert obs[21].min() >= 0.0 and obs[21].max() <= 1.0
+    assert obs[22].min() >= 0.0 and obs[22].max() <= 1.0
+    env.close()
+    print("test_fill_ratio_channels: PASS")
+
+
+def test_candidate_count_channel():
+    """Channel 23: candidate_count_grid / 9.0."""
+    env, obs = get_env_and_obs()
+    expected = env.candidate_count_grid.astype(np.float32) / 9.0
+    np.testing.assert_allclose(obs[23], expected, atol=1e-6)
+    env.close()
+    print("test_candidate_count_channel: PASS")
+
+
+def test_naked_single_channel():
+    """Channel 24: 1.0 only for cells with exactly 1 candidate."""
+    env, obs = get_env_and_obs()
+    expected = env.single_candidate_grid
+    np.testing.assert_array_equal(obs[24], expected)
+    env.close()
+    print("test_naked_single_channel: PASS")
+
+
 def test_obs_bounds():
     """All values must be in [0.0, 1.0]."""
     env, obs = get_env_and_obs()
@@ -80,5 +128,9 @@ if __name__ == "__main__":
     test_one_hot_board_channels()
     test_candidate_channels()
     test_fixed_channel()
+    test_empty_channel()           # new
+    test_fill_ratio_channels()     # new
+    test_candidate_count_channel() # new
+    test_naked_single_channel()    # new
     test_obs_bounds()
     print("\nAll obs encoding tests PASSED")

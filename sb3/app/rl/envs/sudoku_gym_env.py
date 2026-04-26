@@ -32,7 +32,7 @@ from app.sudoku.teacher_engine import TeacherEngine
 class SudokuGymEnv(gym.Env):
     metadata = {"render_modes": []}
 
-    N_CHANNELS = 26  # 9 one-hot board + 9 candidate planes + 8 auxiliary
+    N_CHANNELS = 26  # 9 one-hot + 9 candidates + 8 aux (fixed, empty, row/col/box ratio, cand_count, naked, hidden)
 
     def __init__(
         self,
