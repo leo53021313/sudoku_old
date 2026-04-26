@@ -129,6 +129,11 @@ class MainWindow(QMainWindow):
             w.stop()
         for w in self._workers:
             w.wait(5_000)
+        stragglers = [w for w in self._workers if w.isRunning()]
+        if stragglers:
+            self.log_widget.add_message(
+                f"⚠ {len(stragglers)} 個執行緒未能在 5 秒內停止，將被捨棄。", "yellow"
+            )
         self._workers.clear()
         self.stats_panel.stop_session()
         self._start_btn.setEnabled(True)
