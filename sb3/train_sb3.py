@@ -97,7 +97,9 @@ def main() -> None:
     policy_kwargs = dict(
         features_extractor_class=SudokuFeaturesExtractor,
         features_extractor_kwargs={"features_dim": 192},
-        net_arch=[],   # features extractor handles all; no additional MLP layers
+        # pi: direct Linear(921→729) — lets per-cell logits (first 729 dims) pass through
+        # vf: one hidden layer to aggregate global context for value estimation
+        net_arch={"pi": [], "vf": [128]},
     )
 
     # ── Model ─────────────────────────────────────────────────────────────────
