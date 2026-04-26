@@ -48,6 +48,16 @@ class PuzzlePoolDB:
             self._local.conn = conn
         return conn
 
+    def close(self) -> None:
+        """Close the per-thread DB connection if open."""
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
+
+    def __del__(self) -> None:
+        self.close()
+
     @contextmanager
     def transaction(self):
         conn = self._get_conn()
