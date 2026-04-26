@@ -21,6 +21,7 @@ Key design:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 
@@ -152,6 +153,24 @@ def main() -> None:
         verbose=args.verbose,
     )
 
+    # Restore curriculum state if resuming from a checkpoint
+    if args.load_model:
+        _cpath = args.load_model.replace(".zip", "_curriculum.json")
+        if os.path.exists(_cpath):
+            with open(_cpath) as _f:
+                _cs = json.load(_f)
+            curriculum._stage_idx = int(_cs.get("stage_idx", 0))
+            curriculum._total_eps = int(_cs.get("total_eps", 0))
+            model.mrv_prob = float(_cs.get("mrv_prob", model.mrv_prob_init))
+            if args.verbose >= 1:
+                print(
+                    f"[train_sb3] Curriculum restored: stage={curriculum._stage_idx + 1}  "
+                    f"total_eps={curriculum._total_eps}  mrv_prob={model.mrv_prob:.3f}"
+                )
+        else:
+            if args.verbose >= 1:
+                print(f"[train_sb3] No curriculum state found at {_cpath} — starting fresh")
+
     # ── Training ──────────────────────────────────────────────────────────────
     model.learn(
         total_timesteps=args.timesteps,
@@ -164,6 +183,17 @@ def main() -> None:
     if not args.no_vecnorm and isinstance(vec_env, VecNormalize):
         vec_env.save(save_path + "_vecnorm.pkl")
     print(f"[train_sb3] Saved → {save_path}.zip")
+
+    # Save curriculum state alongside the model for resume support
+    curriculum_path = os.path.join(MODEL_DIR, MODEL_NAME + "_curriculum.json")
+    curriculum_state = {
+        "stage_idx": curriculum._stage_idx,
+        "total_eps": curriculum._total_eps,
+        "mrv_prob":  float(model.mrv_prob),
+    }
+    with open(curriculum_path, "w") as f:
+        json.dump(curriculum_state, f, indent=2)
+    print(f"[train_sb3] Curriculum state saved → {curriculum_path}")
 
 
 if __name__ == "__main__":

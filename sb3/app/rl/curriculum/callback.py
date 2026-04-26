@@ -127,6 +127,18 @@ class CurriculumCallback(BaseCallback):
                 f"Final dist: {stage['dist']}"
             )
 
+    def _on_training_start(self) -> None:
+        """Re-apply stage distribution when training (re)starts — handles resume."""
+        if self._stage_idx == 0:
+            return  # default stage, nothing to restore
+        stage = self._stages[self._stage_idx]
+        self.training_env.env_method("set_difficulty_distribution", stage["dist"])
+        if self.verbose >= 1:
+            print(
+                f"[Curriculum] Restored stage {self._stage_idx + 1}: "
+                f"dist={stage['dist']}  mrv={stage['mrv']:.2f}"
+            )
+
     # ── Stage management ──────────────────────────────────────────────────────
 
     def _maybe_advance(self) -> None:
