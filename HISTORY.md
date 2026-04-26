@@ -2,6 +2,75 @@
 
 ---
 
+## [v10] 架構強化：26-channel Obs + Per-cell Action Head + 訓練基礎設施（2026-04-26）
+
+### Changed
+
+- **`sb3/app/rl/envs/sudoku_gym_env.py`** — 觀察空間 9 → 26 channels
+  - Ch 0-8：one-hot board planes（digit 1..9 → index 0..8），取代原本 board/9.0 ordinal encoding
+  - Ch 9-17：per-digit candidate planes（v is legal at (r,c)），取代單一 candidate_count channel
+  - Ch 18-25：auxiliary（fixed, empty, row/col/box fill ratio, cand_count/9, naked-single, hidden-single）
+
+- **`sb3/app/rl/models/features_extractor.py`** — 架構改為 per-cell action head
+  - 原本：27 ConstraintHeads → mean-pool → (batch, 192)
+  - 現在：27 ConstraintHeads → `cell_proj`(B,81,9)→(B,729) + `global_proj`(mean-pool)→(B,192)
+  - 輸出：(batch, 921) = 729 per-cell logits + 192 global context
+  - `net_arch` 對應改為 `{"pi": [], "vf": [128]}`：policy head 直接 Linear(921→729)，value head 有 128-unit MLP
+
+- **`sb3/app/rl/models/sudoku_ppo.py`** — `_bc_pass()` 修正
+  - `evaluate_actions()` 現在傳入 `action_masks=masks_t`，BC 分布與 rollout 時的 masked policy 一致
+  - 修正 dtype 注釋：`rollout_buffer.action_masks` 為 float32，cast 至 bool 在下一行發生
+
+- **`sb3/app/rl/curriculum/callback.py`** — resume 支援強化
+  - 新增 `_on_training_start()`：從 checkpoint 恢復時自動 re-apply 當前 stage 的 difficulty distribution
+  - 新增 `stage_idx` bounds-check，防止 JSON 與 curriculum stage 數不符時的 IndexError
+  - `stage_eps` 納入 JSON 持久化，確保 backstop timer 不因 resume 重置
+
+- **`sb3/train_sb3.py`** — curriculum state save/load；`ent_coef` 0.05→0.01；VecNormalize `clip_reward` 10→50
+  - 新增 curriculum state JSON save（`{stage_idx, total_eps, stage_eps, mrv_prob}`）隨 `model.save()` 一起寫出
+  - 新增 curriculum state restore 區塊（`--load-model` 時讀取 JSON 並還原所有欄位）
+  - `getattr(model, "mrv_prob_init", 0.80)` 容錯舊 checkpoint（無此屬性）
+
+### Added
+
+- **`sb3/app/rl/curriculum/eval_callback.py`**（新增）— `SudokuEvalCallback`
+  - 每 50k steps 對各難度分別評估 20 局，記錄 `eval/success_rate_L{d}` 和 `eval/success_rate_overall`
+  - 使用 maskable predict：`model.predict(obs[np.newaxis], action_masks=masks[np.newaxis], deterministic=True)`
+  - Eval env 在 `_init_callback()` 建立一次，`_on_training_end()` 關閉，避免每次觸發重新建立
+
+- **Tests**（5 個新測試檔案）
+  - `tests/test_obs_encoding.py` — 9 tests：shape、one-hot ch 0-8、candidate planes ch 9-17、aux ch 18-24 語義正確性
+  - `tests/test_features_extractor.py` — 4 tests：output shape (4, 921)、backward pass through all 27 heads
+  - `tests/test_bc_masks.py` — BC evaluate_actions with action_masks 產生正確 log_prob
+  - `tests/test_curriculum_save_load.py` — curriculum JSON round-trip save/restore
+  - `tests/test_eval_callback.py` — SudokuEvalCallback 在 total_timesteps budget 內正確觸發
+
+### Fixed (Critical)
+
+- **`sb3/app/rl/models/features_extractor.py` col/box heads 梯度靜默消失**（Critical）
+  - 原因：`torch.zeros(...)` + in-place slice `col_out[:, :, c, :] = head(...)` — autograd 無法追蹤 in-place 寫入無梯度 tensor
+  - 影響：9 col_heads + 9 box_heads（共 18/27 個 ConstraintHead）完全無梯度更新
+  - 修正：`torch.stack([self.col_heads[c](...) for c in range(9)], dim=2)` 和 nested list + `torch.stack` 拼合 box_out
+  - 驗證：修正後 col_grad norm ≈ 70.05、box_grad norm ≈ 105.30、row_grad norm ≈ 91.79
+
+- **`sb3/app/rl/models/sudoku_ppo.py` BC loss 在 unmasked distribution 計算**（Critical）
+  - 原因：`evaluate_actions(obs_t, ta)` 未傳 `action_masks`
+  - 影響：BC log_prob 在不同於 rollout 的 distribution 上計算，梯度方向有偏差
+  - 修正：從 `rollout_buffer.action_masks[teacher_mask]` 取 masks（float32）轉 bool 後傳入
+
+### Architecture (sb3/ updated)
+
+| Component | Before (v9) | After (v10) |
+|-----------|-------------|-------------|
+| Obs channels | 9 (ordinal board + 7 aux) | 26 (9 one-hot + 9 candidate planes + 8 aux) |
+| Extractor output | (B, 192) | (B, 921) = 729 per-cell + 192 global |
+| net_arch | default | `{"pi": [], "vf": [128]}` |
+| BC masks | not passed | `action_masks=masks_t` in evaluate_actions |
+| Eval | none | SudokuEvalCallback every 50k steps |
+| Resume | partial | full curriculum JSON save/load |
+
+---
+
 ## [v9] 專案拆分：legacy/ + sb3/ + SB3 MaskablePPO 訓練系統（2026-04-25）
 
 ### Added

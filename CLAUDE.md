@@ -38,7 +38,7 @@ python main_train.py
 ## sb3/ — Active SB3 Training System
 
 **Data flow:**
-1. `SudokuGymEnv.reset()` fetches puzzle from DB → solves with backtracking solver → builds 9-channel observation
+1. `SudokuGymEnv.reset()` fetches puzzle from DB → solves with backtracking solver → builds 26-channel observation
 2. `SudokuMaskablePPO` collects 512-step rollouts across 8 SubprocVecEnv workers (4,096 steps/update)
 3. `TeacherEngine` runs inside each subprocess → returns `(teacher_action, teacher_quality)` via info dict
 4. PPO update + separate BC loss pass; `CurriculumCallback` escalates difficulty in 4 stages
@@ -48,11 +48,12 @@ python main_train.py
 - [sb3/app/rl/envs/sudoku_gym_env.py](sb3/app/rl/envs/sudoku_gym_env.py) — `SudokuGymEnv`: Gymnasium env, `action_masks()`, `set_difficulty_distribution()`
 - [sb3/app/rl/envs/sudoku_solver.py](sb3/app/rl/envs/sudoku_solver.py) — backtracking solver with MRV heuristic; pre-solves puzzle at `reset()`
 - [sb3/app/rl/envs/reward_computer.py](sb3/app/rl/envs/reward_computer.py) — `RewardComputer`: naked single +3, hidden single +2, cascade +0.5, unit +5, done +20, wrong −3
-- [sb3/app/rl/models/features_extractor.py](sb3/app/rl/models/features_extractor.py) — `SudokuFeaturesExtractor` (BaseFeaturesExtractor): 27 ConstraintHeads → mean pool → (batch, 192)
+- [sb3/app/rl/models/features_extractor.py](sb3/app/rl/models/features_extractor.py) — `SudokuFeaturesExtractor` (BaseFeaturesExtractor): 27 ConstraintHeads → per-cell logits (B,729) + global ctx (B,192) → **(batch, 921)**; net_arch `{"pi": [], "vf": [128]}`
 - [sb3/app/rl/models/sudoku_ppo.py](sb3/app/rl/models/sudoku_ppo.py) — `SudokuMaskablePPO`: BC loss as separate optimizer pass; teacher data via callback monkey-patch
 - [sb3/app/rl/curriculum/callback.py](sb3/app/rl/curriculum/callback.py) — `CurriculumCallback`: 4-stage dist escalation, backstop/threshold-based advance, entropy warning
+- [sb3/app/rl/curriculum/eval_callback.py](sb3/app/rl/curriculum/eval_callback.py) — `SudokuEvalCallback`: per-difficulty eval every 50k steps; `model.predict(obs[np.newaxis], action_masks=masks[np.newaxis], deterministic=True)`
 
-**Observation space** (9 channels, shape `(9,9,9)` channels-first): board/9, fixed, empty, row/col/box fill ratio, candidate count/9, naked-single flag, hidden-single flag.
+**Observation space** (26 channels, shape `(26,9,9)` channels-first): ch 0-8 one-hot board planes (digit→index 0-8), ch 9-17 per-digit candidate planes (v legal at (r,c)), ch 18-25 aux (fixed, empty, row/col/box fill ratio, cand_count/9, naked-single, hidden-single).
 
 **Action space**: `Discrete(729)` = `row*81 + col*9 + (val-1)`. `action_masks()` masks illegal fills.
 
@@ -137,4 +138,8 @@ The following keys in `legacy/data/user_config.json` intentionally deviate from 
 - **TeacherEngine in subprocess**: pure numpy → safe inside SubprocVecEnv. Results passed via `info` dict from `step()`, read by `collect_rollouts()` monkey-patch.
 - **BC buffer alignment**: after `super().train()`, `rollout_buffer.observations` is `swap_and_flatten`ed to `(n_envs * n_steps, *obs_shape)`. Teacher arrays `(n_steps, n_envs)` must use `.T.flatten()` to align.
 - **BC as separate pass**: `_bc_pass()` runs after `super().train()` with its own `optimizer.step()`. Keeps BC gradient separate from PPO to avoid interference.
+- **`torch.zeros` + in-place slice assignment drops gradients**: `col_out[:, :, c, :] = head(...)` breaks autograd — 18/27 constraint heads received zero gradients. Always use `torch.stack([head(...) for c in range(9)], dim=2)` instead.
+- **BC `evaluate_actions` must pass `action_masks`**: `evaluate_actions(obs, actions, action_masks=masks_t)` — omitting masks trains BC on unmasked distribution, biasing gradients. `rollout_buffer.action_masks` is `float32`; cast to bool before passing.
+- **Curriculum JSON state**: `{stage_idx, total_eps, stage_eps, mrv_prob}` saved alongside model; `_on_training_start()` re-applies difficulty distribution on resume. `stage_eps` must be included or backstop resets every resume.
+- **Old checkpoint compatibility**: Use `getattr(model, "mrv_prob_init", 0.80)` when loading — old checkpoints may lack this attribute.
 - **`db.path` in user_config.json overrides schema default**: if `legacy/data/user_config.json` has an explicit `db.path` key, the schema default is ignored. Both must be `"../data/puzzle_pool.db"` after the project split.
