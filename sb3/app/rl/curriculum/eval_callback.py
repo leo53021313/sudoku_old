@@ -47,32 +47,39 @@ class SudokuEvalCallback(BaseCallback):
         self._difficulties = difficulties
         self._last_eval    = 0
 
+    def _init_callback(self) -> None:
+        self._eval_env = SudokuGymEnv(db_path=self._db_path)
+
+    def _on_training_end(self) -> None:
+        self._eval_env.close()
+
     def _on_step(self) -> bool:
         if self.num_timesteps - self._last_eval < self._eval_freq:
             return True
         self._last_eval = self.num_timesteps
 
-        env = SudokuGymEnv(db_path=self._db_path)
         total_s, total_n = 0, 0
+        level_rates: dict[int, float] = {}
 
         for diff in self._difficulties:
-            env.set_difficulty_distribution({diff: 1.0})
+            self._eval_env.set_difficulty_distribution({diff: 1.0})
             successes = []
             for _ in range(self._n_episodes):
-                obs, _ = env.reset()
+                obs, _ = self._eval_env.reset()
                 done = False
                 while not done:
-                    masks = env.action_masks()[np.newaxis]          # (1, 729)
+                    masks = self._eval_env.action_masks()[np.newaxis]          # (1, 729)
                     action, _ = self.model.predict(
                         obs[np.newaxis],                             # (1, C, 9, 9)
                         action_masks=masks,
                         deterministic=True,
                     )
-                    obs, _, terminated, truncated, info = env.step(int(action[0]))
+                    obs, _, terminated, truncated, info = self._eval_env.step(int(action[0]))
                     done = terminated or truncated
                 successes.append(info["is_success"])
 
             rate = float(np.mean(successes))
+            level_rates[diff] = rate
             self.logger.record(f"eval/success_rate_L{diff}", rate)
             total_s += sum(successes)
             total_n += len(successes)
@@ -81,9 +88,7 @@ class SudokuEvalCallback(BaseCallback):
         self.logger.record("eval/success_rate_overall", overall)
 
         if self.verbose >= 1:
-            parts = ", ".join(
-                f"L{d}={self._n_episodes}" for d in self._difficulties
-            )
+            parts = ", ".join(f"L{d}={level_rates[d]:.0%}" for d in self._difficulties)
             print(
                 f"[Eval] Step {self.num_timesteps:,}: "
                 f"overall={overall:.2%}  ({total_s}/{total_n})  [{parts}]"

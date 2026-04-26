@@ -26,13 +26,14 @@ def test_eval_callback_logs(tmp_path):
 
     cb = SudokuEvalCallback(
         db_path='../data/puzzle_pool.db',
-        eval_freq=64,
+        eval_freq=50,
         n_episodes=3,
         difficulties=(1,),
         verbose=1,
     )
 
     model.learn(total_timesteps=64, callback=cb, reset_num_timesteps=True)
+    assert cb._last_eval > 0, "EvalCallback never fired — increase total_timesteps or lower eval_freq"
     # If we got here without exception, the callback ran
     print("PASS")
     env.close()
