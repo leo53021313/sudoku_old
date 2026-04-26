@@ -115,7 +115,7 @@ class SudokuMaskablePPO(MaskablePPO):
         ta       = torch.tensor(teacher_a_flat[teacher_mask], dtype=torch.long,  device=self.device)
         tq       = torch.tensor(teacher_q_flat[teacher_mask], dtype=torch.float32, device=self.device)
 
-        # Guard against NaN when all teacher quality is near-zero
+        # Guard against near-zero denominator in BC loss; legitimate minimum quality is 0.15
         if tq.sum() < 1e-8:
             return
 
