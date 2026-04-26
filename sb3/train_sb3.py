@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 import torch
 from stable_baselines3.common.callbacks import CheckpointCallback
@@ -38,7 +39,7 @@ from app.rl.curriculum.callback import CurriculumCallback, CURRICULUM_STAGES
 from app.rl.curriculum.eval_callback import SudokuEvalCallback
 
 
-DB_PATH    = "../data/puzzle_pool.db"
+DB_PATH    = str(Path(__file__).parent.parent / "data" / "puzzle_pool.db")
 MODEL_DIR  = "models"
 MODEL_NAME = "sudoku_sb3_latest"
 LOG_DIR    = "./runs/sudoku_sb3"
