@@ -64,7 +64,7 @@ def test_straggler_threads_are_terminated(qapp, tmp_path, monkeypatch):
     from app.db.pool_db import PuzzlePoolDB
     from app.core.worker import CrawlerWorker
     from config import CrawlerConfig
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import call, MagicMock
 
     db = PuzzlePoolDB(str(tmp_path / "test.db"))
     config = CrawlerConfig(num_workers=1)
@@ -82,3 +82,5 @@ def test_straggler_threads_are_terminated(qapp, tmp_path, monkeypatch):
 
     # terminate() must be called on the straggler
     mock_worker.terminate.assert_called_once()
+    # The last wait() call must be wait(1_000) — the post-terminate cleanup wait
+    assert mock_worker.wait.call_args_list[-1] == call(1_000)
