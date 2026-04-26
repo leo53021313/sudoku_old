@@ -1,7 +1,7 @@
 # app/gui/settings_dialog.py
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QSpinBox, QDoubleSpinBox, QPushButton, QGroupBox,
+    QSpinBox, QDoubleSpinBox, QPushButton, QGroupBox, QMessageBox,
 )
 from config import CrawlerConfig
 
@@ -100,6 +100,18 @@ class SettingsDialog(QDialog):
         layout.addLayout(btn_row)
 
     def _apply(self) -> None:
+        if self._resume.value() >= self._max_pool.value():
+            QMessageBox.warning(
+                self, "設定錯誤",
+                "恢復爬取門檻必須小於目標收錄上限。",
+            )
+            return
+        if self._min_delay.value() > self._max_delay.value():
+            QMessageBox.warning(
+                self, "設定錯誤",
+                "最短請求間隔不可大於最長請求間隔。",
+            )
+            return
         self._config.num_workers          = self._num_workers.value()
         self._config.max_pool_size        = self._max_pool.value()
         self._config.resume_threshold     = self._resume.value()
