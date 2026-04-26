@@ -152,16 +152,16 @@ class CurriculumCallback(BaseCallback):
     # ── Stage management ──────────────────────────────────────────────────────
 
     def _maybe_advance(self) -> None:
-        stage = self._stages[self._stage_idx]
-        threshold = stage.get("threshold")
-        backstop  = stage.get("backstop", float("inf"))
-
         with self._buf_lock:
+            stage_idx   = self._stage_idx          # snapshot under lock
             stage_eps   = self._stage_eps
             buf_len     = len(self._success_buf)
-            success_buf = list(self._success_buf)
-            top_diff    = max(stage["dist"].keys())
+            top_diff    = max(self._stages[stage_idx]["dist"].keys())
             top_buf     = list(self._diff_success.get(top_diff, []))
+
+        cur_stage = self._stages[stage_idx]
+        threshold = cur_stage.get("threshold")
+        backstop  = cur_stage.get("backstop", float("inf"))
 
         advance = False
         reason  = ""
@@ -179,9 +179,13 @@ class CurriculumCallback(BaseCallback):
 
         if advance:
             with self._buf_lock:
-                self._stage_idx += 1
-                self._stage_eps  = 0
-            self._apply_stage(reason)
+                if self._stage_idx == stage_idx:  # still the same stage?
+                    self._stage_idx += 1
+                    self._stage_eps  = 0
+                else:
+                    advance = False  # another thread already advanced
+            if advance:
+                self._apply_stage(reason)
 
     def _apply_stage(self, reason: str = "") -> None:
         stage = self._stages[self._stage_idx]
