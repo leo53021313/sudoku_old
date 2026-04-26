@@ -35,6 +35,7 @@ from app.rl.envs.sudoku_gym_env import SudokuGymEnv
 from app.rl.models.features_extractor import SudokuFeaturesExtractor
 from app.rl.models.sudoku_ppo import SudokuMaskablePPO
 from app.rl.curriculum.callback import CurriculumCallback, CURRICULUM_STAGES
+from app.rl.curriculum.eval_callback import SudokuEvalCallback
 
 
 DB_PATH    = "../data/puzzle_pool.db"
@@ -172,10 +173,18 @@ def main() -> None:
             if args.verbose >= 1:
                 print(f"[train_sb3] No curriculum state found at {_cpath} — starting fresh")
 
+    eval_cb = SudokuEvalCallback(
+        db_path=DB_PATH,
+        eval_freq=50_000,
+        n_episodes=20,
+        difficulties=(1, 2, 3, 4),
+        verbose=args.verbose,
+    )
+
     # ── Training ──────────────────────────────────────────────────────────────
     model.learn(
         total_timesteps=args.timesteps,
-        callback=[curriculum, checkpoint],
+        callback=[curriculum, checkpoint, eval_cb],
         reset_num_timesteps=args.load_model is None,
     )
 
