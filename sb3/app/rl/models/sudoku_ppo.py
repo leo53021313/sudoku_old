@@ -115,7 +115,7 @@ class SudokuMaskablePPO(MaskablePPO):
         ta       = torch.tensor(teacher_a_flat[teacher_mask], dtype=torch.long,  device=self.device)
         tq       = torch.tensor(teacher_q_flat[teacher_mask], dtype=torch.float32, device=self.device)
         # Use stored masks so BC fits the same masked distribution the policy plays
-        masks_np = self.rollout_buffer.action_masks[teacher_mask]   # (N, 729) bool
+        masks_np = self.rollout_buffer.action_masks[teacher_mask]   # (N, 729) float32; cast to bool below
         masks_t  = torch.as_tensor(masks_np, dtype=torch.bool, device=self.device)
 
         self.policy.set_training_mode(True)
