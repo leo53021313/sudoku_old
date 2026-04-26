@@ -15,12 +15,14 @@ def test_eval_callback_continues_on_predict_error():
         eval_freq=1,
         n_episodes=2,
         difficulties=(1,),
-        verbose=1,
+        verbose=0,
     )
 
     # Set up minimal callback state
     cb.num_timesteps = 100
     cb._last_eval = 0
+    # Mock logger directly in __dict__ to bypass the property descriptor
+    cb.__dict__['logger'] = MagicMock()
 
     # Mock eval env and model
     mock_env = MagicMock()
