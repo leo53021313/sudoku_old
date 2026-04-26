@@ -2,6 +2,81 @@
 
 ---
 
+## [v11] 穩定性強化 Wave 1+2：11 項 Critical/Resource 修復（2026-04-26）
+
+### Fixed (Wave 1 — Critical Stability)
+
+- **`sb3/app/rl/envs/sudoku_gym_env.py` reset() 遞迴深度無限制**（Critical）
+  - 原因：`solve(board)` 回傳 `None` 時無限遞迴自呼叫，DB 含無解題目即 stack overflow
+  - 修正：加入 `_retries: int = 0` 參數；`_retries >= 10` 時拋出 `RuntimeError`
+  - 為什麼 10 次：合理上限，正常 DB 不應出現連續無解題目
+
+- **`sb3/app/rl/models/sudoku_ppo.py` BC loss NaN 毒化優化器**（Critical）
+  - 原因：`-(log_probs * tq).sum() / tq.sum()`，teacher 全部棄權時 `tq.sum() ≈ 0` → NaN
+  - 修正：`if tq.sum() < 1e-8: return`；合法最低品質為 0.15，接近 0 代表 teacher 棄權
+  - 隱患：`-inf * 0 = NaN`（masked action log_prob = `-inf`），同時在 W3-2 用 `.clamp(min=-1e9)` 防禦（Wave 3 待實作）
+
+- **`sb3/app/rl/curriculum/eval_callback.py` 例外靜默停用後續 eval**（Critical）
+  - 原因：`model.predict()` 因 device mismatch 或 mask 問題拋出例外，傳播到 SB3 callback loop 後被靜默吞掉，後續所有 eval 不再觸發
+  - 修正：整個難度迴圈包在 `try-except Exception`；`logger.record()` 全部移至迴圈外（原子提交，避免部分寫入 TensorBoard）
+  - 關鍵細節：`self._last_eval = self.num_timesteps` 必須在 try 外先設，避免例外後立即重試
+
+- **`crawler/app/core/worker.py` 例外只顯示截斷訊息**（Critical）
+  - 原因：`except Exception as exc: emit(str(exc)[:120])` — 使用者看不到 stack trace，無法診斷 worker 停止原因
+  - 修正：`import traceback as _traceback`；error signal 的 `msg` 改為 `_traceback.format_exc()`
+
+- **`crawler/app/gui/main_window.py` straggler thread 累積不終止**（Critical）
+  - 原因：`w.wait(5_000)` 後仍在跑的 thread 直接解除引用，反覆 start/stop 累積 live thread
+  - 修正：收集 `[w for w in self._workers if w.isRunning()]`，逐一 `w.terminate(); w.wait(1_000)`，並在 log 顯示數量
+
+### Fixed (Wave 2 — Resource Leaks & Race Conditions)
+
+- **`sb3/app/rl/models/features_extractor.py` box head O(N²) Python 指定**（Performance）
+  - 原因：9×9 list，81 次 Python-level tensor 賦值 + 兩層 nested `torch.stack`，forward pass 效率差
+  - 修正：`torch.stack(box_results, dim=1).reshape(B,3,3,3,3,H).permute(0,1,3,2,4,5).reshape(B,9,9,H)`
+  - 關鍵：`permute(0,1,3,2,4,5)` 將 `(B,box_row,box_col,local_row,local_col,H)` 轉為正確空間排列 `(B,box_row,local_row,box_col,local_col,H)`，輸出與原始 scatter 版完全一致（以 `torch.allclose` 驗證）
+
+- **`sb3/app/rl/curriculum/callback.py` `_success_buf` 無鎖並發寫入**（Race Condition）
+  - 原因：`_success_buf` deque 和 `_diff_success` dict 從多個 SubprocVecEnv worker callback 並發讀寫
+  - 修正：`self._buf_lock = threading.Lock()`；所有讀寫包在 `with self._buf_lock:` 內
+  - TOCTOU 修正：`_maybe_advance()` 先在鎖內 snapshot `stage_idx`，計算完再以 `if self._stage_idx == stage_idx:` 重新驗證後才寫入，避免雙重 stage advance
+  - `_on_rollout_end()` 的 `logger.record()` 移至鎖外（snapshot 後計算），避免長時間持鎖
+
+- **`sb3/app/data/pool_db.py` thread-local DB connection 不釋放**（Resource Leak）
+  - 原因：`_get_conn()` 以 `self._local` 快取連線，SubprocVecEnv subprocess 整個訓練週期都不關閉
+  - 修正：新增 `close()` 方法（`getattr(self._local, "conn", None)` 安全取值）和 `__del__` 呼叫它
+  - 為何用 `getattr`：`threading.local` 的屬性只在設定過的 thread 上存在，直接存取會 `AttributeError`
+
+- **`crawler/app/gui/db_panel.py` refresh() 例外傳播到 Qt event loop**（Stability）
+  - 原因：`get_pool_stats()` 因 DB locked 等問題拋出例外，Qt timer callback 靜默停止
+  - 修正：`refresh()` 包 `try-except`；每次例外都更新 label 顯示 `DB 錯誤: {e}`（非僅第一次）；成功時重置狀態
+
+- **`crawler/app/web/proxy_manager.py` executor 關閉後 socket 仍懸空**（Resource Leak）
+  - 原因：`executor.shutdown(wait=False)` 立即返回，驗證 socket 仍持有連線
+  - 修正：`executor.shutdown(wait=True, cancel_futures=True)` — 取消 pending future 並等待 in-flight probe 完成
+
+- **`crawler/app/core/worker.py` get_pool_stats() 高頻 DB 讀取**（Performance）
+  - 原因：10 個 worker 每次迭代都呼叫 `db.get_pool_stats()`，≈20 reads/sec 純粹浪費
+  - 修正：`_STATS_TTL = 2.0`；`_get_stats()` 以 `time.monotonic()` 實作 2 秒 TTL 快取
+  - 兩個 `db.get_pool_stats()` 呼叫點都改為 `self._get_stats()`
+
+### Tests Added
+
+**Wave 1:**
+- `sb3/tests/test_gym_env_stability.py` — reset() 遞迴深度限制
+- `sb3/tests/test_bc_guards.py` — BC loss NaN guard（quality=1e-9 測試邊界）
+- `sb3/tests/test_eval_callback_safety.py` — eval exception safety + atomic logger
+- `crawler/tests/test_worker_stability.py` — traceback format + straggler terminate
+
+**Wave 2:**
+- `sb3/tests/test_features_extractor.py` — box head 空間映射正確性（`torch.allclose` vs old scatter）
+- `sb3/tests/test_curriculum_lock.py` — curriculum lock concurrent access
+- `sb3/tests/test_pool_db_close.py` — `close()` / `__del__` 不拋出例外
+- `crawler/tests/test_db_panel.py` — refresh() exception safety
+- `crawler/tests/test_worker_stability.py` — TTL cache（2s 內不重複呼叫 DB）
+
+---
+
 ## [v10] 架構強化：26-channel Obs + Per-cell Action Head + 訓練基礎設施（2026-04-26）
 
 ### Changed
