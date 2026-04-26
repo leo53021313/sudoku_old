@@ -6,3 +6,4 @@ __pycache__/
 runs/
 *.pt.old
 *.db.old
+sb3/data/eval_puzzles.json
