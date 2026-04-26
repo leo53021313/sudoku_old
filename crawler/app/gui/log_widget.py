@@ -20,7 +20,7 @@ class LogWidget(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setReadOnly(True)
-        self.setMaximumBlockCount(_MAX_LINES)
+        self.document().setMaximumBlockCount(_MAX_LINES)
         self.setStyleSheet(
             "QTextEdit{"
             "background:#0d0d0d;color:#e0e0e0;"
