@@ -94,7 +94,12 @@ class SudokuGymEnv(gym.Env):
 
         if options is not None and "board" in options:
             self.board    = np.array(options["board"], dtype=np.int8).copy()
-            self.solution = np.array(options["solution"], dtype=np.int8).copy()
+            raw_sol = options.get("solution")
+            if raw_sol is None:
+                raw_sol = solve(self.board)
+            if raw_sol is None:
+                raise ValueError("Board has no unique solution and no solution was provided in options.")
+            self.solution = np.array(raw_sol, dtype=np.int8).copy()
             self.fixed    = (self.board != 0)
             self._current_difficulty = int(options.get("difficulty", 1))
             self.wrong_count    = 0
