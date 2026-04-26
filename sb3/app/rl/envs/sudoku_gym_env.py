@@ -92,6 +92,17 @@ class SudokuGymEnv(gym.Env):
     ) -> tuple[np.ndarray, dict]:
         super().reset(seed=seed)
 
+        if options is not None and "board" in options:
+            self.board    = np.array(options["board"], dtype=np.int8).copy()
+            self.solution = np.array(options["solution"], dtype=np.int8).copy()
+            self.fixed    = (self.board != 0)
+            self._current_difficulty = int(options.get("difficulty", 1))
+            self.wrong_count    = 0
+            self._step_count    = 0
+            self._episode_reward = 0.0
+            self._rebuild_candidates()
+            return self._obs(), {}
+
         # Sample difficulty from distribution
         difficulties = list(self._difficulty_dist.keys())
         probs        = list(self._difficulty_dist.values())
