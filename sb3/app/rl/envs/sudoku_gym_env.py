@@ -89,6 +89,7 @@ class SudokuGymEnv(gym.Env):
         *,
         seed: int | None = None,
         options: dict | None = None,
+        _retries: int = 0,
     ) -> tuple[np.ndarray, dict]:
         super().reset(seed=seed)
 
@@ -137,8 +138,11 @@ class SudokuGymEnv(gym.Env):
         # Pre-compute unique solution
         sol = solve(board)
         if sol is None:
-            # Should not happen with well-formed DB puzzles; reset again
-            return self.reset(seed=seed, options=options)
+            if _retries >= 10:
+                raise RuntimeError(
+                    "Too many unsolvable puzzles in DB — check puzzle_pool.db integrity"
+                )
+            return self.reset(seed=seed, options=options, _retries=_retries + 1)
         self.solution = sol
 
         return self._obs(), {}
