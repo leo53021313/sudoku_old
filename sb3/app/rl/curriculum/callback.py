@@ -17,6 +17,7 @@ Entropy monitoring: logs a WARNING if mean_entropy < 0.3 nats.
 
 from __future__ import annotations
 
+import threading
 from collections import deque
 from typing import Any
 
@@ -87,6 +88,9 @@ class CurriculumCallback(BaseCallback):
             lvl: deque(maxlen=window) for lvl in range(1, 5)
         }
 
+        # Defensive lock: guards all buffer mutations against future concurrent access
+        self._buf_lock: threading.Lock = threading.Lock()
+
     # ── BaseCallback interface ────────────────────────────────────────────────
 
     def _on_step(self) -> bool:
@@ -99,11 +103,12 @@ class CurriculumCallback(BaseCallback):
             success    = bool(info.get("is_success", False))
             difficulty = int(info.get("difficulty", 1))
 
-            self._total_eps  += 1
-            self._stage_eps  += 1
-            self._success_buf.append(success)
-            self._diff_buf.append(difficulty)
-            self._diff_success.setdefault(difficulty, deque(maxlen=self._window)).append(success)
+            with self._buf_lock:
+                self._total_eps  += 1
+                self._stage_eps  += 1
+                self._success_buf.append(success)
+                self._diff_buf.append(difficulty)
+                self._diff_success.setdefault(difficulty, deque(maxlen=self._window)).append(success)
 
         # Check stage advancement
         if self._stage_idx < len(self._stages) - 1:
@@ -151,24 +156,31 @@ class CurriculumCallback(BaseCallback):
         threshold = stage.get("threshold")
         backstop  = stage.get("backstop", float("inf"))
 
-        advance = False
+        with self._buf_lock:
+            stage_eps   = self._stage_eps
+            buf_len     = len(self._success_buf)
+            success_buf = list(self._success_buf)
+            top_diff    = max(stage["dist"].keys())
+            top_buf     = list(self._diff_success.get(top_diff, []))
 
-        if self._stage_eps >= backstop:
+        advance = False
+        reason  = ""
+
+        if stage_eps >= backstop:
             advance = True
             reason  = f"backstop ({backstop} eps)"
-        elif threshold is not None and len(self._success_buf) >= min(self._window, 50):
+        elif threshold is not None and buf_len >= min(self._window, 50):
             # Use the success rate for the HIGHEST difficulty in the current mix
-            top_diff = max(stage["dist"].keys())
-            top_buf  = self._diff_success.get(top_diff)
-            if top_buf and len(top_buf) >= 30:
-                rate = float(np.mean(list(top_buf)))
+            if len(top_buf) >= 30:
+                rate = float(np.mean(top_buf))
                 if rate >= threshold:
                     advance = True
                     reason  = f"success_rate={rate:.2f} ≥ {threshold} on L{top_diff}"
 
         if advance:
-            self._stage_idx += 1
-            self._stage_eps  = 0
+            with self._buf_lock:
+                self._stage_idx += 1
+                self._stage_eps  = 0
             self._apply_stage(reason)
 
     def _apply_stage(self, reason: str = "") -> None:
@@ -196,17 +208,20 @@ class CurriculumCallback(BaseCallback):
     # ── Logging ───────────────────────────────────────────────────────────────
 
     def _on_rollout_end(self) -> None:
-        if not self._success_buf:
-            return
+        with self._buf_lock:
+            if not self._success_buf:
+                return
+            overall_rate = float(np.mean(list(self._success_buf)))
+            stage = self._stage_idx + 1
+            total_eps = self._total_eps
+            diff_snapshot = {lvl: list(buf) for lvl, buf in self._diff_success.items() if buf}
 
-        overall_rate = float(np.mean(list(self._success_buf)))
         self.logger.record("curriculum/success_rate_overall", overall_rate)
-        self.logger.record("curriculum/stage",               self._stage_idx + 1)
-        self.logger.record("curriculum/total_episodes",      self._total_eps)
+        self.logger.record("curriculum/stage",               stage)
+        self.logger.record("curriculum/total_episodes",      total_eps)
 
-        for lvl, buf in self._diff_success.items():
-            if buf:
-                self.logger.record(
-                    f"curriculum/success_rate_L{lvl}",
-                    float(np.mean(list(buf)))
-                )
+        for lvl, vals in diff_snapshot.items():
+            self.logger.record(
+                f"curriculum/success_rate_L{lvl}",
+                float(np.mean(vals))
+            )
