@@ -13,24 +13,29 @@ def test_save_load_roundtrip():
     cb._total_eps = 12345
     fake_mrv_prob = 0.20
 
+    cb._stage_eps = 3000
+
     with tempfile.NamedTemporaryFile(mode='w', suffix='_curriculum.json', delete=False) as f:
         json.dump({
             "stage_idx": cb._stage_idx,
             "total_eps": cb._total_eps,
+            "stage_eps": cb._stage_eps,
             "mrv_prob":  fake_mrv_prob,
         }, f, indent=2)
         path = f.name
 
     # Simulate restore
     cb2 = CurriculumCallback(verbose=0)
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         cs = json.load(f)
     cb2._stage_idx = int(cs["stage_idx"])
     cb2._total_eps = int(cs["total_eps"])
+    cb2._stage_eps = int(cs.get("stage_eps", 0))
     restored_mrv   = float(cs["mrv_prob"])
 
     assert cb2._stage_idx == 2,     f"stage_idx: {cb2._stage_idx}"
     assert cb2._total_eps == 12345, f"total_eps: {cb2._total_eps}"
+    assert cb2._stage_eps == 3000,  f"stage_eps: {cb2._stage_eps}"
     assert restored_mrv   == 0.20,  f"mrv_prob:  {restored_mrv}"
     os.unlink(path)
     print("PASS")

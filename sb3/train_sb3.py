@@ -157,11 +157,12 @@ def main() -> None:
     if args.load_model:
         _cpath = args.load_model.replace(".zip", "_curriculum.json")
         if os.path.exists(_cpath):
-            with open(_cpath) as _f:
+            with open(_cpath, encoding="utf-8") as _f:
                 _cs = json.load(_f)
             curriculum._stage_idx = int(_cs.get("stage_idx", 0))
             curriculum._total_eps = int(_cs.get("total_eps", 0))
-            model.mrv_prob = float(_cs.get("mrv_prob", model.mrv_prob_init))
+            curriculum._stage_eps = int(_cs.get("stage_eps", 0))
+            model.mrv_prob = float(_cs.get("mrv_prob", getattr(model, "mrv_prob_init", 0.80)))
             if args.verbose >= 1:
                 print(
                     f"[train_sb3] Curriculum restored: stage={curriculum._stage_idx + 1}  "
@@ -189,9 +190,10 @@ def main() -> None:
     curriculum_state = {
         "stage_idx": curriculum._stage_idx,
         "total_eps": curriculum._total_eps,
-        "mrv_prob":  float(model.mrv_prob),
+        "stage_eps": curriculum._stage_eps,
+        "mrv_prob":  float(getattr(model, "mrv_prob", 0.80)),
     }
-    with open(curriculum_path, "w") as f:
+    with open(curriculum_path, "w", encoding="utf-8") as f:
         json.dump(curriculum_state, f, indent=2)
     print(f"[train_sb3] Curriculum state saved → {curriculum_path}")
 

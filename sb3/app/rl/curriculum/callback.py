@@ -131,6 +131,11 @@ class CurriculumCallback(BaseCallback):
         """Re-apply stage distribution when training (re)starts — handles resume."""
         if self._stage_idx == 0:
             return  # default stage, nothing to restore
+        if self._stage_idx >= len(self._stages):
+            raise ValueError(
+                f"[Curriculum] Restored stage_idx={self._stage_idx} is out of range "
+                f"for {len(self._stages)}-stage curriculum. Check your curriculum JSON."
+            )
         stage = self._stages[self._stage_idx]
         self.training_env.env_method("set_difficulty_distribution", stage["dist"])
         if self.verbose >= 1:
