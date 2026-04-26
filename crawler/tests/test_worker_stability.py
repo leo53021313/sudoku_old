@@ -57,6 +57,38 @@ def test_error_signal_contains_traceback(qapp, worker, monkeypatch):
         f"Expected 'connection reset' in msg, got: {error_events[0]['msg']!r}"
 
 
+def test_get_stats_cached_within_ttl(tmp_path):
+    """get_pool_stats must not be called more than once per 2s within a single worker."""
+    from app.core.worker import CrawlerWorker
+    from app.db.pool_db import PuzzlePoolDB
+    from config import CrawlerConfig
+    from unittest.mock import MagicMock
+
+    db = PuzzlePoolDB(str(tmp_path / "test.db"))
+    config = CrawlerConfig()
+    proxy = MagicMock()
+    proxy.get_requests_proxy.return_value = None
+
+    worker = CrawlerWorker(0, config, proxy, db)
+
+    call_count = [0]
+    original_get_pool_stats = db.get_pool_stats
+
+    def counting_get_pool_stats(**kwargs):
+        call_count[0] += 1
+        return original_get_pool_stats(**kwargs)
+
+    db.get_pool_stats = counting_get_pool_stats
+
+    # Call _get_stats 5 times in rapid succession
+    for _ in range(5):
+        worker._get_stats()
+
+    # Without cache: 5 calls. With cache: 1 call (all within 2s TTL).
+    assert call_count[0] == 1, \
+        f"Expected 1 DB call (cached), got {call_count[0]}"
+
+
 def test_straggler_threads_are_terminated(qapp, tmp_path, monkeypatch):
     """Threads that don't stop within 5s must have terminate() called on them."""
     from app.gui.main_window import MainWindow

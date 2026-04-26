@@ -13,6 +13,9 @@ from app.db.pool_db import PuzzlePoolDB
 from config import CrawlerConfig
 
 
+_STATS_TTL = 2.0
+
+
 class CrawlerWorker(QThread):
     event_signal = pyqtSignal(dict)
 
@@ -29,15 +32,24 @@ class CrawlerWorker(QThread):
         self.proxy_manager = proxy_manager
         self.db = db
         self._stop = False
+        self._stats_cache: dict | None = None
+        self._stats_ts: float = 0.0
 
     def stop(self) -> None:
         self._stop = True
+
+    def _get_stats(self) -> dict:
+        now = time.monotonic()
+        if self._stats_cache is None or now - self._stats_ts > _STATS_TTL:
+            self._stats_cache = self.db.get_pool_stats()
+            self._stats_ts = now
+        return self._stats_cache
 
     def run(self) -> None:
         while not self._stop:
             # Pause when DB is full; resume when it drops below threshold
             try:
-                total = self.db.get_pool_stats()["total"]
+                total = self._get_stats()["total"]
             except Exception:
                 time.sleep(2)
                 continue
@@ -46,7 +58,7 @@ class CrawlerWorker(QThread):
                 while not self._stop:
                     time.sleep(2)
                     try:
-                        if self.db.get_pool_stats()["total"] < self.config.resume_threshold:
+                        if self._get_stats()["total"] < self.config.resume_threshold:
                             break
                     except Exception:
                         pass
