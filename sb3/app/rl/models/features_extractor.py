@@ -113,22 +113,22 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
             [self.col_heads[c](emb_[:, :, c, :]) for c in range(9)], dim=2
         )
 
-        # Box heads
-        # Collect per-cell outputs in a 9x9 list, then stack into a tensor
-        box_cell_outputs: list[list[torch.Tensor]] = [[None] * 9 for _ in range(9)]
+        # Box heads — scatter-free: collect 9 outputs, then reshape+permute into board layout
+        box_results = []
         for b in range(9):
-            br, bc    = (b // 3) * 3, (b % 3) * 3
+            br, bc = (b // 3) * 3, (b % 3) * 3
             box_cells = emb_[:, br:br+3, bc:bc+3, :].reshape(B, 9, self.cell_dim)
-            result    = self.box_heads[b](box_cells).reshape(B, 3, 3, self.head_dim)
-            for kr in range(3):
-                for kc in range(3):
-                    box_cell_outputs[br + kr][bc + kc] = result[:, kr, kc, :]  # (B, head_dim)
+            box_results.append(self.box_heads[b](box_cells).reshape(B, 3, 3, self.head_dim))
 
-        # Stack to (B, 9, 9, head_dim) — no in-place ops
-        box_out = torch.stack([
-            torch.stack([box_cell_outputs[r][c] for c in range(9)], dim=1)
-            for r in range(9)
-        ], dim=1)
+        # (B, 9, 3, 3, head_dim) → reshape → (B, 3, 3, 3, 3, head_dim)
+        # permute (0,1,3,2,4,5) → (B, box_row, local_row, box_col, local_col, head_dim)
+        # reshape → (B, 9, 9, head_dim) with correct spatial layout
+        box_out = (
+            torch.stack(box_results, dim=1)
+            .reshape(B, 3, 3, 3, 3, self.head_dim)
+            .permute(0, 1, 3, 2, 4, 5)
+            .reshape(B, 9, 9, self.head_dim)
+        )
 
         # Fuse per-cell outputs: (B, 81, head_dim * 3)
         fused = torch.cat([

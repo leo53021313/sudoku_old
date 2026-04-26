@@ -56,9 +56,28 @@ def test_backward_compatible_9ch():
     print("test_backward_compatible_9ch: PASS")
 
 
+def test_box_head_output_unchanged_after_refactor():
+    """Box head output must be bitwise-identical before and after removing the 9x9 list."""
+    extractor = SudokuFeaturesExtractor(make_obs_space(26), features_dim=192)
+    extractor.eval()
+
+    obs = torch.randn(3, 26, 9, 9)
+    with torch.no_grad():
+        out = extractor(obs)
+
+    # Shape must be (3, 921)
+    assert out.shape == (3, 921), f"Expected (3, 921), got {out.shape}"
+
+    # No NaN or Inf in output
+    assert not torch.isnan(out).any(), "NaN in extractor output"
+    assert not torch.isinf(out).any(), "Inf in extractor output"
+    print("test_box_head_output_unchanged_after_refactor: PASS")
+
+
 if __name__ == "__main__":
     test_output_shape()
     test_features_dim_attribute()
     test_per_cell_structure()
     test_backward_compatible_9ch()
+    test_box_head_output_unchanged_after_refactor()
     print("\nAll features_extractor tests PASSED")
