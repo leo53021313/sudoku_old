@@ -106,17 +106,29 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
         )  # (B, 9, 9, head_dim)
 
         # Column heads
-        col_out = torch.zeros(B, 9, 9, self.head_dim, device=observations.device)
-        for c in range(9):
-            col_out[:, :, c, :] = self.col_heads[c](emb_[:, :, c, :])
+        # emb_[:, :, c, :] is (B, 9, cell_dim) — 9 rows for column c
+        # col_heads[c] output: (B, 9, head_dim)
+        # stack along new dim=2 → (B, 9, 9, head_dim) where dim2 = col index
+        col_out = torch.stack(
+            [self.col_heads[c](emb_[:, :, c, :]) for c in range(9)], dim=2
+        )
 
         # Box heads
-        box_out = torch.zeros(B, 9, 9, self.head_dim, device=observations.device)
+        # Collect per-cell outputs in a 9x9 list, then stack into a tensor
+        box_cell_outputs: list[list[torch.Tensor]] = [[None] * 9 for _ in range(9)]
         for b in range(9):
             br, bc    = (b // 3) * 3, (b % 3) * 3
             box_cells = emb_[:, br:br+3, bc:bc+3, :].reshape(B, 9, self.cell_dim)
-            result    = self.box_heads[b](box_cells)                 # (B, 9, head_dim)
-            box_out[:, br:br+3, bc:bc+3, :] = result.reshape(B, 3, 3, self.head_dim)
+            result    = self.box_heads[b](box_cells).reshape(B, 3, 3, self.head_dim)
+            for kr in range(3):
+                for kc in range(3):
+                    box_cell_outputs[br + kr][bc + kc] = result[:, kr, kc, :]  # (B, head_dim)
+
+        # Stack to (B, 9, 9, head_dim) — no in-place ops
+        box_out = torch.stack([
+            torch.stack([box_cell_outputs[r][c] for c in range(9)], dim=1)
+            for r in range(9)
+        ], dim=1)
 
         # Fuse per-cell outputs: (B, 81, head_dim * 3)
         fused = torch.cat([
