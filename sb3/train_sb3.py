@@ -44,6 +44,7 @@ from app.rl.models.sudoku_ppo import SudokuMaskablePPO
 from app.rl.curriculum.callback import CurriculumCallback, CURRICULUM_STAGES
 from app.rl.curriculum.eval_callback import SudokuEvalCallback
 from app.rl.curriculum.milestone_callback import MilestoneCallback
+from app.rl.curriculum.reserved_eval_callback import ReservedEvalCallback
 
 
 DB_PATH    = str(Path(__file__).parent.parent / "data" / "puzzle_pool.db")
@@ -108,6 +109,8 @@ def main() -> None:
         # pi: direct Linear(921→729) — lets per-cell logits (first 729 dims) pass through
         # vf: one hidden layer to aggregate global context for value estimation
         net_arch={"pi": [], "vf": [128]},
+        # Phase 1.5: light L2 regularisation against memorisation
+        optimizer_kwargs={"weight_decay": 1e-4},
     )
 
     # ── Model ─────────────────────────────────────────────────────────────────
@@ -209,10 +212,18 @@ def main() -> None:
     milestones = MilestoneCallback(verbose=args.verbose)
     milestones.attach_curriculum(curriculum)
 
+    reserved_eval = ReservedEvalCallback(
+        json_path=str(Path(__file__).parent / "data" / "eval_puzzles.json"),
+        db_path=DB_PATH,
+        eval_freq=50_000,
+        difficulties=(1, 2, 3, 4),
+        verbose=args.verbose,
+    )
+
     # ── Training ──────────────────────────────────────────────────────────────
     model.learn(
         total_timesteps=args.timesteps,
-        callback=[curriculum, milestones, checkpoint, eval_cb],
+        callback=[curriculum, milestones, checkpoint, eval_cb, reserved_eval],
         reset_num_timesteps=args.load_model is None,
     )
 
