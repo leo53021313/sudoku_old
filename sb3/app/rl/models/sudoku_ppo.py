@@ -8,10 +8,13 @@ How BC works:
      returned by SudokuGymEnv.step() (teacher runs inside the subprocess).
   2. After the standard PPO update in train(), a separate BC optimization step
      computes weighted cross-entropy loss over steps where teacher_quality > 0.
-  3. mrv_prob (updated by CurriculumCallback) controls BC strength:
-       eff_bc = bc_coef × (mrv_prob / mrv_prob_init)
+  3. bc_coef_eff is queried from a LinearSchedule(bc_coef, 0.3*bc_coef, end_fraction=1.0)
+     using SB3's self._current_progress_remaining. It is INDEPENDENT of mrv_prob.
 
 The BC pass is intentionally separate from PPO to avoid gradient interference.
+
+mrv_prob is still tracked here (and updated by CurriculumCallback) but is now used
+ONLY by the env to control teacher rollout intervention rate — not to scale BC loss.
 """
 
 from __future__ import annotations
@@ -40,7 +43,13 @@ class SudokuMaskablePPO(MaskablePPO):
         super().__init__(*args, **kwargs)
         self.bc_coef       = bc_coef
         self.mrv_prob_init = mrv_prob_init
-        self.mrv_prob      = mrv_prob_init  # updated by CurriculumCallback
+        self.mrv_prob      = mrv_prob_init  # updated by CurriculumCallback (still used by env)
+
+        # BC schedule — independent of mrv_prob. Linear from bc_coef → 0.3 × bc_coef.
+        # With oracle teacher (Phase 1 task 1), BC remains valuable throughout training,
+        # so we no longer collapse bc_coef_eff to near-zero in late stages.
+        from stable_baselines3.common.utils import LinearSchedule
+        self._bc_schedule = LinearSchedule(bc_coef, 0.3 * bc_coef, end_fraction=1.0)
 
         # Teacher data captured during collect_rollouts: shape (n_steps, n_envs)
         self._teacher_actions: np.ndarray | None = None
@@ -96,7 +105,9 @@ class SudokuMaskablePPO(MaskablePPO):
         if self._teacher_actions is None or self._teacher_quality is None:
             return
 
-        eff_bc = self.bc_coef * (self.mrv_prob / max(self.mrv_prob_init, 1e-8))
+        # BC coef from independent schedule (decoupled from mrv_prob).
+        # SB3 maintains self._current_progress_remaining during learn().
+        eff_bc = float(self._bc_schedule(self._current_progress_remaining))
         if eff_bc < 1e-6:
             return
 
