@@ -47,6 +47,20 @@ def _log_failure_record(path: str, record: dict) -> None:
 
 
 class SudokuEvalCallback(BaseCallback):
+    """
+    Parameters
+    ----------
+    db_path : str
+        Path to puzzle DB (same as training).
+    eval_freq : int
+        Run eval every this many timesteps (default 50_000).
+    n_episodes : int
+        Episodes per difficulty level per eval (default 20).
+    difficulties : tuple[int, ...]
+        Difficulty levels to evaluate (default (1, 2, 3, 4)).
+    verbose : int
+        Verbosity (1 = print summary per eval, 0 = silent).
+    """
     def __init__(
         self,
         db_path: str,

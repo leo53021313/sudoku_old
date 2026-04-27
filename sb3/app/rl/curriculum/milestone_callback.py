@@ -4,12 +4,17 @@
 MilestoneCallback — abort training early if predefined health/performance
 milestones aren't met. Saves wasted compute on a doomed 6.5-hour run.
 
-Milestones (per Phase 1 design spec §6):
-  100k  : approx_kl < 0.05 AND entropy_loss > -2.0    (PPO health)
-  300k  : success_rate_L1 >= 0.75                      (Stage 1 finished)
-  500k  : success_rate_L1 >= 0.70 AND L2 >= 0.50
-  1M    : L1 >= 0.80 AND L2 >= 0.70 AND L3 >= 0.50       (warn only)
-  2M    : L1, L2, L3 >= 0.80 AND L4 >= 0.30             (final pass/fail)
+Milestones (Phase 1.5: only 100k is hard-abort; success-rate milestones
+are warn-only because random fetcher trajectories diverge from Phase 1's
+biased ones):
+  100k  : approx_kl < 0.05 AND entropy_loss > -2.0    (PPO health, hard abort)
+  300k  : success_rate_L1 >= 0.75                      (warn only)
+  500k  : success_rate_L1 >= 0.70 AND L2 >= 0.50      (warn only)
+  1M    : L1 >= 0.80 AND L2 >= 0.70 AND L3 >= 0.50    (warn only)
+  2M    : L1, L2, L3 >= 0.80 AND L4 >= 0.30            (warn only)
+
+Final pass/fail of Phase 1.5 comes from eval/reserved_* metrics
+(see ReservedEvalCallback), not from these milestones.
 
 The callback queries the curriculum's rolling success buffers + the latest
 PPO log values. On hard fail, returns False from _on_step() so SB3's
