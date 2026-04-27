@@ -8,7 +8,7 @@ import traceback as _traceback
 import requests
 from PyQt6.QtCore import QThread, pyqtSignal
 
-from app.web.reader import fetch_puzzle_via_requests, get_level_url, BlockedError
+from app.web.reader import fetch_puzzle_via_requests, get_level_url, BlockedError, ParseError
 from app.web.proxy_manager import ProxyManager
 from app.db.pool_db import PuzzlePoolDB
 from config import CrawlerConfig
@@ -100,6 +100,17 @@ class CrawlerWorker(QThread):
                 self.event_signal.emit({
                     "type": "blocked",
                     "proxy": server_url or "direct",
+                    "worker_id": self.worker_id,
+                })
+                continue
+            except ParseError as exc:
+                # Proxy returned non-puzzle content (e.g. transparent proxy injecting
+                # its own page). Blacklist and emit a short, traceback-free event.
+                if server_url:
+                    self.proxy_manager.blacklist_server(server_url)
+                self.event_signal.emit({
+                    "type": "parse_error",
+                    "msg": f"{type(exc).__name__}: {server_url or 'direct'}",
                     "worker_id": self.worker_id,
                 })
                 continue

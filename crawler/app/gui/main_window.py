@@ -163,6 +163,8 @@ class MainWindow(QMainWindow):
             self.log_widget.add_message(event["msg"], "yellow")
         elif t == "net_error":
             self.log_widget.add_message(f"✗ {event['msg']}", "grey")
+        elif t == "parse_error":
+            self.log_widget.add_message(f"✗ {event['msg']}", "grey")
         elif t == "error":
             self.log_widget.add_message(f"✗ {event['msg']}", "red")
 

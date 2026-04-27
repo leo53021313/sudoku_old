@@ -96,6 +96,54 @@ def test_proxy_error_emits_short_net_error_not_traceback(qapp, worker, monkeypat
         f"Routine ProxyError should not produce error events, got: {error_events}"
 
 
+def test_parse_error_emits_short_event_and_blacklists_proxy(qapp, worker, monkeypatch):
+    """ParseError must produce a short parse_error event (no traceback) and blacklist the proxy."""
+    import app.core.worker as worker_mod
+    from app.web.reader import ParseError
+
+    # Configure proxy to return a fake server URL so blacklisting can be observed
+    worker.proxy_manager.get_requests_proxy.return_value = {
+        "http": "socks4://1.2.3.4:8008",
+        "https": "socks4://1.2.3.4:8008",
+    }
+
+    emitted = []
+
+    def on_event(d):
+        emitted.append(d)
+        worker._stop = True
+
+    worker.event_signal.connect(on_event)
+
+    monkeypatch.setattr(
+        worker_mod, "fetch_puzzle_via_requests",
+        lambda *a, **kw: (_ for _ in ()).throw(
+            ParseError("解析失敗：找到 0 格，預期 81 格（proxy=socks4://1.2.3.4:8008）")
+        ),
+    )
+    worker.db.get_pool_stats = lambda: {"total": 0}
+    monkeypatch.setattr("random.uniform", lambda a, b: 0.0)
+
+    worker._stop = False
+    worker.run()
+
+    parse_events = [e for e in emitted if e.get("type") == "parse_error"]
+    assert parse_events, "No parse_error event emitted for ParseError"
+    msg = parse_events[0]["msg"]
+    assert "Traceback" not in msg, \
+        f"parse_error msg must not contain traceback, got: {msg!r}"
+    assert "ParseError" in msg, \
+        f"Expected exception class name in msg, got: {msg!r}"
+
+    # No `error` (red) events should leak through
+    error_events = [e for e in emitted if e.get("type") == "error"]
+    assert not error_events, \
+        f"ParseError should not produce error events, got: {error_events}"
+
+    # Verify proxy was blacklisted
+    worker.proxy_manager.blacklist_server.assert_called_once_with("socks4://1.2.3.4:8008")
+
+
 def test_get_stats_cached_within_ttl(tmp_path):
     """get_pool_stats must not be called more than once per 2s within a single worker."""
     from app.core.worker import CrawlerWorker

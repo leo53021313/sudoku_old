@@ -58,6 +58,11 @@ class BlockedError(RuntimeError):
     pass
 
 
+class ParseError(ValueError):
+    """頁面不是有效的 81 格數獨；通常代表 proxy 回了非預期內容。"""
+    pass
+
+
 # ── HTML 解析器（用於 requests 直接抓取） ───────────────────────────────────
 
 class _PuzzleHTMLParser(HTMLParser):
@@ -205,7 +210,7 @@ def fetch_puzzle_via_requests(url, proxy_dict=None, timeout=8, debug=False):
                 print("[DEBUG 步驟5] iframe 成功解析 81 格，回傳棋盤")
             return parser2.board, parser2.fixed
 
-    raise ValueError(
+    raise ParseError(
         f"解析失敗：找到 {parser.cell_count} 格，預期 81 格"
         f"（proxy={proxy_label}）"
     )
