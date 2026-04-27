@@ -369,7 +369,7 @@ class PuzzlePoolDB:
                 f" WHERE status IN ('new','training')"
                 f" {level_clause} {tries_clause}"
                 f" ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,"
-                f"          tries ASC, best_empty ASC, id ASC"
+                f"          RANDOM()"
                 f" LIMIT 1",
                 args,
             ).fetchone()
