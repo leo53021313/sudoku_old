@@ -43,6 +43,7 @@ from app.rl.models.features_extractor import SudokuFeaturesExtractor
 from app.rl.models.sudoku_ppo import SudokuMaskablePPO
 from app.rl.curriculum.callback import CurriculumCallback, CURRICULUM_STAGES
 from app.rl.curriculum.eval_callback import SudokuEvalCallback
+from app.rl.curriculum.milestone_callback import MilestoneCallback
 
 
 DB_PATH    = str(Path(__file__).parent.parent / "data" / "puzzle_pool.db")
@@ -126,11 +127,11 @@ def main() -> None:
             env=vec_env,
             n_steps=512,
             batch_size=64,
-            n_epochs=10,
+            n_epochs=4,                    # was 10 — main KL driver
             gamma=0.99,
             gae_lambda=0.95,
-            clip_range=0.2,
-            ent_coef=0.01,
+            clip_range=0.1,                # was 0.2 — tighten clip
+            ent_coef=0.02,                 # was 0.01 — slow entropy collapse
             vf_coef=0.5,
             max_grad_norm=0.5,
             learning_rate=LinearSchedule(3e-4, 1e-5, end_fraction=1.0),
@@ -153,7 +154,6 @@ def main() -> None:
     # ── Callbacks ─────────────────────────────────────────────────────────────
     curriculum = CurriculumCallback(
         stages=CURRICULUM_STAGES,
-        window=100,
         verbose=args.verbose,
     )
     checkpoint = CheckpointCallback(
@@ -190,10 +190,13 @@ def main() -> None:
         verbose=args.verbose,
     )
 
+    milestones = MilestoneCallback(verbose=args.verbose)
+    milestones.attach_curriculum(curriculum)
+
     # ── Training ──────────────────────────────────────────────────────────────
     model.learn(
         total_timesteps=args.timesteps,
-        callback=[curriculum, checkpoint, eval_cb],
+        callback=[curriculum, milestones, checkpoint, eval_cb],
         reset_num_timesteps=args.load_model is None,
     )
 
