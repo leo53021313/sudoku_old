@@ -26,6 +26,12 @@ import os
 import sys
 from pathlib import Path
 
+# Force UTF-8 on stdout/stderr so logs with → ≥ ≤ etc. don't crash on
+# Windows cp950/cp936 consoles. Must run BEFORE any module-level prints.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 import torch
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env

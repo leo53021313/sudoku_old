@@ -11,6 +11,12 @@ import sys
 import threading
 from pathlib import Path
 
+# Force UTF-8 on stdout/stderr so logs with → ⚠ 池等字元 don't crash on
+# Windows cp950/cp936 consoles.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 from PyQt6.QtWidgets import QApplication
 
 from config import CrawlerConfig
