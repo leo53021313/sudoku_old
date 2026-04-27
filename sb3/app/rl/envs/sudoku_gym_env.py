@@ -216,34 +216,37 @@ class SudokuGymEnv(gym.Env):
     # ── Observation builder ───────────────────────────────────────────────────
 
     def _obs(self) -> np.ndarray:
+        # Snapshot the board so the returned obs is isolated from any subsequent
+        # mutation of self.board (matters under shared-memory VecEnv backends).
+        board = self.board.copy()
         obs = np.zeros((self.N_CHANNELS, 9, 9), dtype=np.float32)
 
         # Channels 0-8: one-hot board planes (digit 1..9 → index 0..8)
         for v in range(1, 10):
-            obs[v - 1] = (self.board == v).astype(np.float32)
+            obs[v - 1] = (board == v).astype(np.float32)
 
         # Channels 9-17: per-digit candidate planes (v is still legal at (r,c))
         for r in range(9):
             for c in range(9):
-                if self.board[r, c] == 0:
+                if board[r, c] == 0:
                     for v in self.candidates_cache[r][c]:
                         obs[9 + v - 1, r, c] = 1.0
 
         # Channel 18: fixed (given) cells
         obs[18] = self.fixed.astype(np.float32)
         # Channel 19: empty cells
-        obs[19] = (self.board == 0).astype(np.float32)
+        obs[19] = (board == 0).astype(np.float32)
 
         # Channel 20: row fill ratio
         for r in range(9):
-            obs[20, r, :] = float(np.count_nonzero(self.board[r, :] != 0)) / 9.0
+            obs[20, r, :] = float(np.count_nonzero(board[r, :] != 0)) / 9.0
         # Channel 21: col fill ratio
         for c in range(9):
-            obs[21, :, c] = float(np.count_nonzero(self.board[:, c] != 0)) / 9.0
+            obs[21, :, c] = float(np.count_nonzero(board[:, c] != 0)) / 9.0
         # Channel 22: box fill ratio
         for br in range(3):
             for bc in range(3):
-                box = self.board[br*3:(br+1)*3, bc*3:(bc+1)*3]
+                box = board[br*3:(br+1)*3, bc*3:(bc+1)*3]
                 obs[22, br*3:(br+1)*3, bc*3:(bc+1)*3] = float(np.count_nonzero(box != 0)) / 9.0
 
         # Channel 23: candidate count / 9.0
