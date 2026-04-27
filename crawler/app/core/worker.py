@@ -34,6 +34,7 @@ class CrawlerWorker(QThread):
         self._stop = False
         self._stats_cache: dict | None = None
         self._stats_ts: float = 0.0
+        self._warned_direct: bool = False
 
     def stop(self) -> None:
         self._stop = True
@@ -67,6 +68,14 @@ class CrawlerWorker(QThread):
             # Choose proxy (None = direct connection)
             proxy_dict = self.proxy_manager.get_requests_proxy()
             server_url: str | None = proxy_dict.get("http") if proxy_dict else None
+
+            if proxy_dict is None and not self._warned_direct:
+                self._warned_direct = True
+                self.event_signal.emit({
+                    "type": "warn",
+                    "msg": "⚠ Proxy 池為空，使用直連模式",
+                    "worker_id": self.worker_id,
+                })
 
             # Weighted random difficulty level
             level = random.choices([1, 2, 3, 4], weights=self.config.level_weights, k=1)[0]

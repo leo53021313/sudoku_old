@@ -159,6 +159,8 @@ class MainWindow(QMainWindow):
             self.log_widget.add_message(
                 f"⚠ BlockedError → blacklist {event['proxy']}", "yellow"
             )
+        elif t == "warn":
+            self.log_widget.add_message(event["msg"], "yellow")
         elif t == "error":
             self.log_widget.add_message(f"✗ {event['msg']}", "red")
 

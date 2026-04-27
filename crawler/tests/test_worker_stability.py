@@ -89,6 +89,59 @@ def test_get_stats_cached_within_ttl(tmp_path):
         f"Expected 1 DB call (cached), got {call_count[0]}"
 
 
+def test_worker_warns_on_direct_connect(qapp, tmp_path, monkeypatch):
+    """Worker must emit one 'warn' event when proxy pool is empty (direct connect)."""
+    from app.core.worker import CrawlerWorker
+    from app.db.pool_db import PuzzlePoolDB
+    from config import CrawlerConfig
+    import app.core.worker as worker_mod
+    from unittest.mock import MagicMock
+
+    db = PuzzlePoolDB(str(tmp_path / "test.db"))
+    config = CrawlerConfig(num_workers=1, max_pool_size=100)
+
+    proxy = MagicMock()
+    proxy.get_requests_proxy.return_value = None  # empty proxy pool
+
+    worker = CrawlerWorker(0, config, proxy, db)
+
+    emitted = []
+    worker.event_signal.connect(lambda d: emitted.append(d))
+    worker._stop = False
+
+    # Patch fetch to succeed and stop the worker after first iteration
+    monkeypatch.setattr(
+        worker_mod, "fetch_puzzle_via_requests",
+        lambda *a, **kw: ([[0]*9]*9, [[False]*9]*9),
+    )
+    call_count = [0]
+
+    def patched_upsert(board, source, level):
+        call_count[0] += 1
+        worker._stop = True
+        return {"inserted": True, "puzzle_id": 1}
+
+    db.upsert_puzzle = patched_upsert
+    monkeypatch.setattr("random.uniform", lambda a, b: 0.0)
+
+    worker.run()
+
+    warn_events = [e for e in emitted if e.get("type") == "warn"]
+    assert warn_events, "No warn event emitted when proxy pool is empty"
+    assert "直連" in warn_events[0]["msg"] or "direct" in warn_events[0]["msg"].lower(), \
+        f"Expected direct-connect warning, got: {warn_events[0]['msg']!r}"
+
+    # Second run on the same worker: warning should NOT repeat
+    emitted.clear()
+    worker._stop = False
+    db.upsert_puzzle = patched_upsert  # re-attach (still stops after first iter)
+
+    worker.run()
+
+    warn_events2 = [e for e in emitted if e.get("type") == "warn"]
+    assert not warn_events2, "Warn should only be emitted once per worker, not on every iteration"
+
+
 def test_straggler_threads_are_terminated(qapp, tmp_path, monkeypatch):
     """Threads that don't stop within 5s must have terminate() called on them."""
     from app.gui.main_window import MainWindow
