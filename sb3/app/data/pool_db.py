@@ -26,6 +26,13 @@ def now_str():
 # the maximum number of attempts.
 _LOCK_RETRY_DELAYS = (0.1, 0.3, 1.0)
 
+# Columns that may need to be added on-the-fly when opening an older DB.
+# Adding a new column here is a one-line migration; ``_migrate`` will detect
+# any column not present in PRAGMA table_info(puzzles) and ALTER TABLE it.
+_EXTRA_COLUMNS = {
+    "level": "INTEGER NOT NULL DEFAULT 1",
+}
+
 
 class PuzzlePoolDB:
 
@@ -113,6 +120,21 @@ class PuzzlePoolDB:
             raise last_exc
         raise RuntimeError("_retry_transaction exhausted without result")
 
+    def _migrate(self, conn) -> None:
+        """Add any missing columns to puzzles table. Safe to call multiple times.
+
+        Uses PRAGMA table_info to inspect the current schema and only issues
+        ALTER TABLE for columns that are not already present. Adding a new
+        column is a one-line addition to ``_EXTRA_COLUMNS``.
+        """
+        existing = {row[1] for row in
+                    conn.execute("PRAGMA table_info(puzzles)")}
+        for col, definition in _EXTRA_COLUMNS.items():
+            if col not in existing:
+                conn.execute(
+                    f"ALTER TABLE puzzles ADD COLUMN {col} {definition}"
+                )
+
     def _init_db(self):
         with self.transaction() as conn:
             conn.execute("""
@@ -136,14 +158,9 @@ class PuzzlePoolDB:
             );
             """)
 
-            # 舊資料庫遷移：必須在建立 level 索引之前確保欄位存在
-            try:
-                conn.execute(
-                    "ALTER TABLE puzzles"
-                    " ADD COLUMN level INTEGER NOT NULL DEFAULT 1"
-                )
-            except sqlite3.OperationalError:
-                pass  # 欄位已存在（新建 DB 或已遷移過），略過
+            # 舊資料庫遷移：透過 PRAGMA table_info 檢查欄位是否存在，
+            # 比依賴 ALTER TABLE 例外更明確、更易擴充。
+            self._migrate(conn)
 
             conn.execute("""
             CREATE TABLE IF NOT EXISTS solutions (
