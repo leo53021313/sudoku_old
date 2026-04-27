@@ -9,6 +9,10 @@ Does NOT use EvalCallback from SB3 because that doesn't pass action masks.
 
 Phase 1 addition: each failure appends one JSON line to <log_dir>/eval_failures.jsonl
 so the rollout/eval success-rate divergence can be diagnosed offline.
+
+Phase 1.5 fix: pulls puzzles via fetch_random_puzzles (read-only) instead of
+env.reset() / fetch_one_puzzle_for_training (which is biased toward
+"easy-for-this-model" puzzles via best_empty ASC ordering).
 """
 
 from __future__ import annotations
@@ -20,7 +24,9 @@ from pathlib import Path
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 
+from app.data.pool_db import PuzzlePoolDB
 from app.rl.envs.sudoku_gym_env import SudokuGymEnv
+from app.rl.envs.sudoku_solver import solve
 
 
 def _log_failure_record(path: str, record: dict) -> None:
@@ -41,21 +47,6 @@ def _log_failure_record(path: str, record: dict) -> None:
 
 
 class SudokuEvalCallback(BaseCallback):
-    """
-    Parameters
-    ----------
-    db_path : str
-        Path to puzzle DB (same as training).
-    eval_freq : int
-        Run eval every this many timesteps (default 50_000).
-    n_episodes : int
-        Episodes per difficulty level per eval (default 20).
-    difficulties : tuple[int, ...]
-        Difficulty levels to evaluate (default (1, 2, 3, 4)).
-    verbose : int
-        Verbosity (1 = print summary per eval, 0 = silent).
-    """
-
     def __init__(
         self,
         db_path: str,
@@ -92,30 +83,40 @@ class SudokuEvalCallback(BaseCallback):
         self._last_eval = self.num_timesteps
 
         try:
+            db = PuzzlePoolDB(self._db_path)
             total_s, total_n = 0, 0
             level_rates: dict[int, float] = {}
 
             for diff in self._difficulties:
-                self._eval_env.set_difficulty_distribution({diff: 1.0})
+                rows = db.fetch_random_puzzles(level=diff, n=self._n_episodes)
                 successes = []
-                for _ in range(self._n_episodes):
-                    obs, _ = self._eval_env.reset()
-                    solution = self._eval_env.solution.copy()
-                    history: list[tuple[int, int, int, int, float]] = []  # (r, c, correct_v, picked_v, teacher_quality)
+
+                for row in rows:
+                    board = np.array(
+                        PuzzlePoolDB.string_to_board(row["puzzle"]),
+                        dtype=np.int8,
+                    )
+                    sol = solve(board)
+                    if sol is None:
+                        continue  # skip unsolvable rows defensively
+                    obs, _ = self._eval_env.reset(options={
+                        "board": board,
+                        "solution": sol,
+                        "difficulty": diff,
+                    })
+                    history: list[tuple[int, int, int, int, float]] = []
                     done = False
                     while not done:
-                        masks = self._eval_env.action_masks()[np.newaxis]          # (1, 729)
+                        masks = self._eval_env.action_masks()[np.newaxis]
                         action, _ = self.model.predict(
-                            obs[np.newaxis],                             # (1, C, 9, 9)
+                            obs[np.newaxis],
                             action_masks=masks,
                             deterministic=True,
                         )
                         a_int = int(action[0])
                         r, c, v = self._eval_env._decode(a_int)
-                        correct_v = int(solution[r, c])
+                        correct_v = int(sol[r, c])
                         obs, _, terminated, truncated, info = self._eval_env.step(a_int)
-                        # env.step() captures teacher quality on the PRE-step state and
-                        # exposes it via info; this avoids running the teacher twice.
                         teacher_q = float(info.get("teacher_quality", 0.0))
                         history.append((r, c, correct_v, v, teacher_q))
                         done = terminated or truncated
@@ -123,7 +124,6 @@ class SudokuEvalCallback(BaseCallback):
                     successes.append(is_success)
 
                     if not is_success:
-                        # First step where model's value diverged from solution
                         first_wrong = next(
                             (i for i, (_, _, cv, pv, _) in enumerate(history) if cv != pv),
                             len(history) - 1,
@@ -139,12 +139,11 @@ class SudokuEvalCallback(BaseCallback):
                             "teacher_quality_at_that_step": float(tq),
                         })
 
-                rate = float(np.mean(successes))
+                rate = float(np.mean(successes)) if successes else 0.0
                 level_rates[diff] = rate
                 total_s += sum(successes)
                 total_n += len(successes)
 
-            # All difficulties succeeded — log atomically so TensorBoard records are complete
             for diff in self._difficulties:
                 self.logger.record(f"eval/success_rate_L{diff}", level_rates[diff])
             overall = total_s / max(total_n, 1)
