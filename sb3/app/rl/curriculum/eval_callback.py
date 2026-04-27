@@ -6,14 +6,38 @@ SudokuEvalCallback — fixed held-out eval using action-masked prediction.
 Runs N deterministic episodes per difficulty level every eval_freq steps.
 Logs eval/success_rate_L{d} and eval/success_rate_overall to TensorBoard.
 Does NOT use EvalCallback from SB3 because that doesn't pass action masks.
+
+Phase 1 addition: each failure appends one JSON line to <log_dir>/eval_failures.jsonl
+so the rollout/eval success-rate divergence can be diagnosed offline.
 """
 
 from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
 
 import numpy as np
 from stable_baselines3.common.callbacks import BaseCallback
 
 from app.rl.envs.sudoku_gym_env import SudokuGymEnv
+
+
+def _log_failure_record(path: str, record: dict) -> None:
+    """Append one JSONL record. Coerces numpy scalars/arrays via json default."""
+    def _default(o):
+        if isinstance(o, (np.integer,)):
+            return int(o)
+        if isinstance(o, (np.floating,)):
+            return float(o)
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        raise TypeError(f"Not JSON serialisable: {type(o)}")
+
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, default=_default))
+        f.write("\n")
 
 
 class SudokuEvalCallback(BaseCallback):
@@ -46,12 +70,21 @@ class SudokuEvalCallback(BaseCallback):
         self._n_episodes   = n_episodes
         self._difficulties = difficulties
         self._last_eval    = 0
+        self._failures_path: str | None = None  # set on first eval
 
     def _init_callback(self) -> None:
         self._eval_env = SudokuGymEnv(db_path=self._db_path)
 
     def _on_training_end(self) -> None:
         self._eval_env.close()
+
+    def _resolve_failures_path(self) -> str:
+        """Locate failures.jsonl relative to the active TB run directory."""
+        if self._failures_path is not None:
+            return self._failures_path
+        log_dir = getattr(self.logger, "dir", None) or "."
+        self._failures_path = os.path.join(log_dir, "eval_failures.jsonl")
+        return self._failures_path
 
     def _on_step(self) -> bool:
         if self.num_timesteps - self._last_eval < self._eval_freq:
@@ -67,6 +100,8 @@ class SudokuEvalCallback(BaseCallback):
                 successes = []
                 for _ in range(self._n_episodes):
                     obs, _ = self._eval_env.reset()
+                    solution = self._eval_env.solution.copy()
+                    history: list[tuple[int, int, int, int, float]] = []  # (r, c, correct_v, picked_v, teacher_quality)
                     done = False
                     while not done:
                         masks = self._eval_env.action_masks()[np.newaxis]          # (1, 729)
@@ -75,9 +110,33 @@ class SudokuEvalCallback(BaseCallback):
                             action_masks=masks,
                             deterministic=True,
                         )
-                        obs, _, terminated, truncated, info = self._eval_env.step(int(action[0]))
+                        a_int = int(action[0])
+                        r, c, v = self._eval_env._decode(a_int)
+                        correct_v = int(solution[r, c])
+                        # Capture teacher quality on PRE-step state (teacher reads board+candidates)
+                        teacher_q = float(self._eval_env._teacher(self._eval_env)[1])
+                        history.append((r, c, correct_v, v, teacher_q))
+                        obs, _, terminated, truncated, info = self._eval_env.step(a_int)
                         done = terminated or truncated
-                    successes.append(info["is_success"])
+                    is_success = info["is_success"]
+                    successes.append(is_success)
+
+                    if not is_success:
+                        # First step where model's value diverged from solution
+                        first_wrong = next(
+                            (i for i, (_, _, cv, pv, _) in enumerate(history) if cv != pv),
+                            len(history) - 1,
+                        )
+                        r, c, cv, pv, tq = history[first_wrong]
+                        _log_failure_record(self._resolve_failures_path(), {
+                            "step": int(self.num_timesteps),
+                            "difficulty": int(diff),
+                            "first_wrong_step": int(first_wrong),
+                            "model_picked_cell": [int(r), int(c)],
+                            "model_picked_value": int(pv),
+                            "correct_value": int(cv),
+                            "teacher_quality_at_that_step": float(tq),
+                        })
 
                 rate = float(np.mean(successes))
                 level_rates[diff] = rate
