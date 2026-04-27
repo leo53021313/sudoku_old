@@ -14,7 +14,6 @@ def test_log_failure_record_writes_one_jsonl_line(tmp_path):
     record = {
         "step": 100_000,
         "difficulty": 2,
-        "puzzle_id": 12345,
         "first_wrong_step": 7,
         "model_picked_cell": [3, 5],
         "model_picked_value": 9,

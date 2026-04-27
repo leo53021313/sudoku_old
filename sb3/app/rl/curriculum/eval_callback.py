@@ -113,10 +113,11 @@ class SudokuEvalCallback(BaseCallback):
                         a_int = int(action[0])
                         r, c, v = self._eval_env._decode(a_int)
                         correct_v = int(solution[r, c])
-                        # Capture teacher quality on PRE-step state (teacher reads board+candidates)
-                        teacher_q = float(self._eval_env._teacher(self._eval_env)[1])
-                        history.append((r, c, correct_v, v, teacher_q))
                         obs, _, terminated, truncated, info = self._eval_env.step(a_int)
+                        # env.step() captures teacher quality on the PRE-step state and
+                        # exposes it via info; this avoids running the teacher twice.
+                        teacher_q = float(info.get("teacher_quality", 0.0))
+                        history.append((r, c, correct_v, v, teacher_q))
                         done = terminated or truncated
                     is_success = info["is_success"]
                     successes.append(is_success)
