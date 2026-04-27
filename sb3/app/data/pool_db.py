@@ -12,6 +12,7 @@ import os
 import json
 import sqlite3
 import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -19,6 +20,11 @@ from typing import Any, Dict, List, Optional
 
 def now_str():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+# Retry delays (seconds) for "database is locked" errors. Length determines
+# the maximum number of attempts.
+_LOCK_RETRY_DELAYS = (0.1, 0.3, 1.0)
 
 
 class PuzzlePoolDB:
@@ -67,6 +73,45 @@ class PuzzlePoolDB:
         except Exception:
             conn.rollback()
             raise
+
+    def _retry_transaction(self, fn):
+        """Run fn(conn) with auto-commit and retry on 'database is locked'.
+
+        Retries up to len(_LOCK_RETRY_DELAYS) times with the configured delays.
+        On non-lock OperationalError or after the final attempt, the exception
+        is re-raised. The fn must not commit; this helper handles commit and
+        rollback.
+        """
+        last_exc: Optional[BaseException] = None
+        for attempt, delay in enumerate(_LOCK_RETRY_DELAYS, 1):
+            conn = None
+            try:
+                conn = self._get_conn()
+                result = fn(conn)
+                conn.commit()
+                return result
+            except sqlite3.OperationalError as e:
+                # Best-effort rollback (conn may be None if _get_conn raised)
+                if conn is not None:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                last_exc = e
+                if "locked" not in str(e).lower() or \
+                        attempt == len(_LOCK_RETRY_DELAYS):
+                    raise
+                print(
+                    f"[pool_db] DB busy, retry {attempt}/"
+                    f"{len(_LOCK_RETRY_DELAYS)} in {delay}s",
+                    flush=True,
+                )
+                time.sleep(delay)
+        # Defensive: should be unreachable since the loop either returns or
+        # raises, but guard anyway.
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("_retry_transaction exhausted without result")
 
     def _init_db(self):
         with self.transaction() as conn:
@@ -285,6 +330,10 @@ class PuzzlePoolDB:
         """
         取出一道可訓練題目並鎖定（status → 'training'）。
         level：若指定則只取該難度的題目（擴充介面）。
+
+        Uses ``_retry_transaction`` for resilience against transient
+        "database is locked" errors when many env workers race to lock
+        a puzzle simultaneously.
         """
         now = now_str()
 
@@ -297,7 +346,7 @@ class PuzzlePoolDB:
         if max_tries is not None:
             args.append(int(max_tries))
 
-        with self.transaction() as conn:
+        def _do(conn):
             row = conn.execute(
                 f"SELECT * FROM puzzles"
                 f" WHERE status IN ('new','training')"
@@ -322,6 +371,8 @@ class PuzzlePoolDB:
                     "SELECT * FROM puzzles WHERE id=?", (row["id"],)
                 ).fetchone()
             )
+
+        return self._retry_transaction(_do)
 
     def fetch_random_puzzles(
         self,
