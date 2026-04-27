@@ -24,8 +24,8 @@ def test_refresh_shows_error_label_on_db_failure(qapp, tmp_path):
         f"Expected error label, got: {label_text!r}"
 
 
-def test_refresh_resets_error_flag_on_success(qapp, tmp_path):
-    """After a failed refresh, a successful refresh must clear the error label."""
+def test_refresh_recovers_after_failure(qapp, tmp_path):
+    """After a failed refresh, a successful refresh must replace the error label with the count."""
     from app.gui.db_panel import DbPanel
     from app.db.pool_db import PuzzlePoolDB
 
@@ -35,13 +35,12 @@ def test_refresh_resets_error_flag_on_success(qapp, tmp_path):
     # Fail first
     db.get_pool_stats = MagicMock(side_effect=Exception("DB locked"))
     panel.refresh()
-    assert panel._refresh_error_shown is True
+    assert "DB 錯誤" in panel._total_lbl.text()
 
     # Succeed next — create a new DB that works
     real_db = PuzzlePoolDB(str(tmp_path / "test.db"))
     panel.db = real_db
 
     panel.refresh()
-    assert panel._refresh_error_shown is False
     assert "總計" in panel._total_lbl.text(), \
         f"Expected success label, got: {panel._total_lbl.text()!r}"

@@ -22,7 +22,6 @@ class DbPanel(QWidget):
         super().__init__(parent)
         self.db = db
         self.max_pool_size = max_pool_size
-        self._refresh_error_shown: bool = False
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -111,11 +110,9 @@ class DbPanel(QWidget):
             per_level = [self.db.get_pool_stats(level=i) for i in range(1, 5)]
             grand = self.db.get_pool_stats()
         except Exception as e:
-            self._refresh_error_shown = True
             self._total_lbl.setText(f"DB 錯誤: {e}")
             return
 
-        self._refresh_error_shown = False
         total = grand["total"]
         self._total_lbl.setText(f"總計 {total:,} 筆")
 
