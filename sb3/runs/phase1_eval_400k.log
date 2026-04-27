@@ -1,0 +1,13 @@
+
+=== Sudoku Eval ¡X models/sudoku_sb3_ckpt_400000_steps.zip ===
+Eval set: reserved  |  50 puzzles/difficulty  |  Difficulties: L1 L2 L3 L4
+
+[EvalPuzzleSet] Loaded 40 reserved puzzles from C:\Users\student\Desktop\sudoku_old\sb3\data\eval_puzzles.json
+Difficulty   Success        Avg Steps    Avg Reward
+¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w
+L1           0/10     0%       10.6          1.9
+L2           0/10     0%        6.8        -10.4
+L3           0/10     0%        6.7        -12.6
+L4           0/10     0%        7.5        -11.0
+¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w
+Overall      0/40    0%        7.9         -8.0
