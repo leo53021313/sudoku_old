@@ -128,3 +128,34 @@ def test_value_always_matches_solution_on_random_partial_boards():
         assert v == int(sol[r, c]), \
             f"teacher value {v} != solution[{r},{c}]={sol[r,c]} (quality={quality})"
         assert quality in (1.00, 0.75, 0.50, 0.30)
+
+
+def test_mrv_fallback_value_differs_from_min_candidates_when_solution_is_higher():
+    """
+    Strong MRV regression: construct a board where (a) the MRV cell has multiple
+    candidates and (b) solution[that cell] != min(candidates). The OLD teacher
+    would have returned min(candidates) (bug); the new teacher must return
+    solution[cell].
+
+    Setup:
+      - Use a fully empty 9x9 board so EVERY empty cell has 9 candidates {1..9}.
+      - This guarantees no naked single, no hidden single, no pointing pair.
+      - Teacher falls to MRV tier; MRV picks (0,0) (smallest cnt-then-(r,c) tie-break).
+      - solution[0,0] in our solved grid is 5, but min({1..9}) = 1, so 5 != 1.
+    """
+    sol = _solved_grid()
+    assert int(sol[0, 0]) == 5  # sanity: solution at (0,0) is 5
+    board = np.zeros((9, 9), dtype=np.int8)  # fully empty
+    env = _make_env_with_state(board, sol)
+
+    teacher = TeacherEngine()
+    action, quality = teacher(env)
+
+    assert action is not None
+    r, c, v = action
+    # MRV picks (0,0) — first cell in scan order with min candidate count (all are 9)
+    assert (r, c) == (0, 0), f"MRV should pick (0,0), got ({r},{c})"
+    # Value must be solution[0,0] = 5, NOT min(candidates) = 1
+    assert v == 5, f"Oracle teacher must return solution[0,0]=5, got {v} (likely the old MRV bug returning min(candidates)=1)"
+    # Quality must be MRV tier (0.30)
+    assert quality == 0.30, f"Empty board has no naked/hidden/pointing — must be MRV (0.30), got {quality}"
