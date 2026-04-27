@@ -22,10 +22,11 @@ def test_bc_logprob_differs_with_masks():
         policy_kwargs=dict(
             features_extractor_class=SudokuFeaturesExtractor,
             features_extractor_kwargs={"features_dim": 192},
-            net_arch=[],
+            net_arch={"pi": [], "vf": [128]},
         ),
     )
-    obs_np = np.random.rand(4, 9, 9, 9).astype(np.float32)
+    n_channels = env.observation_space.shape[0]
+    obs_np = np.random.rand(4, n_channels, 9, 9).astype(np.float32)
     obs_t  = torch.as_tensor(obs_np, device=model.device)
     actions = torch.zeros(4, dtype=torch.long, device=model.device)
 
