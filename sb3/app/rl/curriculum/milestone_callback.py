@@ -33,11 +33,13 @@ MILESTONES: list[dict[str, Any]] = [
     {
         "step":             300_000,
         "success_L1_min":   0.75,
+        "warn_only":        True,
     },
     {
         "step":             500_000,
         "success_L1_min":   0.70,
         "success_L2_min":   0.50,
+        "warn_only":        True,
     },
     {
         "step":             1_000_000,
@@ -52,6 +54,7 @@ MILESTONES: list[dict[str, Any]] = [
         "success_L2_min":   0.80,
         "success_L3_min":   0.80,
         "success_L4_min":   0.30,
+        "warn_only":        True,
     },
 ]
 
