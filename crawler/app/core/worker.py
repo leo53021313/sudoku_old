@@ -5,6 +5,7 @@ import random
 import time
 import traceback as _traceback
 
+import requests
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from app.web.reader import fetch_puzzle_via_requests, get_level_url, BlockedError
@@ -102,7 +103,15 @@ class CrawlerWorker(QThread):
                     "worker_id": self.worker_id,
                 })
                 continue
-            except Exception as exc:
+            except requests.exceptions.RequestException as exc:
+                # Routine network/proxy failure — short summary, no traceback spam
+                self.event_signal.emit({
+                    "type": "net_error",
+                    "msg": f"{type(exc).__name__}: {server_url or 'direct'}",
+                    "worker_id": self.worker_id,
+                })
+            except Exception:
+                # Unexpected error — emit full traceback for diagnosis
                 self.event_signal.emit({
                     "type": "error",
                     "msg": _traceback.format_exc(),

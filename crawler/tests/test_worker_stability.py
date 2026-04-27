@@ -57,6 +57,45 @@ def test_error_signal_contains_traceback(qapp, worker, monkeypatch):
         f"Expected 'connection reset' in msg, got: {error_events[0]['msg']!r}"
 
 
+def test_proxy_error_emits_short_net_error_not_traceback(qapp, worker, monkeypatch):
+    """Routine requests.exceptions.RequestException must produce a short net_error, not a full traceback."""
+    import app.core.worker as worker_mod
+    import requests
+
+    emitted = []
+
+    def on_event(d):
+        emitted.append(d)
+        worker._stop = True
+
+    worker.event_signal.connect(on_event)
+
+    monkeypatch.setattr(
+        worker_mod, "fetch_puzzle_via_requests",
+        lambda *a, **kw: (_ for _ in ()).throw(
+            requests.exceptions.ProxyError("Unable to connect to proxy")
+        ),
+    )
+    worker.db.get_pool_stats = lambda: {"total": 0}
+    monkeypatch.setattr("random.uniform", lambda a, b: 0.0)
+
+    worker._stop = False
+    worker.run()
+
+    net_events = [e for e in emitted if e.get("type") == "net_error"]
+    assert net_events, "No net_error event emitted for ProxyError"
+    msg = net_events[0]["msg"]
+    assert "Traceback" not in msg, \
+        f"net_error msg must not contain traceback, got: {msg!r}"
+    assert "ProxyError" in msg, \
+        f"Expected exception class name in msg, got: {msg!r}"
+
+    # Also confirm no `error` (red) events leaked through
+    error_events = [e for e in emitted if e.get("type") == "error"]
+    assert not error_events, \
+        f"Routine ProxyError should not produce error events, got: {error_events}"
+
+
 def test_get_stats_cached_within_ttl(tmp_path):
     """get_pool_stats must not be called more than once per 2s within a single worker."""
     from app.core.worker import CrawlerWorker
