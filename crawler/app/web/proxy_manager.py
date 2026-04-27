@@ -126,7 +126,7 @@ class ProxyManager:
         self,
         max_validate=None,
         max_workers=100,
-        timeout=8,
+        timeout=3,
         verbose=True,
     ):
         """

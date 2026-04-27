@@ -92,6 +92,7 @@ class StatsPanel(QWidget):
         self._counts[idx] += 1
         self._level_vals[idx].setText(f"{self._counts[idx]:,}")
         now = time.time()
+        # _insert_times is only accessed from signal slots (main thread) — no lock needed
         self._insert_times.append(now)
         while self._insert_times and now - self._insert_times[0] > 60:
             self._insert_times.popleft()
