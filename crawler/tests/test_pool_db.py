@@ -1,3 +1,7 @@
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+import sqlite3
 import pytest
 from app.db.pool_db import PuzzlePoolDB
 
@@ -46,3 +50,28 @@ def test_board_string_roundtrip():
     assert len(s) == 81 and s[0] == "5" and s[80] == "9"
     back = PuzzlePoolDB.string_to_board(s)
     assert back[0][0] == 5 and back[8][8] == 9
+
+
+def test_upsert_retries_on_locked_db(tmp_path, monkeypatch):
+    """upsert_puzzle must retry up to 3 times on OperationalError: database is locked."""
+    db_path = str(tmp_path / "test.db")
+    db = PuzzlePoolDB(db_path)
+    board = [[0] * 9 for _ in range(9)]
+    board[0][0] = 1
+
+    call_count = [0]
+    original_get_conn = db._get_conn
+
+    def flaky_get_conn():
+        if call_count[0] < 2:
+            call_count[0] += 1
+            raise sqlite3.OperationalError("database is locked")
+        return original_get_conn()
+
+    monkeypatch.setattr(db, "_get_conn", flaky_get_conn)
+    # Speed up retries
+    monkeypatch.setattr("time.sleep", lambda s: None)
+
+    result = db.upsert_puzzle(board, level=1)
+    assert result["inserted"] is True
+    assert call_count[0] == 2  # 2 failures then success
