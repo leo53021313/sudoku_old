@@ -126,6 +126,10 @@ class SudokuMaskablePPO(MaskablePPO):
         self.policy.set_training_mode(True)
 
         _, log_probs, _ = self.policy.evaluate_actions(obs_t, ta, action_masks=masks_t)
+        # Clamp to a finite floor: MaskableCategoricalDistribution may return -inf for
+        # masked actions, and -inf * 0 = NaN (IEEE 754) would poison the optimizer.
+        # Legitimate (unmasked) log_probs are well above -1e9, so this is a no-op for them.
+        log_probs = log_probs.clamp(min=-1e9)
 
         bc_loss = -(log_probs * tq).sum() / tq.sum()
 
