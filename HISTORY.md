@@ -2,6 +2,59 @@
 
 ---
 
+## [v12] 穩定性強化 Wave 3：8 項 Minor Hardening（2026-04-27）
+
+### Fixed (Wave 3 — Minor Hardening)
+
+- **`sb3/app/rl/envs/sudoku_gym_env.py` `_obs()` 持有 live `self.board` reference**（Defensive）
+  - 原因：obs 在當前實作下因 `(self.board == v).astype(np.float32)` 隱式 copy 而安全，但若未來改用 `SharedMemoryVecEnv` 或 view-returning op 即會 alias
+  - 修正：`_obs()` 開頭加 `board = self.board.copy()`，函式內所有 `self.board` 改為 `board`
+  - 為防禦性修正，加入 regression test 鎖定 contract
+
+- **`sb3/app/rl/models/sudoku_ppo.py` BC loss `-inf * 0 = NaN` 風險**（Defensive）
+  - 原因：PyTorch `MaskableCategoricalDistribution` 對 masked action 給 log_prob，IEEE 754 下 `-inf * 0 = NaN`（非 0）
+  - 注意：當前 sb3-contrib 版本實際給 `-1e8` 而非 `-inf`，並有 `teacher_mask > 0` 預過濾，本次失敗模式在現行程式碼路徑下不可達
+  - 修正：`evaluate_actions()` 後加 `log_probs = log_probs.clamp(min=-1e9)`，防護未來 SB3 改動
+
+- **`crawler/app/web/proxy_manager.py` `validate_all()` 預設 timeout 與 config 不一致**（Consistency）
+  - 原因：`validate_all()` 預設 `timeout=8`，但 `start_background_validation()` 用 `config.proxy_validate_timeout`（預設 3）
+  - 修正：`validate_all()` 預設改為 `timeout=3`
+
+- **`crawler/app/core/worker.py` 直連模式無 UI 提示**（UX）
+  - 原因：proxy 池為空時 worker 靜默使用直連，使用者只看到「0 proxies valid」誤以為爬蟲已停
+  - 修正：`__init__` 加 `_warned_direct` flag；首次進入直連時發送一次性 `warn` event；`main_window._on_worker_event` 新增 `warn` 分支顯示為黃色
+
+- **`crawler/app/db/pool_db.py` 高並發下 `database is locked` 直接拋例外**（Resilience）
+  - 原因：10 worker 並發 INSERT，`busy_timeout` 觸發後直接 `OperationalError`
+  - 修正：新增 `_retry_transaction(fn)` helper，最多 3 次重試，延遲 `(0.1, 0.3, 1.0)` 秒；`upsert_puzzle()` 改用 helper
+
+- **`sb3/app/data/pool_db.py` 同樣的鎖等待風險**（Resilience）
+  - 對稱於 W3-5：相同 `_retry_transaction()` 實作，套用至 `fetch_one_puzzle_for_training()`（sb3 hot path 是 read 而非 write）
+  - 兩個 pool_db.py 的 helper 邏輯為 byte-identical（同 delays、同錯誤判斷、同 log 格式）
+
+- **兩個 `pool_db.py` `ALTER TABLE ADD COLUMN` 用 try/except 遮蔽錯誤**（Maintainability）
+  - 原因：`except OperationalError: pass` 會吞掉非「duplicate column」的真實 schema 錯誤
+  - 修正：新增模組級 `_EXTRA_COLUMNS = {"level": "INTEGER NOT NULL DEFAULT 1"}` 和 `_migrate(self, conn)` 方法，使用 `PRAGMA table_info(puzzles)` 檢查欄位存在後再 ALTER；`_init_db()` 呼叫 `self._migrate(conn)`
+  - 加入新欄位現在只需在 `_EXTRA_COLUMNS` dict 加一行
+
+- **`crawler/app/gui/stats_panel.py` `_insert_times` 無鎖看似可疑**（Documentation）
+  - 原因：deque 看起來像 race-prone state，未來工程師可能誤加鎖
+  - 修正：加一行註解說明 PyQt6 signal slots 在 main thread serialize，無需鎖
+
+### Tests Added
+
+- `sb3/tests/test_gym_env_stability.py` — `test_obs_uses_board_copy_not_reference`（W3-1 regression）
+- `sb3/tests/test_bc_guards.py` — `test_bc_pass_masked_actions_no_nan`（W3-2 clamp 行為）
+- `crawler/tests/test_worker_stability.py` — `test_worker_warns_on_direct_connect`（W3-4 一次性語義）
+- `crawler/tests/test_pool_db.py`（新增）— `test_upsert_retries_on_locked_db` + `test_migration_idempotent_with_pre_existing_schema`
+- `sb3/tests/test_pool_db_close.py` — `test_fetch_retries_on_locked_db` + `test_migration_idempotent_with_pre_existing_schema`
+
+### Cleanup
+
+- **`crawler/app/gui/db_panel.py` 移除 dead `_refresh_error_shown` flag**：v11 polish commit 將 refresh 改為「永遠更新 label」後，此 flag 仍寫入但永不讀取——pure dead state，刪除
+
+---
+
 ## [v11] 穩定性強化 Wave 1+2：11 項 Critical/Resource 修復（2026-04-26）
 
 ### Fixed (Wave 1 — Critical Stability)

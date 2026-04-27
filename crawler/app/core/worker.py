@@ -69,6 +69,7 @@ class CrawlerWorker(QThread):
             proxy_dict = self.proxy_manager.get_requests_proxy()
             server_url: str | None = proxy_dict.get("http") if proxy_dict else None
 
+            # One-shot warn — avoid spamming the GUI on every iteration
             if proxy_dict is None and not self._warned_direct:
                 self._warned_direct = True
                 self.event_signal.emit({
