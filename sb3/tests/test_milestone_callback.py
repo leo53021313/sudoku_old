@@ -65,3 +65,48 @@ def test_milestone_callback_warns_only_at_1m_when_below_target():
         "success_rate_L4": 0.0,
     }
     assert cb._check_milestone(1_000_000) is True
+
+
+def test_milestone_callback_aborts_at_2m_when_l4_below_target():
+    """2M is the final hard-fail gate. If L4 < 0.30, must abort (return False)."""
+    cb = MilestoneCallback()
+    cb._metrics_provider = lambda step: {
+        "approx_kl": 0.02,
+        "entropy_loss": -1.5,
+        "success_rate_L1": 0.85,
+        "success_rate_L2": 0.85,
+        "success_rate_L3": 0.85,
+        "success_rate_L4": 0.20,   # below 0.30 threshold
+    }
+    assert cb._check_milestone(2_000_000) is False
+
+
+def test_on_step_fires_milestone_once_and_aborts():
+    """_on_step must (a) fire each milestone once and (b) return False on hard fail."""
+    cb = MilestoneCallback()
+    cb._metrics_provider = lambda step: {
+        "approx_kl": 0.10,   # > 0.05 → abort at 100k
+        "entropy_loss": -1.0,
+        "success_rate_L1": 0.0,
+        "success_rate_L2": 0.0,
+        "success_rate_L3": 0.0,
+        "success_rate_L4": 0.0,
+    }
+    # Cross 100k threshold
+    cb.num_timesteps = 100_000
+    assert cb._on_step() is False
+    assert 100_000 in cb._fired_steps
+
+    # Reset _metrics_provider to passing values to confirm second call doesn't re-fire 100k
+    cb._metrics_provider = lambda step: {
+        "approx_kl": 0.02,
+        "entropy_loss": -1.5,
+        "success_rate_L1": 0.0,
+        "success_rate_L2": 0.0,
+        "success_rate_L3": 0.0,
+        "success_rate_L4": 0.0,
+    }
+    cb.num_timesteps = 100_001
+    # 100k already fired; only milestones 300k+ would be checked.
+    # 300k threshold (≥ 100_001 is False), so no milestone evaluates → returns True.
+    assert cb._on_step() is True
