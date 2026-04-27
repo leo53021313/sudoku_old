@@ -110,3 +110,34 @@ def test_on_step_fires_milestone_once_and_aborts():
     # 100k already fired; only milestones 300k+ would be checked.
     # 300k threshold (≥ 100_001 is False), so no milestone evaluates → returns True.
     assert cb._on_step() is True
+
+
+def test_on_training_start_skips_milestones_already_in_past():
+    """On resume from a checkpoint past some milestones, those should NOT re-fire."""
+    cb = MilestoneCallback()
+    # Simulate resume from step 150k — past the 100k milestone
+    cb.num_timesteps = 150_000
+
+    # Manually invoke _on_training_start (would be called by SB3 at learn() start)
+    cb._on_training_start()
+
+    # 100k should be in _fired_steps (already passed); 300k+ should NOT be
+    assert 100_000 in cb._fired_steps
+    assert 300_000 not in cb._fired_steps
+    assert 500_000 not in cb._fired_steps
+    assert 1_000_000 not in cb._fired_steps
+    assert 2_000_000 not in cb._fired_steps
+
+    # And _on_step should NOT re-fire 100k even with bad metrics
+    cb._metrics_provider = lambda step: {
+        "approx_kl": 0.99,  # Would normally trigger 100k abort
+        "entropy_loss": 0.0,
+        "success_rate_L1": 0.0,
+        "success_rate_L2": 0.0,
+        "success_rate_L3": 0.0,
+        "success_rate_L4": 0.0,
+    }
+    # Must return True (continues) since 100k already in _fired_steps
+    # and 300k not yet reached
+    cb.num_timesteps = 150_001
+    assert cb._on_step() is True

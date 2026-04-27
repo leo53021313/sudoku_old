@@ -111,7 +111,7 @@ def main() -> None:
     )
 
     # ── Model ─────────────────────────────────────────────────────────────────
-    bc_coef = 0.0 if args.no_teacher else 1.0
+    bc_coef = 0.0 if args.no_teacher else 0.5
 
     if args.load_model:
         print(f"[train_sb3] Resuming from: {args.load_model}")
@@ -121,19 +121,35 @@ def main() -> None:
             device=args.device,
             bc_coef=bc_coef,
         )
+        # HP override on resume: ensure new (Phase 1 v2) HPs apply even though
+        # the checkpoint was trained under older values. See spec §10 100k-fail
+        # fallback. Resume preserves model weights but explicitly overrides:
+        from stable_baselines3.common.utils import ConstantSchedule
+        model.n_epochs   = 3
+        model.clip_range = ConstantSchedule(0.05)
+        model.ent_coef   = 0.02
+        model.target_kl  = 0.02
+        model.bc_coef    = bc_coef
+        model._bc_schedule = LinearSchedule(bc_coef, 0.3 * bc_coef, end_fraction=1.0)
+        if args.verbose >= 1:
+            print(
+                f"[train_sb3] HP override on resume: n_epochs=3 clip_range=0.05 "
+                f"target_kl=0.02 ent_coef=0.02 bc_coef={bc_coef:.2f}"
+            )
     else:
         model = SudokuMaskablePPO(
             policy="CnnPolicy",
             env=vec_env,
             n_steps=512,
             batch_size=64,
-            n_epochs=4,                    # was 10 — main KL driver
+            n_epochs=3,                    # was 4 (spec §10 fallback for 100k fail)
             gamma=0.99,
             gae_lambda=0.95,
-            clip_range=0.1,                # was 0.2 — tighten clip
-            ent_coef=0.02,                 # was 0.01 — slow entropy collapse
+            clip_range=0.05,               # was 0.1 (spec §10 fallback)
+            ent_coef=0.02,
             vf_coef=0.5,
             max_grad_norm=0.5,
+            target_kl=0.02,                # NEW: SB3-builtin early-stop on KL spike
             learning_rate=LinearSchedule(3e-4, 1e-5, end_fraction=1.0),
             policy_kwargs=policy_kwargs,
             tensorboard_log=LOG_DIR,

@@ -76,6 +76,19 @@ class MilestoneCallback(BaseCallback):
     def attach_curriculum(self, curriculum_callback) -> None:
         self._curriculum = curriculum_callback
 
+    def _on_training_start(self) -> None:
+        """On resume from checkpoint, skip milestones whose step is already past.
+
+        SB3 sets self.num_timesteps from the loaded checkpoint before _on_training_start
+        is called, so this correctly populates _fired_steps to prevent re-firing
+        milestones that were evaluated in a previous training session.
+        """
+        for ms in MILESTONES:
+            if self.num_timesteps >= ms["step"]:
+                self._fired_steps.add(ms["step"])
+                if self.verbose >= 1:
+                    print(f"[Milestone {ms['step']:,}] SKIP (already passed at resume)")
+
     def _gather_metrics(self) -> dict:
         """Read the latest PPO + curriculum metrics."""
         if self._metrics_provider is not None:
