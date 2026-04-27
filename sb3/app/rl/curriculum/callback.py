@@ -7,7 +7,7 @@ Stage progression:
   1 → L1:100%  (mrv=0.80)  → advance when success_rate ≥ 0.75 or 5,000 episodes
   2 → L1:60% L2:40% (mrv=0.40) → advance when L2 success_rate ≥ 0.65 or 15,000 ep
   3 → L1:20% L2:40% L3:40% (mrv=0.20) → advance when L3 success_rate ≥ 0.55 or 30,000 ep
-  4 → L1:10% L2:20% L3:35% L4:35% (mrv=0.05) — final stage, no threshold
+  4 → L1:25% L2:25% L3:25% L4:25% (mrv=0.05) — final stage, no threshold
 
 The callback calls env.env_method('set_difficulty_distribution', dist) on all
 SubprocVecEnv subprocesses when advancing a stage, and updates model.mrv_prob.
@@ -45,7 +45,7 @@ CURRICULUM_STAGES: list[dict[str, Any]] = [
         "backstop":  30_000,
     },
     {
-        "dist":      {1: 0.1, 2: 0.2, 3: 0.35, 4: 0.35},
+        "dist":      {1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25},
         "mrv":       0.05,
         # final stage — no threshold or backstop
     },
@@ -61,7 +61,7 @@ class CurriculumCallback(BaseCallback):
     stages : list[dict]
         Curriculum stage definitions (default: CURRICULUM_STAGES).
     window : int
-        Rolling window size for success rate (default 100 episodes).
+        Rolling window size for success rate (default 200 episodes).
     verbose : int
         Verbosity level.
     """
@@ -69,7 +69,7 @@ class CurriculumCallback(BaseCallback):
     def __init__(
         self,
         stages: list[dict[str, Any]] | None = None,
-        window: int = 100,
+        window: int = 200,
         verbose: int = 1,
     ) -> None:
         super().__init__(verbose=verbose)
