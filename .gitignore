@@ -8,3 +8,5 @@ __pycache__/
 sb3/data/eval_puzzles.json
 reasoner/data/puzzle_techniques.json
 .superpowers/
+reasoner/models/
+reasoner/runs/
