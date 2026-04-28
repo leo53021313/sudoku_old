@@ -43,7 +43,6 @@ from app.rl.models.features_extractor import SudokuFeaturesExtractor
 from app.rl.models.sudoku_ppo import SudokuMaskablePPO
 from app.rl.curriculum.callback import CurriculumCallback, CURRICULUM_STAGES
 from app.rl.curriculum.eval_callback import SudokuEvalCallback
-from app.rl.curriculum.milestone_callback import MilestoneCallback
 from app.rl.curriculum.reserved_eval_callback import ReservedEvalCallback
 
 
@@ -109,12 +108,10 @@ def main() -> None:
         # pi: direct Linear(921→729) — lets per-cell logits (first 729 dims) pass through
         # vf: one hidden layer to aggregate global context for value estimation
         net_arch={"pi": [], "vf": [128]},
-        # Phase 1.5: light L2 regularisation against memorisation
-        optimizer_kwargs={"weight_decay": 1e-4},
     )
 
     # ── Model ─────────────────────────────────────────────────────────────────
-    bc_coef = 0.0 if args.no_teacher else 0.5
+    bc_coef = 0.0 if args.no_teacher else 1.0
 
     if args.load_model:
         print(f"[train_sb3] Resuming from: {args.load_model}")
@@ -124,20 +121,22 @@ def main() -> None:
             device=args.device,
             bc_coef=bc_coef,
         )
-        # HP override on resume: ensure new (Phase 1 v2) HPs apply even though
-        # the checkpoint was trained under older values. See spec §10 100k-fail
-        # fallback. Resume preserves model weights but explicitly overrides:
+        # HP override on resume: align with the PPO_8 successful baseline
+        # (n_epochs=4, clip_range=0.1, no target_kl, ent_coef=0.02, bc_coef=1.0).
+        # Phase 1.5 §10 tightened these in response to milestone failures, but
+        # the failures were better explained by stochastic seed variance and
+        # the tightening itself starved the policy of update room.
         from stable_baselines3.common.utils import ConstantSchedule
-        model.n_epochs   = 3
-        model.clip_range = ConstantSchedule(0.05)
+        model.n_epochs   = 4
+        model.clip_range = ConstantSchedule(0.1)
         model.ent_coef   = 0.02
-        model.target_kl  = 0.02
+        model.target_kl  = None
         model.bc_coef    = bc_coef
         model._bc_schedule = LinearSchedule(bc_coef, 0.3 * bc_coef, end_fraction=1.0)
         if args.verbose >= 1:
             print(
-                f"[train_sb3] HP override on resume: n_epochs=3 clip_range=0.05 "
-                f"target_kl=0.02 ent_coef=0.02 bc_coef={bc_coef:.2f}"
+                f"[train_sb3] HP override on resume: n_epochs=4 clip_range=0.1 "
+                f"target_kl=None ent_coef=0.02 bc_coef={bc_coef:.2f}"
             )
     else:
         model = SudokuMaskablePPO(
@@ -145,14 +144,14 @@ def main() -> None:
             env=vec_env,
             n_steps=512,
             batch_size=64,
-            n_epochs=3,                    # was 4 (spec §10 fallback for 100k fail)
+            n_epochs=4,
             gamma=0.99,
             gae_lambda=0.95,
-            clip_range=0.05,               # was 0.1 (spec §10 fallback)
+            clip_range=0.1,
             ent_coef=0.02,
             vf_coef=0.5,
             max_grad_norm=0.5,
-            target_kl=0.02,                # NEW: SB3-builtin early-stop on KL spike
+            target_kl=None,
             learning_rate=LinearSchedule(3e-4, 1e-5, end_fraction=1.0),
             policy_kwargs=policy_kwargs,
             tensorboard_log=LOG_DIR,
@@ -209,9 +208,6 @@ def main() -> None:
         verbose=args.verbose,
     )
 
-    milestones = MilestoneCallback(verbose=args.verbose)
-    milestones.attach_curriculum(curriculum)
-
     reserved_eval = ReservedEvalCallback(
         json_path=str(Path(__file__).parent / "data" / "eval_puzzles.json"),
         db_path=DB_PATH,
@@ -223,7 +219,7 @@ def main() -> None:
     # ── Training ──────────────────────────────────────────────────────────────
     model.learn(
         total_timesteps=args.timesteps,
-        callback=[curriculum, milestones, checkpoint, eval_cb, reserved_eval],
+        callback=[curriculum, checkpoint, eval_cb, reserved_eval],
         reset_num_timesteps=args.load_model is None,
     )
 
