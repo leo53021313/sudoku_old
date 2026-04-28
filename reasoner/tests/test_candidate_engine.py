@@ -87,3 +87,28 @@ def test_apply_fill_does_not_touch_unrelated_cells():
     eng.apply_fill(0, 0, 5)
     # cell (4,4) is not in row 0, col 0, or box (0,0)
     assert 5 in eng.get_candidates(4, 4)
+
+
+def test_apply_eliminate_removes_one_candidate():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    assert 5 in eng.get_candidates(0, 0)
+    eng.apply_eliminate(0, 0, 5)
+    assert 5 not in eng.get_candidates(0, 0)
+
+
+def test_apply_eliminate_no_op_when_already_absent():
+    board = _empty_board()
+    board[0, 1] = 5  # row 0 has 5 → (0,0) lost 5
+    eng = CandidateEngine(board)
+    assert 5 not in eng.get_candidates(0, 0)
+    # eliminating again is harmless
+    eng.apply_eliminate(0, 0, 5)
+    assert 5 not in eng.get_candidates(0, 0)
+
+
+def test_apply_eliminate_does_not_touch_board_value():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_eliminate(0, 0, 5)
+    assert eng.board[0, 0] == 0  # eliminate is candidate-only

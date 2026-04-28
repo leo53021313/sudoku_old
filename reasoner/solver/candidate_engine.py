@@ -63,6 +63,10 @@ class CandidateEngine:
             if self._board[rr, cc] == 0:
                 self._cands[rr][cc].discard(v)
 
+    def apply_eliminate(self, r: int, c: int, v: int) -> None:
+        """Remove v from (r,c)'s candidates. No-op if already absent."""
+        self._cands[r][c].discard(v)
+
     @staticmethod
     def _related_cells(r: int, c: int) -> Iterable[tuple[int, int]]:
         seen: set[tuple[int, int]] = set()
