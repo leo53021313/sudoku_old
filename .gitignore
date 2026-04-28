@@ -10,3 +10,5 @@ reasoner/data/puzzle_techniques.json
 .superpowers/
 reasoner/models/
 reasoner/runs/
+sb3/models/
+sb3/runs/
