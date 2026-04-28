@@ -44,3 +44,46 @@ def test_box_constraint_eliminates():
     assert 5 not in eng.get_candidates(2, 2)
     # but cell outside the box (row 0 col 0's box is rows 0-2, cols 0-2) is row-only constraint
     assert 5 not in eng.get_candidates(0, 4)  # row constraint
+
+
+def test_apply_fill_updates_board():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    assert eng.board[0, 0] == 5
+
+
+def test_apply_fill_clears_filled_cell_candidates():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    assert eng.get_candidates(0, 0) == set()
+
+
+def test_apply_fill_propagates_to_row():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    assert 5 not in eng.get_candidates(0, 5)
+
+
+def test_apply_fill_propagates_to_col():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    assert 5 not in eng.get_candidates(5, 0)
+
+
+def test_apply_fill_propagates_to_box():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    assert 5 not in eng.get_candidates(2, 2)
+
+
+def test_apply_fill_does_not_touch_unrelated_cells():
+    board = _empty_board()
+    eng = CandidateEngine(board)
+    eng.apply_fill(0, 0, 5)
+    # cell (4,4) is not in row 0, col 0, or box (0,0)
+    assert 5 in eng.get_candidates(4, 4)

@@ -5,6 +5,7 @@ incrementally on fill/eliminate operations. Pure Python; no IO.
 """
 
 from __future__ import annotations
+from typing import Iterable
 import numpy as np
 
 
@@ -53,3 +54,27 @@ class CandidateEngine:
             if self._board[rr, cc] != 0
         )
         return {n for n in range(1, 10) if n not in used}
+
+    def apply_fill(self, r: int, c: int, v: int) -> None:
+        """Place v at (r,c). Updates board + candidate sets for related cells."""
+        self._board[r, c] = v
+        self._cands[r][c] = set()
+        for rr, cc in self._related_cells(r, c):
+            if self._board[rr, cc] == 0:
+                self._cands[rr][cc].discard(v)
+
+    @staticmethod
+    def _related_cells(r: int, c: int) -> Iterable[tuple[int, int]]:
+        seen: set[tuple[int, int]] = set()
+        for cc in range(9):
+            if (r, cc) != (r, c):
+                seen.add((r, cc))
+        for rr in range(9):
+            if (rr, c) != (r, c):
+                seen.add((rr, c))
+        br, bc = (r // 3) * 3, (c // 3) * 3
+        for rr in range(br, br + 3):
+            for cc in range(bc, bc + 3):
+                if (rr, cc) != (r, c):
+                    seen.add((rr, cc))
+        return seen
