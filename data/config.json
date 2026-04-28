@@ -1,0 +1,16 @@
+{
+  "num_workers": 20,
+  "max_pool_size": 50000,
+  "resume_threshold": 30000,
+  "level_weights": [
+    25,
+    25,
+    25,
+    25
+  ],
+  "min_delay": 0.0,
+  "max_delay": 0.3,
+  "request_timeout": 8,
+  "proxy_validate_workers": 50,
+  "proxy_validate_timeout": 3
+}
