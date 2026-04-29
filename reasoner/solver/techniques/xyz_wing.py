@@ -28,6 +28,65 @@ def _are_peers(r1: int, c1: int, r2: int, c2: int) -> bool:
     return (r1 // 3 == r2 // 3) and (c1 // 3 == c2 // 3)
 
 
+def justifies_xyz_wing(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does XYZ-Wing reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and there exist P={x,y,z} (trivalue), W1={x,z}, W2={y,z}
+    (bivalue) with v==z, W1 and W2 peers of P, and (r,c) a peer of P, W1, W2.
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    trivalues: list[tuple[int, int, set[int]]] = []
+    bivalues: list[tuple[int, int, set[int]]] = []
+    for rr in range(9):
+        for cc in range(9):
+            if engine.is_empty(rr, cc):
+                cands = engine.get_candidates(rr, cc)
+                if len(cands) == 3:
+                    trivalues.append((rr, cc, cands))
+                elif len(cands) == 2:
+                    bivalues.append((rr, cc, cands))
+
+    for (pr, pc, pcands) in trivalues:
+        for z in pcands:
+            if z != v:
+                continue
+            xy = pcands - {z}
+            x, y = sorted(xy)
+            for (w1r, w1c, w1cands) in bivalues:
+                if (w1r, w1c) == (pr, pc):
+                    continue
+                if not _are_peers(pr, pc, w1r, w1c):
+                    continue
+                if w1cands != {x, z}:
+                    continue
+                for (w2r, w2c, w2cands) in bivalues:
+                    if (w2r, w2c) in [(pr, pc), (w1r, w1c)]:
+                        continue
+                    if not _are_peers(pr, pc, w2r, w2c):
+                        continue
+                    if w2cands != {y, z}:
+                        continue
+                    # (r, c) must see ALL THREE, not be any of them
+                    if (r, c) in [(pr, pc), (w1r, w1c), (w2r, w2c)]:
+                        continue
+                    if (_are_peers(r, c, pr, pc) and
+                            _are_peers(r, c, w1r, w1c) and
+                            _are_peers(r, c, w2r, w2c)):
+                        return True
+    return False
+
+
 def find_xyz_wing_elimination(engine: CandidateEngine) -> tuple[str, int, int, int] | None:
     trivalues: list[tuple[int, int, set[int]]] = []
     bivalues: list[tuple[int, int, set[int]]] = []

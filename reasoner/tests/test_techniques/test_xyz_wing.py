@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.xyz_wing import find_xyz_wing_elimination
+from reasoner.solver.techniques.xyz_wing import find_xyz_wing_elimination, justifies_xyz_wing
 
 
 def _empty_eng():
@@ -112,3 +112,47 @@ def test_xyz_wing_row_col_geometry():
 
     result = find_xyz_wing_elimination(eng)
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# justifies_xyz_wing tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_xyz_wing_positive():
+    """Classic XYZ-Wing: P=(0,0)={1,2,3}, W1=(0,1)={1,3}, W2=(1,0)={2,3}. Target (1,1)."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[0][0] = {1, 2, 3}
+    eng._cands[0][1] = {1, 3}
+    eng._cands[1][0] = {2, 3}
+    eng._cands[1][1] = {3, 5}
+    assert justifies_xyz_wing(eng, ('eliminate', 1, 1, 3)) is True
+
+
+def test_justifies_xyz_wing_rejects_wrong_mode():
+    """justifies_xyz_wing returns False for 'fill' actions."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[0][0] = {1, 2, 3}
+    eng._cands[0][1] = {1, 3}
+    eng._cands[1][0] = {2, 3}
+    eng._cands[1][1] = {3, 5}
+    assert justifies_xyz_wing(eng, ('fill', 1, 1, 3)) is False
+
+
+def test_justifies_xyz_wing_rejects_cell_not_seeing_pivot():
+    """Cell (7,7) sees wing1 and wing2 but NOT pivot at (4,4) — not justified."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[4][4] = {1, 2, 3}
+    eng._cands[4][7] = {1, 3}
+    eng._cands[7][4] = {2, 3}
+    eng._cands[7][7] = {3, 6}
+    # (7,7) sees wing1 via col 7 and wing2 via row 7, but NOT pivot (4,4)
+    assert justifies_xyz_wing(eng, ('eliminate', 7, 7, 3)) is False
