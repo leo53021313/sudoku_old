@@ -26,6 +26,66 @@ def _are_peers(r1: int, c1: int, r2: int, c2: int) -> bool:
     return (r1 // 3 == r2 // 3) and (c1 // 3 == c2 // 3)
 
 
+def justifies_xy_wing(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does XY-Wing reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and there exist P={x,y}, W1={x,z}, W2={y,z} (all bivalue) with
+    v==z, W1 and W2 peers of P, and (r,c) a peer of both W1 and W2.
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    # Collect all bivalue cells
+    bivalues: list[tuple[int, int, set[int]]] = []
+    for rr in range(9):
+        for cc in range(9):
+            if engine.is_empty(rr, cc):
+                cands = engine.get_candidates(rr, cc)
+                if len(cands) == 2:
+                    bivalues.append((rr, cc, cands))
+
+    for (pr, pc, pcands) in bivalues:
+        x, y = sorted(pcands)
+        for (w1r, w1c, w1cands) in bivalues:
+            if (w1r, w1c) == (pr, pc):
+                continue
+            if not _are_peers(pr, pc, w1r, w1c):
+                continue
+            common = w1cands & pcands
+            if len(common) != 1:
+                continue
+            shared_digit = next(iter(common))
+            other_pivot_digit = (pcands - {shared_digit}).pop()
+            z = (w1cands - {shared_digit}).pop()
+            if z in pcands:
+                continue
+            if z != v:
+                continue
+            # Wing2: peer of pivot, candidates {other_pivot_digit, z}
+            for (w2r, w2c, w2cands) in bivalues:
+                if (w2r, w2c) in [(pr, pc), (w1r, w1c)]:
+                    continue
+                if not _are_peers(pr, pc, w2r, w2c):
+                    continue
+                if w2cands != {other_pivot_digit, z}:
+                    continue
+                # (r, c) must be a peer of both W1 and W2, not P/W1/W2 itself
+                if (r, c) in [(pr, pc), (w1r, w1c), (w2r, w2c)]:
+                    continue
+                if _are_peers(r, c, w1r, w1c) and _are_peers(r, c, w2r, w2c):
+                    return True
+    return False
+
+
 def find_xy_wing_elimination(engine: CandidateEngine) -> tuple[str, int, int, int] | None:
     # Collect all bivalue cells
     bivalues: list[tuple[int, int, set[int]]] = []

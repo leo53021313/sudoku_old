@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.xy_wing import find_xy_wing_elimination
+from reasoner.solver.techniques.xy_wing import find_xy_wing_elimination, justifies_xy_wing
 
 
 def _empty_eng():
@@ -109,3 +109,47 @@ def test_xy_wing_in_box():
     assert op == 'eliminate'
     assert v == 3
     assert (r, c) == (1, 1)
+
+
+# ---------------------------------------------------------------------------
+# justifies_xy_wing tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_xy_wing_positive():
+    """Classic XY-Wing: P=(0,0)={1,2}, W1=(0,3)={1,3}, W2=(3,0)={2,3}. Target (3,3)."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][3] = {1, 3}
+    eng._cands[3][0] = {2, 3}
+    eng._cands[3][3] = {3, 4, 5}
+    assert justifies_xy_wing(eng, ('eliminate', 3, 3, 3)) is True
+
+
+def test_justifies_xy_wing_rejects_wrong_mode():
+    """justifies_xy_wing returns False for 'fill' actions."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][3] = {1, 3}
+    eng._cands[3][0] = {2, 3}
+    eng._cands[3][3] = {3, 4, 5}
+    assert justifies_xy_wing(eng, ('fill', 3, 3, 3)) is False
+
+
+def test_justifies_xy_wing_rejects_wrong_digit():
+    """digit 4 is NOT the z-digit — not justified by this XY-Wing."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][3] = {1, 3}
+    eng._cands[3][0] = {2, 3}
+    eng._cands[3][3] = {3, 4, 5}
+    # digit 4 is not the z-digit (3) in this XY-Wing
+    assert justifies_xy_wing(eng, ('eliminate', 3, 3, 4)) is False
