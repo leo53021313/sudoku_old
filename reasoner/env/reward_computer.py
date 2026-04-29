@@ -30,13 +30,24 @@ from reasoner.solver.human_solver import HumanSolver
 MAX_WRONG = 20
 
 TECH_BONUS: dict[int, float] = {
-    1: 0.0,   # naked single (fill)
-    2: 0.5,   # hidden single (fill)
+    # Fill techniques
+    1: 0.0,   # naked single
+    2: 0.5,   # hidden single
     3: 0.0,   # basic elim (engine-internal)
-    4: 1.0,   # naked pair (eliminate)
-    5: 1.0,   # hidden pair (eliminate)
-    6: 1.0,   # pointing pair (eliminate)
-    7: 1.0,   # box-line (eliminate)
+    # Pair / locked-candidate techniques
+    4: 1.0,   # naked pair
+    5: 1.0,   # hidden pair
+    6: 1.0,   # pointing pair
+    7: 1.0,   # box-line reduction
+    # Tier A.2-A.3: harder pattern techniques get larger bonuses
+    8:  1.5,  # naked triple
+    9:  1.5,  # naked quad
+    10: 2.0,  # X-Wing
+    11: 2.5,  # Swordfish
+    12: 2.5,  # XY-Wing
+    13: 3.0,  # XYZ-Wing
+    # Last-resort technique
+    17: 3.0,  # Trial & Error (backtracking-based search)
 }
 
 

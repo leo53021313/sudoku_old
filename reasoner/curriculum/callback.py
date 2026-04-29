@@ -6,12 +6,22 @@ from typing import Optional
 from stable_baselines3.common.callbacks import BaseCallback
 
 
-# Stage definitions: stage N includes max_tech ≤ STAGE_MAX_TECH[N], strictly above STAGE_MAX_TECH[N-1].
-# None means "no upper bound" (Stage 3 catches everything else).
+# Stage definitions: stage N includes max_tech in (STAGE_MAX_TECH[N-1], STAGE_MAX_TECH[N]].
+# None means "no upper bound" — final stage catches everything else (incl. tech 17 T&E
+# and any puzzle where the v1 solver couldn't conclude with deterministic techniques).
+#
+# 5 stages mapping the technique tiers from the spec:
+#   Stage 1: tech 1-3   — naked / hidden single, basic pencil marks
+#   Stage 2: tech 4-7   — naked/hidden pair, pointing pair, box-line reduction
+#   Stage 3: tech 8-9   — naked triple/quad
+#   Stage 4: tech 10-13 — X-Wing, Swordfish, XY-Wing, XYZ-Wing
+#   Stage 5: tech 14-17 — chains/coloring/AIC/T&E (incl. unsolvable-by-v1 catchall)
 STAGE_MAX_TECH: dict[int, Optional[int]] = {
     1: 3,
     2: 7,
-    3: None,
+    3: 9,
+    4: 13,
+    5: None,
 }
 
 
