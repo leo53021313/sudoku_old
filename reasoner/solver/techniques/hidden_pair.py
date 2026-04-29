@@ -57,3 +57,46 @@ def find_hidden_pair_elimination(engine: CandidateEngine) -> tuple[str, int, int
             if result is not None:
                 return result
     return None
+
+
+def _iter_units(eng: CandidateEngine):
+    """Yield each unit's cell list: 9 rows, 9 cols, 9 boxes."""
+    for r in range(9):
+        yield _empty_cells_in_row(eng, r)
+    for c in range(9):
+        yield _empty_cells_in_col(eng, c)
+    for br in (0, 3, 6):
+        for bc in (0, 3, 6):
+            yield _empty_cells_in_box(eng, br, bc)
+
+
+def justifies_hidden_pair(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does hidden-pair reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and there exists a unit U containing (r, c) where some pair of
+    digits {x, y} appears in EXACTLY 2 empty cells of U, (r, c) is one of them,
+    and v ∉ {x, y} (v is an extra digit being stripped from the pair cell).
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    for cells in _iter_units(engine):
+        if (r, c) not in cells:
+            continue
+        for x, y in combinations(range(1, 10), 2):
+            cells_with_x = [(rr, cc) for rr, cc in cells if x in engine.get_candidates(rr, cc)]
+            cells_with_y = [(rr, cc) for rr, cc in cells if y in engine.get_candidates(rr, cc)]
+            if len(cells_with_x) == 2 and cells_with_x == cells_with_y:
+                # Hidden pair {x, y} at these two cells
+                if (r, c) in cells_with_x and v not in {x, y}:
+                    return True
+    return False
