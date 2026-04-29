@@ -10,16 +10,17 @@ Resume semantics:
 - `--load-model auto`     find newest reasoner_ckpt_*_steps.zip in MODEL_DIR
 - `--load-model latest`   alias for `auto`
 - `--load-model <path>`   load specific checkpoint
-- model.zip side-cars (loaded automatically when present):
-    <ckpt>_vecnorm.pkl     VecNormalize running stats
-    <ckpt>_curriculum.json Curriculum stage state
+- VecNormalize running stats are saved alongside each checkpoint as
+  <ckpt>_vecnorm.pkl and reloaded automatically.
 - num_timesteps + LR schedule + optimizer state are restored from the .zip
-  by SB3 itself; we only need to preserve VecNormalize and curriculum.
+  by SB3 itself.
+
+The DB sampling does NOT use a stage curriculum; the env samples uniformly
+from all puzzles at the requested websudoku difficulty (level 1-4).
 """
 
 from __future__ import annotations
 import argparse
-import json
 import os
 import re
 import sys
@@ -39,14 +40,12 @@ from stable_baselines3.common.utils import LinearSchedule
 from reasoner.env.sudoku_gym_env import SudokuGymEnv
 from reasoner.model.features_extractor import SudokuFeaturesExtractor
 from reasoner.train.ppo import SudokuMaskablePPO
-from reasoner.curriculum.callback import TechniqueCurriculumCallback
 from reasoner.eval.eval_callback import SudokuEvalCallback
 from reasoner.eval.reserved_eval_callback import ReservedEvalCallback
 
 
 _REPO_ROOT  = Path(__file__).resolve().parents[2]
 DB_PATH     = str(_REPO_ROOT / "data" / "puzzle_pool.db")
-LABELS_PATH = str(_REPO_ROOT / "reasoner" / "data" / "puzzle_techniques.json")
 EVAL_PATH   = str(_REPO_ROOT / "reasoner" / "data" / "eval_puzzles.json")
 MODEL_DIR   = str(_REPO_ROOT / "reasoner" / "models")
 LOG_DIR     = str(_REPO_ROOT / "reasoner" / "runs")
@@ -73,10 +72,11 @@ def _find_latest_checkpoint(model_dir: str) -> str | None:
 
 
 class CheckpointWithSidecars(BaseCallback):
-    """Periodic save of (model, VecNormalize, curriculum-state) trio.
+    """Periodic save of (model, VecNormalize) pair.
 
-    Replaces SB3's CheckpointCallback to ensure all training state is saved
-    together so that --load-model auto can fully resume.
+    Replaces SB3's CheckpointCallback so that --load-model auto can fully
+    resume — VecNormalize stats need to be saved alongside the model zip
+    or reward normalization restarts from identity on each resume.
     """
 
     def __init__(
@@ -84,14 +84,12 @@ class CheckpointWithSidecars(BaseCallback):
         save_freq: int,
         save_path: str,
         name_prefix: str,
-        curriculum: TechniqueCurriculumCallback,
         verbose: int = 1,
     ) -> None:
         super().__init__(verbose=verbose)
         self.save_freq = save_freq
         self.save_path = save_path
         self.name_prefix = name_prefix
-        self._curriculum = curriculum
         self._last_save: int | None = None  # set on _init_callback to num_timesteps
         os.makedirs(save_path, exist_ok=True)
 
@@ -106,24 +104,15 @@ class CheckpointWithSidecars(BaseCallback):
         self._last_save = self.num_timesteps
 
         base = os.path.join(self.save_path, f"{self.name_prefix}_{self.num_timesteps}_steps")
-        # 1. Model
         self.model.save(base + ".zip")
-        # 2. VecNormalize sidecar (if wrapped)
         vec_env = self.model.get_vec_normalize_env()
         if isinstance(vec_env, VecNormalize):
             vec_env.save(base + "_vecnorm.pkl")
-        # 3. Curriculum state sidecar
-        curr_state = {
-            "stage_idx":         self._curriculum._stage_idx,
-            "consec_pass":       self._curriculum._consec_pass,
-            "stage_entry_step":  self._curriculum._stage_entry_step,
-            "stage_entry_rate":  self._curriculum._stage_entry_rate,
-        }
-        with open(base + "_curriculum.json", "w", encoding="utf-8") as f:
-            json.dump(curr_state, f, indent=2)
-
+            tag = "+vecnorm"
+        else:
+            tag = ""
         if self.verbose >= 1:
-            print(f"[Checkpoint] step={self.num_timesteps:,} -> {base}.zip (+vecnorm + curriculum)")
+            print(f"[Checkpoint] step={self.num_timesteps:,} -> {base}.zip {tag}")
         return True
 
 
@@ -174,14 +163,6 @@ def main():
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     os.makedirs(LOG_DIR, exist_ok=True)
-
-    if not os.path.exists(LABELS_PATH):
-        sys.exit(
-            f"[train] FATAL: puzzle_techniques.json not found at {LABELS_PATH}.\n"
-            f"Run: python -m reasoner.solver.label_puzzles --db {DB_PATH} --out {LABELS_PATH} --verbose"
-        )
-    with open(LABELS_PATH, encoding="utf-8") as f:
-        puzzle_labels = json.load(f)
 
     load_path = _resolve_load_path(args.load_model)
 
@@ -258,32 +239,10 @@ def main():
                   "Increase --timesteps to keep training.")
 
     # Callbacks
-    curriculum = TechniqueCurriculumCallback(
-        puzzle_labels=puzzle_labels,
-        eval_threshold=0.80,
-        consec_pass_required=3,
-        verbose=args.verbose,
-    )
-
-    # Restore curriculum state if sidecar exists
-    if load_path is not None:
-        curr_path = load_path.replace(".zip", "_curriculum.json")
-        if os.path.exists(curr_path):
-            with open(curr_path, encoding="utf-8") as f:
-                state = json.load(f)
-            curriculum._stage_idx        = int(state.get("stage_idx", 0))
-            curriculum._consec_pass      = int(state.get("consec_pass", 0))
-            curriculum._stage_entry_step = int(state.get("stage_entry_step", 0))
-            curriculum._stage_entry_rate = float(state.get("stage_entry_rate", 0.0))
-            if args.verbose >= 1:
-                print(f"[train] Curriculum restored: stage={curriculum.current_stage} "
-                      f"consec_pass={curriculum._consec_pass}")
-
     checkpoint = CheckpointWithSidecars(
         save_freq=50_000,
         save_path=MODEL_DIR,
         name_prefix="reasoner_ckpt",
-        curriculum=curriculum,
         verbose=args.verbose,
     )
     eval_cb = SudokuEvalCallback(
@@ -304,7 +263,7 @@ def main():
     try:
         model.learn(
             total_timesteps=args.timesteps,
-            callback=[curriculum, checkpoint, eval_cb, reserved_eval],
+            callback=[checkpoint, eval_cb, reserved_eval],
             reset_num_timesteps=(load_path is None),
             tb_log_name=TB_LOG_NAME,
         )
@@ -312,20 +271,10 @@ def main():
         # Always save on exit (Ctrl-C, exception, normal completion)
         save_path = os.path.join(MODEL_DIR, MODEL_NAME)
         model.save(save_path)
-        sidecars = []
+        sidecars: list[str] = []
         if isinstance(vec_env, VecNormalize):
             vec_env.save(save_path + "_vecnorm.pkl")
             sidecars.append("vecnorm")
-        # Curriculum sidecar (always save)
-        curr_state = {
-            "stage_idx":         curriculum._stage_idx,
-            "consec_pass":       curriculum._consec_pass,
-            "stage_entry_step":  curriculum._stage_entry_step,
-            "stage_entry_rate":  curriculum._stage_entry_rate,
-        }
-        with open(save_path + "_curriculum.json", "w", encoding="utf-8") as f:
-            json.dump(curr_state, f, indent=2)
-        sidecars.append("curriculum")
         sidecar_str = " + ".join(sidecars) if sidecars else "no sidecars"
         print(f"[train] Saved -> {save_path}.zip ({sidecar_str})")
 
