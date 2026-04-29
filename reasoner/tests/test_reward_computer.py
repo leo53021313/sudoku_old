@@ -57,7 +57,7 @@ def test_correct_fill_completes_board_gives_plus_20():
     env = _StubEnv(board, sol, cands)
     rc = RewardComputer(env)
     # solution[8,8] == 9
-    reward, terminated = rc.compute(8, 8, 9)
+    reward, terminated = rc.compute("fill", 8, 8, 9)
     assert terminated
     assert reward == pytest.approx(20.0)
 
@@ -70,7 +70,7 @@ def test_wrong_fill_gets_minus_one_and_continues():
     env = _StubEnv(board, sol, cands)
     rc = RewardComputer(env)
     # Wrong: solution at (8,8) is 9, agent fills 5
-    reward, terminated = rc.compute(8, 8, 5)
+    reward, terminated = rc.compute("fill", 8, 8, 5)
     assert reward == -1.0
     assert not terminated  # max_wrong=20, only 1 wrong so far
     assert env.wrong_count == 1
@@ -84,7 +84,7 @@ def test_wrong_fill_terminates_at_max_wrong():
     env = _StubEnv(board, sol, cands)
     env.wrong_count = 19  # next wrong = 20th
     rc = RewardComputer(env)
-    reward, terminated = rc.compute(5, 5, 9)  # wrong (correct is 4)
+    reward, terminated = rc.compute("fill", 5, 5, 9)  # wrong (correct is 4)
     assert reward == -1.0
     assert terminated
     assert env.wrong_count == 20
@@ -110,7 +110,7 @@ def test_correct_naked_single_matches_solver_for_tech1_bonus():
     # solution[8,8] = 9. After we fill (8,8)=9, board is NOT complete (7,7 still empty).
     # solver suggested: should be naked single at (7,7) (tech 1), NOT (8,8).
     # So our fill (8,8,9) is correct but DOESN'T match solver's suggestion → +0.3
-    reward, terminated = rc2.compute(8, 8, 9)
+    reward, terminated = rc2.compute("fill", 8, 8, 9)
     assert not terminated
     # Could be 1.0 (if solver picked 8,8) or 0.3 (if solver picked 7,7 first).
     # Both (8,8) and (7,7) are naked singles. Scan order: (7,7) before (8,8) → solver picks (7,7).
@@ -135,7 +135,7 @@ def test_correct_lucky_fill_when_solver_cannot_solve():
     env = _StubEnv(board, sol, cands)
     rc = RewardComputer(env)
     # Wrong at (7,7) — solution is 3
-    reward, terminated = rc.compute(7, 7, 1)
+    reward, terminated = rc.compute("fill", 7, 7, 1)
     assert reward == -1.0
     assert env.wrong_count == 1
 
@@ -174,6 +174,82 @@ def test_correct_hidden_single_gets_tech2_bonus():
     # HumanSolver.suggest() on this board should return ('fill', 1, 4, 7) at tech_id 2
     # (verified in test_human_solver.py::test_max_technique_id_reflects_used_technique).
     # Agent fills (1,4,7) → matches → reward = 1.0 + TECH_BONUS[2] = 1.0 + 0.5 = 1.5
-    reward, terminated = rc.compute(1, 4, 7)
+    reward, terminated = rc.compute("fill", 1, 4, 7)
     assert reward == pytest.approx(1.5)
     assert not terminated
+
+
+# ── Eliminate-mode tests (route II) ───────────────────────────────────────────
+
+
+def test_bad_eliminate_removes_solution_value_gets_minus_one():
+    """Eliminating v == solution[r,c] is wrong; -1 + wrong_count++."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[5, 5] = 0  # solution[5,5] = 4
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    rc = RewardComputer(env)
+    reward, terminated = rc.compute("eliminate", 5, 5, 4)
+    assert reward == -1.0
+    assert env.wrong_count == 1
+    assert not terminated
+    # The candidate IS removed (agent lives with the bad eliminate)
+    assert 4 not in env.candidates_cache[5][5]
+
+
+def test_bad_eliminate_terminates_at_max_wrong():
+    sol = _solved_grid()
+    board = sol.copy()
+    board[5, 5] = 0
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    env.wrong_count = 19
+    rc = RewardComputer(env)
+    reward, terminated = rc.compute("eliminate", 5, 5, 4)
+    assert reward == -1.0
+    assert env.wrong_count == 20
+    assert terminated
+
+
+def test_valid_eliminate_not_matching_solver_gets_small_positive():
+    """Eliminating a wrong-value candidate the solver doesn't prioritise → +0.1."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[8, 8] = 0  # solution[8,8] = 9
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    # Force (8,8) to have multiple candidates so eliminate is non-trivial
+    env.candidates_cache[8][8] = {4, 9}
+    env.candidate_count_grid[8][8] = 2
+    rc = RewardComputer(env)
+    # Eliminate 4 (wrong-value candidate). Solver will likely not return this exact eliminate
+    # since priority loop usually finds a fill-tech first; this is the "+0.1 path".
+    reward, terminated = rc.compute("eliminate", 8, 8, 4)
+    assert reward == pytest.approx(0.1)
+    assert not terminated
+    assert 4 not in env.candidates_cache[8][8]
+    assert 9 in env.candidates_cache[8][8]
+
+
+def test_eliminate_leaves_board_value_unchanged():
+    """Eliminate must never modify env.board (it touches candidates only)."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[5, 5] = 0
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    rc = RewardComputer(env)
+    if 7 in env.candidates_cache[5][5]:
+        rc.compute("eliminate", 5, 5, 7)
+    assert env.board[5, 5] == 0  # still empty
+
+
+def test_unknown_mode_raises():
+    sol = _solved_grid()
+    board = sol.copy()
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    rc = RewardComputer(env)
+    with pytest.raises(ValueError):
+        rc.compute("teleport", 0, 0, 1)

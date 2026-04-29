@@ -1,18 +1,21 @@
-# app/rl/models/features_extractor.py
+# reasoner/model/features_extractor.py
 # -*- coding: utf-8 -*-
 """
-SudokuFeaturesExtractor — constraint-head architecture with per-cell action head.
+SudokuFeaturesExtractor — fill + eliminate per-cell action heads.
 
-Input:  (batch, C, 9, 9)  — C channels, channels-first (C=26 for new obs, C=9 legacy)
-Output: (batch, 729 + features_dim)  — per-cell action logits + global context
+Input:  (batch, C, 9, 9)  — C channels, channels-first (C=24 in reasoner)
+Output: (batch, 1458 + features_dim)
+  - dims 0..728     : per-cell FILL logits (action 0..728  in env)
+  - dims 729..1457  : per-cell ELIMINATE logits (action 729..1457 in env)
+  - dims 1458..end  : global context (for value head, len = features_dim)
 
 Architecture:
   Cell embedding:   Linear(C→128) → LayerNorm → ReLU → Linear(128→128) → LayerNorm → ReLU
   27 ConstraintHeads (9 row + 9 col + 9 box): gated local+context attention
   Fused:            (batch, 81, 192)
-  Per-cell logits:  cell_proj(fused) → (batch, 81, 9) → (batch, 729)
-  Global context:   global_proj(fused.mean(dim=1)) → (batch, features_dim)
-  Output:           cat([per_cell_logits, global_ctx], dim=-1) → (batch, 729 + features_dim)
+  Per-cell FILL logits:      cell_proj_fill(fused) → (batch, 81, 9) → (batch, 729)
+  Per-cell ELIMINATE logits: cell_proj_elim(fused) → (batch, 81, 9) → (batch, 729)
+  Global context:            global_proj(fused.mean(dim=1)) → (batch, features_dim)
 """
 
 from __future__ import annotations
@@ -46,10 +49,10 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
     Parameters
     ----------
     observation_space : gymnasium.spaces.Box
-        Shape (C, 9, 9) — C channels (26 for new obs, 9 for legacy).
+        Shape (C, 9, 9) — C channels.
     features_dim : int
         Global context dimension (default 192).
-        Actual extractor output = 729 + features_dim (= 921 at default).
+        Actual extractor output = 1458 + features_dim (= 1650 at default).
     cell_dim : int
         Cell embedding dimension (default 128).
     head_dim : int
@@ -64,8 +67,8 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
         cell_dim: int = 128,
         head_dim: int = 64,
     ) -> None:
-        fused_dim   = head_dim * 3            # 192
-        actual_dim  = 9 * 81 + features_dim   # 729 + 192 = 921
+        fused_dim   = head_dim * 3                   # 192
+        actual_dim  = 2 * 9 * 81 + features_dim      # 1458 + 192 = 1650
         super().__init__(observation_space, actual_dim)
 
         in_channels      = observation_space.shape[0]
@@ -86,8 +89,10 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
         self.col_heads = nn.ModuleList([ConstraintHead(cell_dim, head_dim) for _ in range(9)])
         self.box_heads = nn.ModuleList([ConstraintHead(cell_dim, head_dim) for _ in range(9)])
 
-        # Per-cell projection: fused (B, 81, 192) → action logits (B, 81, 9) → (B, 729)
-        self.cell_proj   = nn.Linear(fused_dim, 9)
+        # Two per-cell projections — one for fill, one for eliminate.
+        # Each maps fused (B, 81, 192) → (B, 81, 9) → flatten to (B, 729).
+        self.cell_proj_fill = nn.Linear(fused_dim, 9)
+        self.cell_proj_elim = nn.Linear(fused_dim, 9)
         # Global context for value estimation: mean-pool → (B, features_dim)
         self.global_proj = nn.Linear(fused_dim, features_dim)
 
@@ -138,11 +143,13 @@ class SudokuFeaturesExtractor(BaseFeaturesExtractor):
             box_out.reshape(B, 81, self.head_dim),
         ], dim=-1)
 
-        # Per-cell action logits: (B, 81, 9) → (B, 729)
-        cell_logits = self.cell_proj(fused).reshape(B, 729)
+        # Per-cell FILL logits: (B, 81, 9) → (B, 729) — actions 0..728
+        fill_logits = self.cell_proj_fill(fused).reshape(B, 729)
+        # Per-cell ELIMINATE logits: (B, 81, 9) → (B, 729) — actions 729..1457
+        elim_logits = self.cell_proj_elim(fused).reshape(B, 729)
 
         # Global context for value head: mean-pool → (B, global_dim)
         global_ctx = self.global_proj(fused.mean(dim=1))
 
-        # Concatenate: (B, 921)
-        return torch.cat([cell_logits, global_ctx], dim=-1)
+        # Concatenate: (B, 1458 + features_dim) = (B, 1650) at defaults
+        return torch.cat([fill_logits, elim_logits, global_ctx], dim=-1)

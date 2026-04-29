@@ -1,12 +1,20 @@
 # reasoner/env/sudoku_gym_env.py
 # -*- coding: utf-8 -*-
-"""SudokuGymEnv — 24-ch obs, solver-aware reward, no teacher info.
+"""SudokuGymEnv — 24-ch obs, fill+eliminate action space, solver-aware reward.
 
-Differences vs sb3/app/rl/envs/sudoku_gym_env.py:
-- 24 obs channels (no naked-single / hidden-single shortcut flags)
-- max_wrong_fills default 20 (was 5) so episodes have room to learn
-- info dict has no teacher_action / teacher_quality
-- reward via solver-aware RewardComputer (Task 4.2)
+Action space: Discrete(1458)
+  action 0..728     -> ('fill',      r, c, v)
+  action 729..1457  -> ('eliminate', r, c, v)
+  in both halves: r=idx//81, c=(idx%81)//9, v=(idx%9)+1
+                  where idx = action (fill) or action - 729 (eliminate)
+
+Routes I and II divergence: this env supports route II — the agent can
+either fill a cell with a value, OR eliminate a candidate from a cell.
+Eliminate actions let the agent directly demonstrate techniques 4-7
+(naked/hidden pair, pointing pair, box-line) that act on candidates.
+
+Wrong actions (whether wrong fill or eliminating the solution value) both
+increment wrong_count; episode terminates when wrong_count >= max_wrong_fills.
 """
 
 from __future__ import annotations
@@ -23,7 +31,9 @@ from reasoner.data_pkg.pool_db import PuzzlePoolDB
 class SudokuGymEnv(gym.Env):
     metadata = {"render_modes": []}
 
-    N_CHANNELS = 24  # was 26 — removed naked-single (24) and hidden-single (25) shortcut flags
+    N_CHANNELS = 24  # removed naked-single / hidden-single shortcut flags
+    N_ACTIONS  = 1458  # 729 fill + 729 eliminate
+    _ELIM_OFFSET = 729
 
     def __init__(
         self,
@@ -45,7 +55,7 @@ class SudokuGymEnv(gym.Env):
             shape=(self.N_CHANNELS, 9, 9),
             dtype=np.float32,
         )
-        self.action_space = spaces.Discrete(729)
+        self.action_space = spaces.Discrete(self.N_ACTIONS)
 
         self._db: PuzzlePoolDB | None = None
 
@@ -116,8 +126,8 @@ class SudokuGymEnv(gym.Env):
         return self._obs(), {}
 
     def step(self, action):
-        r, c, v = self._decode(int(action))
-        reward, terminated = self._reward_computer.compute(r, c, v)
+        mode, r, c, v = self._decode(int(action))
+        reward, terminated = self._reward_computer.compute(mode, r, c, v)
         self._step_count += 1
         self._episode_reward += reward
         truncated = (not terminated) and (self._step_count >= self.max_steps)
@@ -127,18 +137,30 @@ class SudokuGymEnv(gym.Env):
             "difficulty":  self._current_difficulty,
             "wrong_count": self.wrong_count,
             "steps":       self._step_count,
+            "action_mode": mode,
             "episode_reward": self._episode_reward,
         }
         return self._obs(), float(reward), terminated, truncated, info
 
     def action_masks(self) -> np.ndarray:
-        mask = np.zeros(729, dtype=bool)
+        """Legality mask over the 1458-action space.
+
+        Both fill and eliminate operate on (r, c, v) where v is currently
+        a candidate at empty cell (r, c). Filling a non-empty cell is illegal;
+        eliminating a digit that's not in candidates is a no-op so we mask it
+        out too. The CORRECTNESS of the action (whether v matches solution)
+        is NOT checked here — that would leak the solution; correctness is
+        evaluated by RewardComputer and contributes to wrong_count instead.
+        """
+        mask = np.zeros(self.N_ACTIONS, dtype=bool)
         for r in range(9):
             for c in range(9):
                 if self.board[r, c] != 0:
                     continue
                 for v in self.candidates_cache[r][c]:
-                    mask[r * 81 + c * 9 + (v - 1)] = True
+                    base = r * 81 + c * 9 + (v - 1)
+                    mask[base] = True                       # fill
+                    mask[self._ELIM_OFFSET + base] = True   # eliminate
         return mask
 
     def set_difficulty_distribution(self, dist: dict[int, float]) -> None:
@@ -208,15 +230,31 @@ class SudokuGymEnv(gym.Env):
         return {n for n in range(1, 10) if n not in used}
 
     @staticmethod
-    def _decode(action):
-        r = action // 81
-        c = (action % 81) // 9
-        v = (action % 9) + 1
-        return r, c, v
+    def _decode(action: int) -> tuple[str, int, int, int]:
+        """Decode a 0..1457 action into (mode, r, c, v)."""
+        if action < SudokuGymEnv._ELIM_OFFSET:
+            mode = "fill"
+            idx = action
+        else:
+            mode = "eliminate"
+            idx = action - SudokuGymEnv._ELIM_OFFSET
+        r = idx // 81
+        c = (idx % 81) // 9
+        v = (idx % 9) + 1
+        return mode, r, c, v
 
     @staticmethod
-    def encode(r, c, v):
-        return r * 81 + c * 9 + (v - 1)
+    def encode(mode: str, r: int, c: int, v: int) -> int:
+        """Encode (mode, r, c, v) into a 0..1457 action.
+
+        mode: 'fill' or 'eliminate'.
+        """
+        base = r * 81 + c * 9 + (v - 1)
+        if mode == "fill":
+            return base
+        if mode == "eliminate":
+            return SudokuGymEnv._ELIM_OFFSET + base
+        raise ValueError(f"Unknown action mode: {mode!r}")
 
     def _get_db(self):
         if self._db is None:
