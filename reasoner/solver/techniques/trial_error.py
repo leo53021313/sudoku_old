@@ -19,6 +19,27 @@ from reasoner.solver.candidate_engine import CandidateEngine
 from reasoner.solver_ext.backtracking import solve
 
 
+def justifies_trial_error(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does trial-and-error reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and hypothesising board[r,c] = v leads to no solution.
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+    board_copy = engine.board.copy()
+    board_copy[r, c] = v
+    return solve(board_copy) is None
+
+
 def find_trial_error_elimination(
     engine: CandidateEngine,
 ) -> tuple[str, int, int, int] | None:

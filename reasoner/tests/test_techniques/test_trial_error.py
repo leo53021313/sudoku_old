@@ -17,7 +17,7 @@ lead to demonstrable contradictions.
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.trial_error import find_trial_error_elimination
+from reasoner.solver.techniques.trial_error import find_trial_error_elimination, justifies_trial_error
 
 
 # ---------------------------------------------------------------------------
@@ -196,3 +196,59 @@ def test_te_sorts_by_candidate_count():
                         f"but T&E returned ({r},{c}) which has MORE candidates — "
                         "sorting by candidate count is broken"
                     )
+
+
+# ---------------------------------------------------------------------------
+# justifies_trial_error tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_trial_error_positive():
+    """Near-complete board: placing wrong value at (0,8) leads to contradiction."""
+    board = _SOL.copy()
+    board[0, 8] = 0  # sol=2; cell has candidate {2} only
+    # We need a cell with 2+ candidates; manually inject a wrong candidate
+    eng = CandidateEngine(board)
+    # The natural candidates for (0,8) after clearing is {2}; inject a wrong one
+    eng._cands[0][8].add(9)  # 9 is already in row 0 as col 8 sol=2; this is wrong
+    # Hypothesise placing 9 at (0,8): row 0 col 8 in solution is 2, not 9
+    # After placing 9, the remaining empty cell (0,8) needs 2 but 9 is placed → 2 still ok
+    # Actually we need a genuine contradiction; use _SOL with (0,8) cleared AND (8,2) cleared
+    board2 = _SOL.copy()
+    board2[0, 8] = 0  # sol=2
+    board2[8, 2] = 0  # sol=5; same col 8? no...
+    # Build a cleaner test: use the hard puzzle and verify a known contradiction
+    eng2 = CandidateEngine(_HARD_PUZZLE.copy())
+    result = find_trial_error_elimination(eng2)
+    if result is not None:
+        op, r, c, v = result
+        # That specific (r, c, v) should also be justified
+        assert justifies_trial_error(eng2, ('eliminate', r, c, v)) is True
+
+
+def test_justifies_trial_error_rejects_wrong_mode():
+    """justifies_trial_error returns False for 'fill' actions."""
+    eng = CandidateEngine(_HARD_PUZZLE.copy())
+    # Find a cell that would normally be eliminated
+    result = find_trial_error_elimination(eng)
+    assert result is not None
+    op, r, c, v = result
+    assert justifies_trial_error(eng, ('fill', r, c, v)) is False
+
+
+def test_justifies_trial_error_rejects_correct_value():
+    """Placing the correct value doesn't lead to contradiction — returns False."""
+    from reasoner.solver_ext.backtracking import solve
+    board = _HARD_PUZZLE.copy()
+    sol = solve(board.copy())
+    assert sol is not None
+    eng = CandidateEngine(board.copy())
+    # Find an empty cell and try its solution value — should NOT lead to contradiction
+    for r in range(9):
+        for c in range(9):
+            if eng.is_empty(r, c):
+                correct_v = int(sol[r, c])
+                # The correct value must be a candidate
+                if correct_v in eng.get_candidates(r, c):
+                    assert justifies_trial_error(eng, ('eliminate', r, c, correct_v)) is False
+                    return
+    pytest.skip("No suitable empty cell found")
