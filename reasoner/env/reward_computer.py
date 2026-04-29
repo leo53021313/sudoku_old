@@ -1,24 +1,29 @@
-"""RewardComputer: solver-aware reward for fill + eliminate actions.
+"""RewardComputer: action-justification reward for fill + eliminate actions.
 
-Reward structure (route II — fill OR eliminate action):
+Reward structure (action-justification model):
 
-FILL path:
-  - Wrong fill (v != solution[r,c]): -1, wrong_count++, terminate if >= MAX_WRONG.
-    The wrong value is still committed to the board (agent lives with it).
-  - Correct fill, board complete: +20 (terminates).
-  - Correct fill matching solver's fill suggestion at tech T: +1 + TECH_BONUS[T].
-  - Correct fill not matching solver: +0.3 (lucky/correct but suboptimal path).
+For ANY action ('fill' or 'eliminate'):
+  1. If the action would destroy the puzzle (wrong fill, or eliminate the
+     correct solution value): -1, wrong_count++, terminate if >= MAX_WRONG.
+  2. If correct fill completes the board: +20 (terminates).
+  3. Otherwise, ask the human-style solver: what is the SIMPLEST cookbook
+     technique that JUSTIFIES this action? Reward = 1.0 + TECH_BONUS[that_tech].
+     - "Justifies" means: technique T's reasoning, applied to the current
+       board state, would produce exactly this (mode, r, c, v) action.
+     - The simplest justifier wins (lowest tech_id), so an agent always
+       gets credit at least as high as the easiest reasoning.
+  4. If no technique justifies the action (legal candidate-state change but
+     not on any cookbook path): small reward — +0.3 for fills, +0.1 for
+     eliminates. Discourages spam without prohibiting exploration.
 
-ELIMINATE path:
-  - "Bad" eliminate (v == solution[r,c]): -1, wrong_count++, terminate if >= MAX_WRONG.
-    The candidate is still removed (board becomes unsolvable; agent lives with it).
-  - Valid eliminate matching solver's eliminate suggestion at tech T: +1 + TECH_BONUS[T].
-    Techniques 4-7 (pair/pointing/box-line) finally have reachable bonuses.
-  - Valid eliminate but not matching solver: +0.1 (legal candidate removal but not on
-    the priority-loop's path; small reward to encourage exploration without spam).
+This replaces the earlier "match solver.suggest()" reward model. Under the
+old model, only the FIRST-priority technique's bonus was reachable, which
+meant high-tier bonuses (X-Wing, XY-Wing, XYZ-Wing, T&E) were unreachable
+whenever an easier technique fired anywhere else on the board.
 
-Action mask in the env permits ANY (r,c,v) where v is a current candidate at empty
-(r,c), so the legality check above mirrors what the agent could possibly send.
+Action mask in the env permits ANY (r, c, v) where v is currently a
+candidate at empty (r, c). Solution-correctness is checked here, not in
+the mask, to avoid leaking the answer.
 """
 
 from __future__ import annotations
@@ -71,7 +76,7 @@ class RewardComputer:
             return self._compute_eliminate(r, c, v)
         raise ValueError(f"Unknown action mode: {mode!r}")
 
-    # ── Fill path (route I logic, unchanged) ──────────────────────────────────
+    # ── Fill path ─────────────────────────────────────────────────────────────
 
     def _compute_fill(self, r: int, c: int, v: int) -> tuple[float, bool]:
         env = self._env
@@ -83,43 +88,42 @@ class RewardComputer:
             terminated = env.wrong_count >= MAX_WRONG
             return -1.0, terminated
 
-        # Solver suggestion is computed BEFORE committing the fill so it
-        # reflects the same state the agent saw when picking its action.
-        solver_action, tech_id = self._solver.suggest(env.board)
+        # Find the simplest technique that justifies this fill BEFORE committing,
+        # so the engine state seen by justifies_* reflects the agent's decision context.
+        tech_id = self._solver.find_simplest_justifier(env.board, ("fill", r, c, v))
 
         self._commit_fill(r, c, v)
 
         if bool(np.all(env.board != 0)):
             return 20.0, True
 
-        if solver_action == ("fill", r, c, v):
+        if tech_id is not None:
             return 1.0 + TECH_BONUS.get(tech_id, 0.0), False
 
-        # Correct fill, but not the solver's first-priority choice (or solver had no fill).
+        # Correct fill but no cookbook reasoning produces it (lucky correct).
         return 0.3, False
 
-    # ── Eliminate path (new in route II) ──────────────────────────────────────
+    # ── Eliminate path ────────────────────────────────────────────────────────
 
     def _compute_eliminate(self, r: int, c: int, v: int) -> tuple[float, bool]:
         env = self._env
         is_bad = (int(v) == int(env.solution[r, c]))
 
         if is_bad:
-            # Removing the correct answer destroys solvability; treat as wrong.
             env.wrong_count += 1
             self._discard_candidate(r, c, v)
             terminated = env.wrong_count >= MAX_WRONG
             return -1.0, terminated
 
-        # Solver suggestion before applying the eliminate (same rationale as fill path).
-        solver_action, tech_id = self._solver.suggest(env.board)
+        # Same justifier-based grading as the fill path.
+        tech_id = self._solver.find_simplest_justifier(env.board, ("eliminate", r, c, v))
 
         self._discard_candidate(r, c, v)
 
-        if solver_action == ("eliminate", r, c, v):
+        if tech_id is not None:
             return 1.0 + TECH_BONUS.get(tech_id, 0.0), False
 
-        # Valid candidate removal but not on the solver's priority path.
+        # Legal candidate removal but no cookbook technique justifies it.
         return 0.1, False
 
     # ── Mutators ──────────────────────────────────────────────────────────────

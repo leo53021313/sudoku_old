@@ -90,32 +90,40 @@ def test_wrong_fill_terminates_at_max_wrong():
     assert env.wrong_count == 20
 
 
-def test_correct_naked_single_matches_solver_for_tech1_bonus():
-    """Correct + matches solver's naked single → 1.0 + TECH_BONUS[1] = 1.0 + 0.0 = 1.0"""
+def test_naked_single_fill_at_either_target_gets_tech1_bonus():
+    """Action-justification model: when two cells are both naked singles, an agent
+    that fills either one gets the tech-1 bonus (+1.0) — regardless of which one
+    the solver's priority scan would pick first.
+
+    Under the OLD reward (solver-suggest match), only the first cell in scan order
+    matched and the other got the +0.3 lucky-correct path. The new
+    action-justification model asks 'what's the simplest reasoning that produces
+    this action?' and naked single applies to either fill independently.
+    """
     sol = _solved_grid()
-    # Make a board where (8,8) is the ONLY empty cell; it's a naked single → tech 1
-    board = sol.copy()
-    board[8, 8] = 0
-    cands = _candidates_from_board(board)
-    env = _StubEnv(board, sol, cands)
-    rc = RewardComputer(env)
-    # solution[8,8] = 9; only one empty cell so completing it terminates → +20
-    # We want a NON-terminating naked-single: introduce another empty cell
+    # Two empty cells, both naked singles after constraint propagation.
     board2 = sol.copy()
-    board2[8, 8] = 0
-    board2[7, 7] = 0  # two empty
+    board2[8, 8] = 0  # solution[8,8] = 9
+    board2[7, 7] = 0  # solution[7,7] = 3
     cands2 = _candidates_from_board(board2)
-    env2 = _StubEnv(board2, sol, cands2)
-    rc2 = RewardComputer(env2)
-    # solution[8,8] = 9. After we fill (8,8)=9, board is NOT complete (7,7 still empty).
-    # solver suggested: should be naked single at (7,7) (tech 1), NOT (8,8).
-    # So our fill (8,8,9) is correct but DOESN'T match solver's suggestion → +0.3
-    reward, terminated = rc2.compute("fill", 8, 8, 9)
-    assert not terminated
-    # Could be 1.0 (if solver picked 8,8) or 0.3 (if solver picked 7,7 first).
-    # Both (8,8) and (7,7) are naked singles. Scan order: (7,7) before (8,8) → solver picks (7,7).
-    # Therefore agent's (8,8,9) is correct but not matching → +0.3
-    assert reward == pytest.approx(0.3)
+
+    # Filling (8,8) = 9 — naked single → +1.0
+    env_a = _StubEnv(board2.copy(), sol, [
+        [set(s) for s in row] for row in cands2
+    ])
+    rc_a = RewardComputer(env_a)
+    r_a, term_a = rc_a.compute("fill", 8, 8, 9)
+    assert not term_a
+    assert r_a == pytest.approx(1.0)
+
+    # Filling (7,7) = 3 — also a naked single → +1.0
+    env_b = _StubEnv(board2.copy(), sol, [
+        [set(s) for s in row] for row in cands2
+    ])
+    rc_b = RewardComputer(env_b)
+    r_b, term_b = rc_b.compute("fill", 7, 7, 3)
+    assert not term_b
+    assert r_b == pytest.approx(1.0)
 
 
 def test_correct_lucky_fill_when_solver_cannot_solve():

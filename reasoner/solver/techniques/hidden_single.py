@@ -46,3 +46,44 @@ def find_hidden_single(engine: CandidateEngine) -> tuple[str, int, int, int] | N
                     rr, cc = cells_with_d[0]
                     return ('fill', rr, cc, d)
     return None
+
+
+def justifies_hidden_single(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does hidden-single reasoning justify the given action?
+
+    True iff action is ('fill', r, c, v) where v is a candidate of (r, c) AND
+    in some unit (row, col, or box) containing (r, c), no other empty cell
+    has v as a candidate.
+    """
+    op, r, c, v = action
+    if op != 'fill':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    # Row check: is (r, c) the only place v can go in row r?
+    only_in_row = all(
+        not (engine.is_empty(r, cc) and v in engine.get_candidates(r, cc))
+        for cc in range(9) if cc != c
+    )
+    if only_in_row:
+        return True
+    # Col check
+    only_in_col = all(
+        not (engine.is_empty(rr, c) and v in engine.get_candidates(rr, c))
+        for rr in range(9) if rr != r
+    )
+    if only_in_col:
+        return True
+    # Box check
+    br, bc = (r // 3) * 3, (c // 3) * 3
+    only_in_box = all(
+        (rr, cc) == (r, c) or not (engine.is_empty(rr, cc) and v in engine.get_candidates(rr, cc))
+        for rr in range(br, br + 3) for cc in range(bc, bc + 3)
+    )
+    return only_in_box
