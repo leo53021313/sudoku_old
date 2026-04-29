@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.swordfish import find_swordfish_elimination
+from reasoner.solver.techniques.swordfish import find_swordfish_elimination, justifies_swordfish
 
 
 def _empty_eng():
@@ -157,3 +157,47 @@ def test_swordfish_row_with_three_cells_still_qualifies():
     assert r not in (0, 3, 6)
     assert c in (2, 5, 8)
     assert (r, c) == (1, 2)
+
+
+# ---------------------------------------------------------------------------
+# justifies_swordfish tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_swordfish_positive():
+    """Row-based swordfish: rows 0,3,6 with d=2 union cols {1,4,7}. Eliminate from (8,1)."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(2)
+    eng._cands[0][1].add(2); eng._cands[0][4].add(2)
+    eng._cands[3][1].add(2); eng._cands[3][7].add(2)
+    eng._cands[6][4].add(2); eng._cands[6][7].add(2)
+    eng._cands[8][1].add(2)
+    assert justifies_swordfish(eng, ('eliminate', 8, 1, 2)) is True
+
+
+def test_justifies_swordfish_rejects_wrong_mode():
+    """justifies_swordfish returns False for 'fill' actions."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(2)
+    eng._cands[0][1].add(2); eng._cands[0][4].add(2)
+    eng._cands[3][1].add(2); eng._cands[3][7].add(2)
+    eng._cands[6][4].add(2); eng._cands[6][7].add(2)
+    eng._cands[8][1].add(2)
+    assert justifies_swordfish(eng, ('fill', 8, 1, 2)) is False
+
+
+def test_justifies_swordfish_rejects_base_row():
+    """Cell (0,1) is a swordfish base row — elimination there is not justified."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(2)
+    eng._cands[0][1].add(2); eng._cands[0][4].add(2)
+    eng._cands[3][1].add(2); eng._cands[3][7].add(2)
+    eng._cands[6][4].add(2); eng._cands[6][7].add(2)
+    eng._cands[8][1].add(2)
+    # (0,1) is a base row cell — swordfish does not eliminate there
+    assert justifies_swordfish(eng, ('eliminate', 0, 1, 2)) is False
