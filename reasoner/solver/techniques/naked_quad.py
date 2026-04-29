@@ -83,3 +83,53 @@ def find_naked_quad_elimination(
             if result is not None:
                 return result
     return None
+
+
+def _iter_units(eng: CandidateEngine):
+    """Yield each unit's cell list: 9 rows, 9 cols, 9 boxes."""
+    for r in range(9):
+        yield _empty_cells_in_row(eng, r)
+    for c in range(9):
+        yield _empty_cells_in_col(eng, c)
+    for br in (0, 3, 6):
+        for bc in (0, 3, 6):
+            yield _empty_cells_in_box(eng, br, bc)
+
+
+def justifies_naked_quad(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does naked-quad reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and there exists a unit containing (r, c) where 4 OTHER empty
+    cells form a naked quad (union of their candidates has exactly 4 digits,
+    each with >= 2 candidates) and v is one of those 4 digits.
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    for cells in _iter_units(engine):
+        if (r, c) not in cells:
+            continue
+        other_cells = [(rr, cc) for rr, cc in cells if (rr, cc) != (r, c)]
+        n = len(other_cells)
+        cands_cache = [engine.get_candidates(*cell) for cell in other_cells]
+        for i, j, k, l in combinations(range(n), 4):
+            if (len(cands_cache[i]) < 2 or
+                    len(cands_cache[j]) < 2 or
+                    len(cands_cache[k]) < 2 or
+                    len(cands_cache[l]) < 2):
+                continue
+            union = cands_cache[i] | cands_cache[j] | cands_cache[k] | cands_cache[l]
+            if len(union) != 4:
+                continue
+            if v in union:
+                return True
+    return False
