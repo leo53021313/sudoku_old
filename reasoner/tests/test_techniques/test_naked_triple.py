@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.naked_triple import find_naked_triple_elimination
+from reasoner.solver.techniques.naked_triple import find_naked_triple_elimination, justifies_naked_triple
 
 
 def _eng(board=None):
@@ -107,3 +107,53 @@ def test_naked_triple_skips_naked_single_degenerate():
     op, r, c, v = result
     assert op == 'eliminate'
     assert v in {1, 2, 3}
+
+
+# ---------------------------------------------------------------------------
+# justifies_naked_triple tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_naked_triple_positive():
+    """(0,4) has digit 1 which can be eliminated due to naked triple {1,2,3} at (0,0),(0,1),(0,2)."""
+    eng = _eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._board[:] = 1
+    eng._board[0, 0] = 0; eng._board[0, 1] = 0; eng._board[0, 2] = 0; eng._board[0, 4] = 0
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][1] = {2, 3}
+    eng._cands[0][2] = {1, 3}
+    eng._cands[0][4] = {1, 5, 6}
+    assert justifies_naked_triple(eng, ('eliminate', 0, 4, 1)) is True
+
+
+def test_justifies_naked_triple_rejects_wrong_mode():
+    """justifies_naked_triple returns False for 'fill' actions."""
+    eng = _eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._board[:] = 1
+    eng._board[0, 0] = 0; eng._board[0, 1] = 0; eng._board[0, 2] = 0; eng._board[0, 4] = 0
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][1] = {2, 3}
+    eng._cands[0][2] = {1, 3}
+    eng._cands[0][4] = {1, 5, 6}
+    assert justifies_naked_triple(eng, ('fill', 0, 4, 1)) is False
+
+
+def test_justifies_naked_triple_rejects_non_triple_digit():
+    """digit 5 is NOT in the naked triple {1,2,3} — justifies returns False."""
+    eng = _eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._board[:] = 1
+    eng._board[0, 0] = 0; eng._board[0, 1] = 0; eng._board[0, 2] = 0; eng._board[0, 4] = 0
+    eng._cands[0][0] = {1, 2}
+    eng._cands[0][1] = {2, 3}
+    eng._cands[0][2] = {1, 3}
+    eng._cands[0][4] = {1, 5, 6}
+    # digit 5 is not in the naked triple
+    assert justifies_naked_triple(eng, ('eliminate', 0, 4, 5)) is False
