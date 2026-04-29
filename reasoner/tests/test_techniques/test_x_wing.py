@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.x_wing import find_x_wing_elimination
+from reasoner.solver.techniques.x_wing import find_x_wing_elimination, justifies_x_wing
 
 
 def _empty_eng():
@@ -138,3 +138,44 @@ def test_x_wing_requires_exactly_two_cells_per_row():
     # Row 0 is NOT a valid X-Wing row (3 candidates), so no X-Wing fires
     result = find_x_wing_elimination(eng)
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# justifies_x_wing tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_x_wing_positive_rows():
+    """Classic row-based X-Wing: rows 0,3 have d=5 exactly at cols 1,4. Cell (6,1) eliminated."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(5)
+    eng._cands[0][1].add(5); eng._cands[0][4].add(5)
+    eng._cands[3][1].add(5); eng._cands[3][4].add(5)
+    eng._cands[6][1].add(5)
+    assert justifies_x_wing(eng, ('eliminate', 6, 1, 5)) is True
+
+
+def test_justifies_x_wing_rejects_wrong_mode():
+    """justifies_x_wing returns False for 'fill' actions."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(5)
+    eng._cands[0][1].add(5); eng._cands[0][4].add(5)
+    eng._cands[3][1].add(5); eng._cands[3][4].add(5)
+    eng._cands[6][1].add(5)
+    assert justifies_x_wing(eng, ('fill', 6, 1, 5)) is False
+
+
+def test_justifies_x_wing_rejects_base_row_cell():
+    """Cell (0,1) is a base row cell — X-Wing does NOT eliminate from base rows."""
+    eng = _empty_eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c].discard(5)
+    eng._cands[0][1].add(5); eng._cands[0][4].add(5)
+    eng._cands[3][1].add(5); eng._cands[3][4].add(5)
+    eng._cands[6][1].add(5)
+    # (0,1) is a base row — should not be justified
+    assert justifies_x_wing(eng, ('eliminate', 0, 1, 5)) is False

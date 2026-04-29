@@ -79,3 +79,69 @@ def find_x_wing_elimination(engine: CandidateEngine) -> tuple[str, int, int, int
                             return ('eliminate', r, c, d)
 
     return None
+
+
+def justifies_x_wing(
+    engine: CandidateEngine,
+    action: tuple[str, int, int, int],
+) -> bool:
+    """Does X-Wing reasoning justify the given action?
+
+    True iff action is ('eliminate', r, c, v) where (r, c) is empty and v is a
+    candidate, and either:
+    - Rows variant: 2 rows r1,r2 each have v's candidates in EXACTLY {c1,c2},
+      r ∉ {r1,r2}, c ∈ {c1,c2}
+    - Cols variant: 2 cols c1,c2 each have v's candidates in EXACTLY {r1,r2},
+      c ∉ {c1,c2}, r ∈ {r1,r2}
+    """
+    op, r, c, v = action
+    if op != 'eliminate':
+        return False
+    if not engine.is_empty(r, c):
+        return False
+    if v not in engine.get_candidates(r, c):
+        return False
+
+    # Rows variant
+    rows_with_pair: list[tuple[int, tuple[int, int]]] = []
+    for row in range(9):
+        cols = tuple(
+            cc for cc in range(9)
+            if engine.is_empty(row, cc) and v in engine.get_candidates(row, cc)
+        )
+        if len(cols) == 2:
+            rows_with_pair.append((row, cols))
+
+    n = len(rows_with_pair)
+    for i in range(n):
+        r1, cols1 = rows_with_pair[i]
+        for j in range(i + 1, n):
+            r2, cols2 = rows_with_pair[j]
+            if cols1 != cols2:
+                continue
+            c1, c2 = cols1
+            if r not in (r1, r2) and c in (c1, c2):
+                return True
+
+    # Cols variant
+    cols_with_pair: list[tuple[int, tuple[int, int]]] = []
+    for col in range(9):
+        rows = tuple(
+            rr for rr in range(9)
+            if engine.is_empty(rr, col) and v in engine.get_candidates(rr, col)
+        )
+        if len(rows) == 2:
+            cols_with_pair.append((col, rows))
+
+    n = len(cols_with_pair)
+    for i in range(n):
+        c1, rows1 = cols_with_pair[i]
+        for j in range(i + 1, n):
+            c2, rows2 = cols_with_pair[j]
+            if rows1 != rows2:
+                continue
+            r1, r2 = rows1
+            if c not in (c1, c2) and r in (r1, r2):
+                return True
+
+    return False
