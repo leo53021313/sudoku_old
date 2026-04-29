@@ -1,6 +1,6 @@
 import numpy as np
 from reasoner.solver.candidate_engine import CandidateEngine
-from reasoner.solver.techniques.naked_pair import find_naked_pair_elimination
+from reasoner.solver.techniques.naked_pair import find_naked_pair_elimination, justifies_naked_pair
 
 
 def _eng(board=None):
@@ -71,3 +71,60 @@ def test_naked_pair_eliminates_from_third_cell():
     assert v in (2, 7)
     assert r == 0
     assert c not in (0, 1)
+
+
+# ---------------------------------------------------------------------------
+# justifies_naked_pair tests
+# ---------------------------------------------------------------------------
+
+def test_justifies_naked_pair_positive():
+    """(0,3) has digit 2 which can be eliminated due to naked pair {2,7} at (0,0),(0,1)."""
+    eng = _eng()
+    # Clear all candidates for surgical control
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    # Set is_empty: mark rows/cols that should be empty
+    eng._board[:] = 1  # fill all
+    eng._board[0, 0] = 0
+    eng._board[0, 1] = 0
+    eng._board[0, 3] = 0
+    # Naked pair at (0,0) and (0,1)
+    eng._cands[0][0] = {2, 7}
+    eng._cands[0][1] = {2, 7}
+    # Target cell (0,3) has candidate 2 (which is in the pair)
+    eng._cands[0][3] = {2, 4, 5}
+    assert justifies_naked_pair(eng, ('eliminate', 0, 3, 2)) is True
+
+
+def test_justifies_naked_pair_rejects_wrong_mode():
+    """justifies_naked_pair returns False for 'fill' actions."""
+    eng = _eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._board[:] = 1
+    eng._board[0, 0] = 0
+    eng._board[0, 1] = 0
+    eng._board[0, 3] = 0
+    eng._cands[0][0] = {2, 7}
+    eng._cands[0][1] = {2, 7}
+    eng._cands[0][3] = {2, 4, 5}
+    assert justifies_naked_pair(eng, ('fill', 0, 3, 2)) is False
+
+
+def test_justifies_naked_pair_rejects_non_pair_digit():
+    """digit 4 is NOT in the naked pair {2,7} — justifies returns False."""
+    eng = _eng()
+    for r in range(9):
+        for c in range(9):
+            eng._cands[r][c] = set()
+    eng._board[:] = 1
+    eng._board[0, 0] = 0
+    eng._board[0, 1] = 0
+    eng._board[0, 3] = 0
+    eng._cands[0][0] = {2, 7}
+    eng._cands[0][1] = {2, 7}
+    eng._cands[0][3] = {2, 4, 5}
+    # 4 is NOT in the naked pair {2,7}, so it cannot be justified by this technique
+    assert justifies_naked_pair(eng, ('eliminate', 0, 3, 4)) is False
