@@ -1,0 +1,18 @@
+{
+  "initial_target_empty": 3,
+  "min_target_empty": 3,
+  "max_target_empty": 55,
+
+  "target_rate": 0.70,
+  "tolerance_band": [0.55, 0.85],
+  "step_size": 10.0,
+
+  "window_size": 200,
+  "min_episodes_before_update": 100,
+  "min_steps_between_updates": 50000,
+
+  "stagnation_threshold_steps": 500000,
+  "stagnation_probe_step": 1,
+  "stagnation_rollback_threshold": 0.40,
+  "stagnation_rollback_window_steps": 200000
+}
