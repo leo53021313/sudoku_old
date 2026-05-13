@@ -213,3 +213,36 @@ def test_probe_rollback_clamps_to_min():
     ctrl.update(current_step=210_000)
     # Rollback would be 4 - 1 = 3, which is min, so clamps to 3.
     assert ctrl.target_empty_rounded == 3
+
+
+def test_save_load_round_trip(tmp_path):
+    """save() then load() should restore exactly the same state."""
+    cfg = _default_config()
+    ctrl1 = CurriculumController(cfg)
+    # Mutate some state
+    for i in range(200):
+        ctrl1.record_episode_outcome(success=(i % 20 < 19))  # 0.95
+    ctrl1.update(current_step=100_000)
+    assert ctrl1.target_empty_rounded == 4
+
+    path = tmp_path / "curriculum.json"
+    ctrl1.save(str(path))
+    assert path.exists()
+
+    ctrl2 = CurriculumController(cfg)
+    ctrl2.load(str(path))
+
+    assert ctrl2.target_empty == ctrl1.target_empty
+    assert ctrl2.last_advance_step == ctrl1.last_advance_step
+    assert ctrl2.last_advance_direction == ctrl1.last_advance_direction
+    assert list(ctrl2._success_window) == list(ctrl1._success_window)
+    assert ctrl2._probe_target == ctrl1._probe_target
+    assert ctrl2._probe_started_at == ctrl1._probe_started_at
+
+
+def test_load_missing_file_keeps_init(tmp_path):
+    """load() of a non-existent file leaves controller at initial state (no crash)."""
+    cfg = _default_config()
+    ctrl = CurriculumController(cfg)
+    ctrl.load(str(tmp_path / "does_not_exist.json"))
+    assert ctrl.target_empty == float(cfg["initial_target_empty"])

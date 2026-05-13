@@ -173,3 +173,45 @@ class CurriculumController:
         elif sr >= self._lo:
             # Probe succeeded or at least not catastrophic — clear probe
             self._probe_target = None
+
+    # ── Persistence ───────────────────────────────────────────────────────
+
+    def save(self, path: str) -> None:
+        """Serialize state to a JSON file at `path`."""
+        import json
+        from pathlib import Path
+
+        state = {
+            "target_empty": self.target_empty,
+            "last_advance_step": self.last_advance_step,
+            "last_advance_direction": self.last_advance_direction,
+            "last_adjustment": self.last_adjustment,
+            "probe_target": self._probe_target,
+            "probe_started_at": self._probe_started_at,
+            "success_window": list(self._success_window),
+        }
+        Path(path).write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+    def load(self, path: str) -> None:
+        """Restore state from a JSON file. No-op if the file does not exist."""
+        import json
+        from pathlib import Path
+
+        p = Path(path)
+        if not p.exists():
+            return  # leave controller at init state
+
+        state = json.loads(p.read_text(encoding="utf-8"))
+        self.target_empty = float(state["target_empty"])
+        self.last_advance_step = int(state["last_advance_step"])
+        self.last_advance_direction = int(state["last_advance_direction"])
+        self.last_adjustment = float(state["last_adjustment"])
+        self._probe_target = (
+            float(state["probe_target"]) if state["probe_target"] is not None else None
+        )
+        self._probe_started_at = int(state["probe_started_at"])
+
+        # Restore success window (preserve maxlen)
+        self._success_window.clear()
+        for v in state["success_window"]:
+            self._success_window.append(int(v))
