@@ -76,6 +76,10 @@ class SudokuGymEnv(gym.Env):
         self._current_difficulty = difficulty
         self._episode_reward = 0.0
 
+        # Curriculum control: when set, reset() will fill back cells from
+        # solution until only `target_empty` cells remain. None = use puzzle as-is.
+        self.target_empty: int | None = None
+
         self._reward_computer = RewardComputer(self)
 
     def reset(self, *, seed=None, options=None, _retries=0):
@@ -169,6 +173,17 @@ class SudokuGymEnv(gym.Env):
 
     def set_difficulty_distribution(self, dist: dict[int, float]) -> None:
         self._difficulty_dist = {int(k): float(p) for k, p in dist.items()}
+
+    def set_target_empty(self, target: int | None) -> None:
+        """Set curriculum difficulty: only `target` empty cells will remain.
+
+        None = disable curriculum (use puzzle's natural empty count).
+        Must be positive integer if not None.
+        """
+        if target is not None:
+            if not isinstance(target, (int, np.integer)) or target <= 0:
+                raise ValueError(f"target_empty must be positive int or None, got {target!r}")
+        self.target_empty = None if target is None else int(target)
 
     def _obs(self) -> np.ndarray:
         board = self.board.copy()

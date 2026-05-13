@@ -119,3 +119,26 @@ def test_obs_ch25_hidden_single_flag():
     assert obs[25].dtype == np.float32
     vals = set(np.unique(obs[25]).tolist())
     assert vals.issubset({0.0, 1.0})
+
+
+def test_target_empty_default_is_none():
+    """When target_empty is None, env behaves like the reasoner baseline."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    assert env.target_empty is None
+
+
+def test_set_target_empty():
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(8)
+    assert env.target_empty == 8
+
+    env.set_target_empty(None)
+    assert env.target_empty is None
+
+
+def test_set_target_empty_rejects_invalid():
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    with pytest.raises(ValueError):
+        env.set_target_empty(-1)
+    with pytest.raises(ValueError):
+        env.set_target_empty(0)
