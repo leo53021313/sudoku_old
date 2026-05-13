@@ -12,3 +12,5 @@ reasoner/models/
 reasoner/runs/
 sb3/models/
 sb3/runs/
+apprentice/models/
+apprentice/runs/
