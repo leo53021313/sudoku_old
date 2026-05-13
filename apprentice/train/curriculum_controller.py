@@ -71,11 +71,14 @@ class CurriculumController:
         self.last_adjustment = 0.0
 
         # Phase 0: handle in-flight probe (must come BEFORE regular update,
-        # otherwise regular update might shadow probe rollback)
+        # otherwise regular update might shadow probe rollback).
+        # When a probe is in flight (either still waiting in the rollback
+        # window, or in the wait-and-see band sr ∈ [rollback_thresh, lo)),
+        # NEVER fall through to the regular update — that would let regular
+        # adjustments race against probe rollback.
         if self._probe_target is not None:
             self._handle_active_probe(current_step)
-            if self._probe_target is None:
-                return  # probe just resolved; skip regular update this cycle
+            return  # regardless of resolved/still-in-flight, skip rest of cycle
 
         # Phase 1: regular sweet-spot update
         self._regular_update(current_step)

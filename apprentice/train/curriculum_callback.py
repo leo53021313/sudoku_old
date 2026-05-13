@@ -89,3 +89,14 @@ class CurriculumCallback(BaseCallback):
         steps_since = int(self.model.num_timesteps) - int(self.controller.last_advance_step)
         self.logger.record("curriculum/steps_since_last_advance", float(steps_since))
         self.logger.record("curriculum/is_probing", 1.0 if self.controller._probe_target is not None else 0.0)
+
+        # env-side limits aggregated from the first worker (all workers share target_empty,
+        # so max_steps and max_wrong_fills are identical across workers)
+        if self.training_env is not None:
+            try:
+                max_steps = int(self.training_env.get_attr("max_steps")[0])
+                max_wrong = int(self.training_env.get_attr("max_wrong_fills")[0])
+                self.logger.record("env/max_steps", float(max_steps))
+                self.logger.record("env/max_wrong", float(max_wrong))
+            except (AttributeError, IndexError):
+                pass  # vec_env doesn't support get_attr (e.g., in some tests)
