@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -m pytest sb3/tests/test_pool_db_fetcher.py -v)"
-    ]
-  }
-}

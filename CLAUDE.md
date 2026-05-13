@@ -7,21 +7,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Structure
 
-This repo contains **two independent training systems** in separate subfolders:
+This repo contains **three independent training systems** in separate subfolders:
 
 ```
 sudoku_old/
-├── data/puzzle_pool.db        ← shared puzzle database (both versions)
+├── data/puzzle_pool.db        ← shared puzzle database (all versions)
 ├── legacy/                    ← archived PyTorch PPO + PyQt6 GUI version
-└── sb3/                       ← active SB3 MaskablePPO version (main development)
+├── sb3/                       ← frozen SB3 MaskablePPO baseline (PPO_8 HPs)
+└── reasoner/                  ← ACTIVE: route-II reasoner (fill+eliminate, justification reward)
 ```
 
-**Shared database**: `data/puzzle_pool.db` at repo root. Both versions reference it as `"../data/puzzle_pool.db"` (run from inside their subfolder). This value is set in `legacy/data/user_config.json` (`db.path`) and `sb3/train_sb3.py` (`DB_PATH`).
+**Shared database**: `data/puzzle_pool.db` at repo root. `legacy/` and `sb3/` reference it as `"../data/puzzle_pool.db"` (run from inside their subfolder). `reasoner/` runs from repo root and resolves the path as `_REPO_ROOT / "data" / "puzzle_pool.db"`.
 
 ## Running
 
 ```bash
-# Active version (SB3 MaskablePPO)
+# Active version (reasoner — route II); run from REPO ROOT, not from inside reasoner/
+python -m reasoner.train.train
+python -m reasoner.train.train --load-model auto                  # resume newest ckpt
+python -m reasoner.train.train --timesteps 100000000 --load-model auto
+
+# Frozen baseline (SB3 MaskablePPO — PPO_8)
 cd sb3
 python train_sb3.py
 python train_sb3.py --timesteps 2000000 --n-envs 8
@@ -35,7 +41,7 @@ python main_train.py
 
 ---
 
-## sb3/ — Active SB3 Training System
+## sb3/ — Frozen SB3 Baseline (reference)
 
 **Data flow:**
 1. `SudokuGymEnv.reset()` fetches puzzle from DB → solves with backtracking solver → builds 26-channel observation
@@ -70,6 +76,27 @@ python main_train.py
 
 ---
 
+## reasoner/ — Active Reasoner Training (route II)
+
+**Differences vs sb3/:** Discrete(1458) action space (fill 0-728 + eliminate 729-1457), 24-ch obs (no naked/hidden-single shortcut flags), technique-justification reward, NO curriculum (removed in `e870443` as inert), pure PPO (no BC pass).
+
+**Run from repo root** (not from inside `reasoner/`): `python -m reasoner.train.train`.
+
+**Key files (`reasoner/`):**
+- [reasoner/train/train.py](reasoner/train/train.py) — entry; `--load-model auto` finds newest `reasoner_ckpt_*_steps.zip` in `reasoner/models/`. VecNormalize stats saved as `<ckpt>_vecnorm.pkl` alongside each checkpoint.
+- [reasoner/train/ppo.py](reasoner/train/ppo.py) — `SudokuMaskablePPO` (pure PPO, no BC)
+- [reasoner/env/sudoku_gym_env.py](reasoner/env/sudoku_gym_env.py) — fill+eliminate env; `max_wrong_fills=20`, `max_steps=300`
+- [reasoner/env/reward_computer.py](reasoner/env/reward_computer.py) — action-justification reward (see below)
+- [reasoner/solver/human_solver.py](reasoner/solver/human_solver.py) — drives `justifies_<tech>()` lookups across `techniques/`
+- [reasoner/solver/techniques/](reasoner/solver/techniques/) — 13 cookbook techniques (naked/hidden single, naked/hidden pair, pointing pair, box-line, naked triple/quad, X-Wing, Swordfish, XY/XYZ-Wing, Trial & Error)
+- [reasoner/eval/eval_callback.py](reasoner/eval/eval_callback.py) — random-sample eval; [reasoner/eval/reserved_eval_callback.py](reasoner/eval/reserved_eval_callback.py) — held-out set
+
+**Reward model (`reward_computer.py`):** For every action (fill or eliminate), ask the human solver "what is the *simplest* cookbook technique whose reasoning would produce this exact action?" → reward = `1.0 + TECH_BONUS[tech_id]`. Bonuses scale 0.0 (naked single) → 3.0 (XYZ-Wing, T&E). Wrong action (bad fill OR eliminating the solution value) → `-1`, `wrong_count++`, terminate at `>= MAX_WRONG (20)`. Board-complete → `+20`. Legal-but-unjustified action: `+0.3` (fill) / `+0.1` (eliminate) — small signal to discourage spam without blocking exploration.
+
+**Why action-justification replaced "match `solver.suggest()`":** under the old model only the highest-priority technique's bonus was reachable, so X-Wing / XY-Wing / T&E bonuses never fired when an easier technique was also applicable somewhere else on the board. See commit `0a93dd4`.
+
+---
+
 ## legacy/ — Archived PPO Training System
 
 **Data flow:**
@@ -99,7 +126,7 @@ All hardcoded constants in `legacy/app/config/schema.py`. Access via `config.get
 - `reload_required: False` → hot-reload (callback triggered immediately on Apply)
 - `reload_required: True` → requires training restart; settings are saved but take effect next run
 
-## Key Design Decisions
+## Key Design Decisions (legacy/)
 
 - **HTTP proxy priority**: Validated by actual page fetch (`puzzle_grid` check); SOCKS only TCP connect — HTTP proxies are more reliable and sorted first (`_PROTO_PRIORITY`).
 - **Proxy stop on F9**: `run()` finally calls `proxy_manager.stop_validation()` before `_stop_event.set()`, ensuring the background validator exits within one iteration.
@@ -118,6 +145,20 @@ All hardcoded constants in `legacy/app/config/schema.py`. Access via `config.get
 - **`ConfigManager._save()` is always called outside `_lock`**: Take a `snapshot = dict(self._user)` inside the lock, release, then call `_save(snapshot)`. This applies to both `set()` and `reset_to_default()`. Doing file I/O inside the lock causes unnecessary hold time when 20 producer threads call concurrently.
 - **`PolicyDemoStore.try_add_episode()` requires policy ratio ≥ `min_ratio` (0.50)**: Episodes dominated by the MRV teacher are rejected — they don't represent policy capability and would pollute the Phase 3 self-improvement signal.
 - **Phase transitions only happen at episode boundaries**: `phase_manager.record_episode()` is called only in `finish_episode()`. Within a single episode the phase never changes, so `_demo_states` / `_demo_total_steps` are always consistent with the phase they were collected under.
+
+## Testing
+
+Reasoner has the active test suite. Run from repo root:
+
+```bash
+python -m pytest reasoner/tests/                     # full suite
+python -m pytest reasoner/tests/test_techniques/     # technique tests only
+python -m pytest reasoner/tests/test_techniques/test_x_wing.py -v
+```
+
+Each `reasoner/solver/techniques/<tech>.py` has a paired `reasoner/tests/test_techniques/test_<tech>.py`. When adding a new technique, add the matching test alongside the bonus entry in `TECH_BONUS`.
+
+`legacy/` and `sb3/` have no automated test suites.
 
 ## Config Overrides (legacy/data/user_config.json vs schema defaults)
 
@@ -157,3 +198,11 @@ The following keys in `legacy/data/user_config.json` intentionally deviate from 
 - **`_retry_transaction(self, fn)` initialises `conn = None` BEFORE `_get_conn()`**: this lets the helper handle the case where `_get_conn()` itself raises `OperationalError: database is locked` (rare but possible under heavy connection pressure). The rollback branch uses `if conn is not None` — without the sentinel, an UnboundLocalError fires before retry can happen.
 - **`_migrate(conn)` runs inside `_init_db()` after `CREATE TABLE IF NOT EXISTS`**: `PRAGMA table_info(puzzles)` reflects the freshly-created schema correctly. To add a new column, just add a line to `_EXTRA_COLUMNS = {"level": "INTEGER NOT NULL DEFAULT 1", ...}` — no method changes needed.
 - **`_warned_direct` is a one-shot per-worker flag, not per-session**: each worker independently emits one direct-connect warning when its first `proxy_dict is None` happens. Restart of a worker (new instance) re-arms the flag. Don't accidentally make it class-level — that would suppress the warning across all workers after the first one fires.
+
+## Key Design Decisions (reasoner/)
+
+- **`TECH_BONUS` keys are 1-13 and 17 only** — `tech_id` 3 ("basic_elim") is engine-internal and never appears as a justifier. IDs 14-16 are reserved (unimplemented Tier B). Adding a new technique = file under `solver/techniques/`, register in `human_solver.py`, add a bonus to `TECH_BONUS` in `reward_computer.py`.
+- **No curriculum**: env samples uniformly from all puzzles at the configured websudoku difficulty (1-4). The old stage-curriculum infrastructure was removed in `e870443` — do NOT reintroduce without explicit ask; it was inert (never triggered meaningful escalation under the justification reward).
+- **TB log name is constant (`"reasoner"`)**: SB3 auto-suffixes (`reasoner_1`, `reasoner_2`, ...) across resumes so all runs are visible together in a single TensorBoard view pointed at `reasoner/runs/`.
+- **Action mask permits any `(r,c,v)` where v is currently a candidate at empty `(r,c)`**: solution-correctness is checked in the reward computer, NOT in the mask, to avoid leaking the answer into the policy's input distribution.
+- **`max_wrong_fills=20` (was 5)**: raised because the eliminate action half makes accidental "destroy the solution" events more frequent (any eliminate of the true solution value counts as a wrong action). Lowering this back to 5 chokes early exploration.
