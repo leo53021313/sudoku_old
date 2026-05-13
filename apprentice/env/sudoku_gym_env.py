@@ -26,12 +26,16 @@ from gymnasium import spaces
 from apprentice.solver_ext.backtracking import solve
 from apprentice.env.reward_computer import RewardComputer
 from apprentice.data_pkg.pool_db import PuzzlePoolDB
+from apprentice.env.obs_helpers import (
+    compute_naked_single_grid,
+    compute_hidden_single_grid,
+)
 
 
 class SudokuGymEnv(gym.Env):
     metadata = {"render_modes": []}
 
-    N_CHANNELS = 24  # removed naked-single / hidden-single shortcut flags
+    N_CHANNELS = 26  # 24 base + naked-single flag (ch 24) + hidden-single flag (ch 25)
     N_ACTIONS  = 1458  # 729 fill + 729 eliminate
     _ELIM_OFFSET = 729
 
@@ -201,7 +205,11 @@ class SudokuGymEnv(gym.Env):
         # ch 23: candidate count / 9.0
         obs[23] = self.candidate_count_grid.astype(np.float32) / 9.0
 
-        # ch 24, 25 REMOVED — no naked-single / hidden-single flags
+        # ch 24: naked-single flag (1.0 where empty cell has exactly 1 candidate)
+        obs[24] = compute_naked_single_grid(self.board, self.candidates_cache)
+
+        # ch 25: hidden-single flag
+        obs[25] = compute_hidden_single_grid(self.board, self.candidates_cache)
 
         return obs
 

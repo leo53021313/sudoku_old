@@ -1,6 +1,9 @@
 import numpy as np
 import pytest
+from pathlib import Path
 from apprentice.env.sudoku_gym_env import SudokuGymEnv
+
+_REPO_DB = Path(__file__).resolve().parents[2] / "data" / "puzzle_pool.db"
 
 
 @pytest.fixture
@@ -8,9 +11,9 @@ def db_path():
     return "data/puzzle_pool.db"
 
 
-def test_obs_shape_is_24_channels(db_path):
+def test_obs_shape_is_26_channels(db_path):
     env = SudokuGymEnv(db_path=db_path)
-    assert env.observation_space.shape == (24, 9, 9)
+    assert env.observation_space.shape == (26, 9, 9)
 
 
 def test_action_space_is_1458(db_path):
@@ -90,3 +93,34 @@ def test_action_mask_fill_and_eliminate_have_same_legal_set(db_path):
     fill_half = mask[:729]
     elim_half = mask[729:]
     np.testing.assert_array_equal(fill_half, elim_half)
+
+
+def test_obs_shape_26_channels():
+    """A3: obs should be (26, 9, 9) — 24 base channels + naked-single + hidden-single."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    obs, _ = env.reset(seed=42)
+    assert obs.shape == (26, 9, 9), f"expected (26,9,9), got {obs.shape}"
+    assert env.observation_space.shape == (26, 9, 9)
+
+
+def test_obs_ch24_naked_single_flag():
+    """Ch 24 marks cells with exactly 1 candidate."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    obs, _ = env.reset(seed=42)
+    # For every empty cell with candidate_count == 1, ch 24 must be 1
+    for r in range(9):
+        for c in range(9):
+            if env.board[r, c] == 0 and len(env.candidates_cache[r][c]) == 1:
+                assert obs[24, r, c] == 1.0
+            else:
+                assert obs[24, r, c] == 0.0
+
+
+def test_obs_ch25_hidden_single_flag():
+    """Ch 25 marks cells that are hidden singles in some unit."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    obs, _ = env.reset(seed=42)
+    # Sanity: ch 25 is float32, all in {0.0, 1.0}
+    assert obs[25].dtype == np.float32
+    vals = set(np.unique(obs[25]).tolist())
+    assert vals.issubset({0.0, 1.0})
