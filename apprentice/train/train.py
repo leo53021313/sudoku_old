@@ -217,7 +217,7 @@ def main():
             gamma=0.99,
             gae_lambda=0.95,
             clip_range=0.1,
-            ent_coef=0.02,
+            ent_coef=0.05,
             vf_coef=0.5,
             max_grad_norm=0.5,
             learning_rate=LinearSchedule(3e-4, 1e-5, end_fraction=1.0),
