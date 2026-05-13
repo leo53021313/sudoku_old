@@ -198,7 +198,7 @@ def main():
     policy_kwargs = dict(
         features_extractor_class=SudokuFeaturesExtractor,
         features_extractor_kwargs={"features_dim": 192},
-        net_arch={"pi": [], "vf": [128]},
+        net_arch={"pi": [128], "vf": [128, 128]},
     )
 
     # Model — pure PPO, no BC
