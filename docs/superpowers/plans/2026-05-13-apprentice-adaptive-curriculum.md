@@ -1045,7 +1045,7 @@ def test_max_wrong_dynamic_when_target_empty_set():
 
     env.set_target_empty(18)
     env.reset(seed=42)
-    assert env.max_wrong_fills == 22  # max(20, 21.6) → 22 after int
+    assert env.max_wrong_fills == 21  # max(20, int(21.6)) = max(20, 21) = 21
 
     env.set_target_empty(50)
     env.reset(seed=42)
