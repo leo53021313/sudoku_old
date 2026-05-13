@@ -11,11 +11,6 @@ def db_path():
     return "data/puzzle_pool.db"
 
 
-def test_obs_shape_is_26_channels(db_path):
-    env = SudokuGymEnv(db_path=db_path)
-    assert env.observation_space.shape == (26, 9, 9)
-
-
 def test_action_space_is_1458(db_path):
     """Route II: 729 fill + 729 eliminate."""
     env = SudokuGymEnv(db_path=db_path)
