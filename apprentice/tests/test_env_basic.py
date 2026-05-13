@@ -142,3 +142,75 @@ def test_set_target_empty_rejects_invalid():
         env.set_target_empty(-1)
     with pytest.raises(ValueError):
         env.set_target_empty(0)
+
+
+def test_reset_with_target_empty_3():
+    """With target_empty=3, only 3 cells should remain empty after reset."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(3)
+    obs, _ = env.reset(seed=42)
+    n_empty = int(np.count_nonzero(env.board == 0))
+    assert n_empty == 3, f"expected 3 empty cells, got {n_empty}"
+
+
+def test_reset_with_target_empty_5():
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(5)
+    obs, _ = env.reset(seed=42)
+    n_empty = int(np.count_nonzero(env.board == 0))
+    assert n_empty == 5
+
+
+def test_reset_target_empty_larger_than_puzzle_keeps_puzzle():
+    """If target_empty >= puzzle's natural empty count, fill nothing back."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(80)  # larger than any L1 puzzle's empty count
+    obs, _ = env.reset(seed=42)
+    n_empty = int(np.count_nonzero(env.board == 0))
+    # L1 puzzles have ~45-55 empty; with target=80 we should keep all of them
+    assert n_empty < 80
+    assert n_empty > 30  # sanity: puzzle is not heavily pre-filled
+
+
+def test_reset_fill_back_cells_match_solution():
+    """Cells filled back during fill_back must match the solver's solution."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(5)
+    obs, _ = env.reset(seed=42)
+    # board cells that were not originally empty OR were filled back from solution
+    # should match solution
+    for r in range(9):
+        for c in range(9):
+            if env.board[r, c] != 0:
+                assert env.board[r, c] == env.solution[r, c], \
+                    f"cell ({r},{c}) board={env.board[r,c]} != solution={env.solution[r,c]}"
+
+
+def test_reset_no_target_empty_unchanged_behavior():
+    """With target_empty=None, reset() behaves like reasoner baseline."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(None)
+    obs, _ = env.reset(seed=42)
+    n_empty_natural = int(np.count_nonzero(env.board == 0))
+
+    # Re-reset with same seed should give same puzzle
+    env.set_target_empty(None)
+    obs2, _ = env.reset(seed=42)
+    n_empty_natural2 = int(np.count_nonzero(env.board == 0))
+    assert n_empty_natural == n_empty_natural2
+    assert n_empty_natural > 30  # natural L1 puzzle is reasonably empty
+
+
+def test_reset_with_target_empty_reproducible():
+    """Same seed + same target_empty → same fill_back."""
+    env1 = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env1.set_target_empty(5)
+    env1.reset(seed=123)
+    board1 = env1.board.copy()
+
+    env2 = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env2.set_target_empty(5)
+    env2.reset(seed=123)
+    board2 = env2.board.copy()
+
+    assert np.array_equal(board1, board2)

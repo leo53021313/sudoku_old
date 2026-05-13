@@ -131,6 +131,10 @@ class SudokuGymEnv(gym.Env):
             return self.reset(seed=seed, options=options, _retries=_retries + 1)
         self.solution = sol
 
+        # B1: optional fill_back from solution to enforce target_empty
+        if self.target_empty is not None:
+            self._apply_fill_back(self.target_empty)
+
         return self._obs(), {}
 
     def step(self, action):
@@ -227,6 +231,34 @@ class SudokuGymEnv(gym.Env):
         obs[25] = compute_hidden_single_grid(self.board, self.candidates_cache)
 
         return obs
+
+    def _apply_fill_back(self, target_empty: int) -> None:
+        """Fill cells from self.solution until only target_empty cells remain empty.
+
+        Uses self.np_random (gymnasium PRNG, seed-controllable via reset(seed=)).
+        """
+        empty_cells = [
+            (r, c) for r in range(9) for c in range(9) if self.board[r, c] == 0
+        ]
+        n_current_empty = len(empty_cells)
+        fill_back = max(0, n_current_empty - target_empty)
+        if fill_back == 0:
+            return
+
+        # Shuffle the empty cells with gymnasium PRNG, take the first fill_back
+        # (np_random.permutation gives same result for same seed)
+        order = self.np_random.permutation(n_current_empty)
+        to_fill = [empty_cells[i] for i in order[:fill_back]]
+
+        for r, c in to_fill:
+            v = int(self.solution[r, c])
+            self.board[r, c] = v
+            # `fixed` mask not updated — fill_back cells are considered "given"
+            # by the env but we don't mark them as `fixed` since they're not
+            # part of the original puzzle. This is fine for obs ch 18.
+
+        # Rebuild candidate cache after the fill_backs change the constraint graph.
+        self._rebuild_candidates()
 
     def _rebuild_candidates(self):
         for r in range(9):
