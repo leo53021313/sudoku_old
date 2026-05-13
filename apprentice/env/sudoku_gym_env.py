@@ -52,6 +52,10 @@ class SudokuGymEnv(gym.Env):
         self.max_wrong_fills = max_wrong_fills
         self.max_steps       = max_steps
 
+        # Save constructor defaults for "target_empty=None" mode
+        self._max_steps_static = max_steps
+        self._max_wrong_static = max_wrong_fills
+
         self._difficulty_dist: dict[int, float] = {difficulty: 1.0}
 
         self.observation_space = spaces.Box(
@@ -99,6 +103,7 @@ class SudokuGymEnv(gym.Env):
             self._step_count    = 0
             self._episode_reward = 0.0
             self._rebuild_candidates()
+            self._update_dynamic_limits()
             return self._obs(), {}
 
         difficulties = list(self._difficulty_dist.keys())
@@ -134,6 +139,9 @@ class SudokuGymEnv(gym.Env):
         # B1: optional fill_back from solution to enforce target_empty
         if self.target_empty is not None:
             self._apply_fill_back(self.target_empty)
+
+        # A5 + E2: dynamic max_steps / max_wrong driven by target_empty (if set)
+        self._update_dynamic_limits()
 
         return self._obs(), {}
 
@@ -231,6 +239,22 @@ class SudokuGymEnv(gym.Env):
         obs[25] = compute_hidden_single_grid(self.board, self.candidates_cache)
 
         return obs
+
+    def _update_dynamic_limits(self) -> None:
+        """A5+E2: set max_steps and max_wrong_fills based on target_empty.
+
+        If target_empty is None, restore constructor defaults.
+        Formula:
+          max_steps = max(60, target_empty * 8)
+          max_wrong = max(20, int(target_empty * 1.2))
+        """
+        if self.target_empty is None:
+            self.max_steps = self._max_steps_static
+            self.max_wrong_fills = self._max_wrong_static
+            return
+
+        self.max_steps = max(60, int(self.target_empty * 8))
+        self.max_wrong_fills = max(20, int(self.target_empty * 1.2))
 
     def _apply_fill_back(self, target_empty: int) -> None:
         """Fill cells from self.solution until only target_empty cells remain empty.

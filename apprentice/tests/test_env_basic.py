@@ -217,3 +217,50 @@ def test_reset_fill_back_deterministic_given_same_puzzle():
     assert int(np.count_nonzero(env1.board == 0)) == int(
         np.count_nonzero(fixed_board == 0)
     )
+
+
+def test_max_steps_dynamic_when_target_empty_set():
+    """A5: max_steps = max(60, target_empty * 8)."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(3)
+    env.reset(seed=42)
+    assert env.max_steps == 60   # max(60, 24)
+
+    env.set_target_empty(12)
+    env.reset(seed=42)
+    assert env.max_steps == 96   # max(60, 96)
+
+    env.set_target_empty(50)
+    env.reset(seed=42)
+    assert env.max_steps == 400   # max(60, 400)
+
+
+def test_max_wrong_dynamic_when_target_empty_set():
+    """E2: max_wrong = max(20, target_empty * 1.2)."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
+    env.set_target_empty(3)
+    env.reset(seed=42)
+    assert env.max_wrong_fills == 20  # max(20, 3.6)
+
+    env.set_target_empty(18)
+    env.reset(seed=42)
+    assert env.max_wrong_fills == 21  # max(20, int(21.6)) = 21
+
+    env.set_target_empty(50)
+    env.reset(seed=42)
+    assert env.max_wrong_fills == 60  # max(20, 60)
+
+
+def test_max_steps_static_when_target_empty_none():
+    """When target_empty is None, max_steps stays as constructor default."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1, max_steps=222)
+    env.set_target_empty(None)
+    env.reset(seed=42)
+    assert env.max_steps == 222
+
+
+def test_max_wrong_static_when_target_empty_none():
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1, max_wrong_fills=33)
+    env.set_target_empty(None)
+    env.reset(seed=42)
+    assert env.max_wrong_fills == 33
