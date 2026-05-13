@@ -21,6 +21,7 @@ from all puzzles at the requested websudoku difficulty (level 1-4).
 
 from __future__ import annotations
 import argparse
+import json
 import os
 import re
 import sys
@@ -40,6 +41,8 @@ from stable_baselines3.common.utils import LinearSchedule
 from apprentice.env.sudoku_gym_env import SudokuGymEnv
 from apprentice.model.features_extractor import SudokuFeaturesExtractor
 from apprentice.train.ppo import SudokuMaskablePPO
+from apprentice.train.curriculum_controller import CurriculumController
+from apprentice.train.curriculum_callback import CurriculumCallback
 from apprentice.eval.eval_callback import SudokuEvalCallback
 from apprentice.eval.reserved_eval_callback import ReservedEvalCallback
 
@@ -52,6 +55,7 @@ LOG_DIR     = str(_REPO_ROOT / "apprentice" / "runs")
 MODEL_NAME  = "apprentice_latest"
 TB_LOG_NAME = "apprentice"  # consistent across resumes; SB3 will create apprentice_1, apprentice_2, ...
                             # all visible together when TB points at LOG_DIR.
+CURRICULUM_CONFIG = str(_REPO_ROOT / "apprentice" / "configs" / "curriculum.json")
 
 _CKPT_PATTERN = re.compile(r"apprentice_ckpt_(\d+)_steps\.zip$")
 
@@ -90,8 +94,12 @@ class CheckpointWithSidecars(BaseCallback):
         self.save_freq = save_freq
         self.save_path = save_path
         self.name_prefix = name_prefix
-        self._last_save: int | None = None  # set on _init_callback to num_timesteps
+        self._last_save: int | None = None
+        self._associated_curriculum_cbs: list = []
         os.makedirs(save_path, exist_ok=True)
+
+    def add_curriculum_callback(self, cb) -> None:
+        self._associated_curriculum_cbs.append(cb)
 
     def _init_callback(self) -> None:
         # Anchor save schedule to current num_timesteps so resume doesn't
@@ -105,12 +113,20 @@ class CheckpointWithSidecars(BaseCallback):
 
         base = os.path.join(self.save_path, f"{self.name_prefix}_{self.num_timesteps}_steps")
         self.model.save(base + ".zip")
+        sidecar_tags: list[str] = []
         vec_env = self.model.get_vec_normalize_env()
         if isinstance(vec_env, VecNormalize):
             vec_env.save(base + "_vecnorm.pkl")
-            tag = "+vecnorm"
-        else:
-            tag = ""
+            sidecar_tags.append("vecnorm")
+
+        # Also save curriculum state alongside ckpt — look up CurriculumCallback in self.callbacks
+        for cb in getattr(self, "_associated_curriculum_cbs", []):
+            if cb is not None and cb.controller is not None:
+                cb.controller.save(base + "_curriculum.json")
+                sidecar_tags.append("curriculum")
+                break
+
+        tag = ("+" + " +".join(sidecar_tags)) if sidecar_tags else ""
         if self.verbose >= 1:
             print(f"[Checkpoint] step={self.num_timesteps:,} -> {base}.zip {tag}")
         return True
@@ -128,6 +144,10 @@ def parse_args():
     p.add_argument("--max-wrong",  type=int, default=20)
     p.add_argument("--no-vecnorm", action="store_true")
     p.add_argument("--verbose",    type=int, default=1)
+    p.add_argument("--curriculum-config", type=str, default=CURRICULUM_CONFIG,
+                   help="Path to curriculum config JSON")
+    p.add_argument("--no-curriculum", action="store_true",
+                   help="Disable adaptive curriculum entirely (env runs with no target_empty)")
     return p.parse_args()
 
 
@@ -203,10 +223,20 @@ def main():
 
     # Model — pure PPO, no BC
     if load_path is not None:
-        print(f"[train] Resuming from: {load_path}")
-        model = SudokuMaskablePPO.load(
-            load_path, env=vec_env, device=args.device,
-        )
+        print(f"[apprentice] Resuming from: {load_path}")
+        try:
+            model = SudokuMaskablePPO.load(
+                load_path, env=vec_env, device=args.device,
+            )
+        except RuntimeError as e:
+            if "size mismatch" in str(e).lower():
+                sys.exit(
+                    f"[apprentice] FATAL: ckpt obs shape doesn't match current env "
+                    f"observation_space={vec_env.observation_space.shape}. "
+                    f"obs shape may have changed between training runs; must cold-start "
+                    f"(omit --load-model). Underlying error: {e}"
+                )
+            raise
     else:
         model = SudokuMaskablePPO(
             policy="CnnPolicy",
@@ -260,23 +290,56 @@ def main():
         verbose=args.verbose,
     )
 
+    # Curriculum controller + callback
+    if not args.no_curriculum:
+        with open(args.curriculum_config, "r", encoding="utf-8") as f:
+            curr_cfg = json.load(f)
+        curriculum = CurriculumController(curr_cfg)
+
+        # If resuming and a curriculum sidecar exists alongside the ckpt, load it
+        if load_path is not None:
+            curr_sidecar = load_path.replace(".zip", "_curriculum.json")
+            if os.path.exists(curr_sidecar):
+                curriculum.load(curr_sidecar)
+                print(f"[apprentice] Loaded curriculum state from {curr_sidecar}")
+
+        # Persistent sidecar: write next to MODEL_NAME on every save
+        curriculum_sidecar = os.path.join(MODEL_DIR, MODEL_NAME + "_curriculum.json")
+        curriculum_cb = CurriculumCallback(
+            controller=curriculum,
+            update_interval_steps=50_000,
+            save_path=curriculum_sidecar,
+            save_freq_steps=50_000,
+            verbose=args.verbose,
+        )
+    else:
+        curriculum_cb = None
+
+    if curriculum_cb is not None:
+        checkpoint.add_curriculum_callback(curriculum_cb)
+
     try:
+        callbacks = [checkpoint, eval_cb, reserved_eval]
+        if curriculum_cb is not None:
+            callbacks.append(curriculum_cb)
         model.learn(
             total_timesteps=args.timesteps,
-            callback=[checkpoint, eval_cb, reserved_eval],
+            callback=callbacks,
             reset_num_timesteps=(load_path is None),
             tb_log_name=TB_LOG_NAME,
         )
     finally:
-        # Always save on exit (Ctrl-C, exception, normal completion)
         save_path = os.path.join(MODEL_DIR, MODEL_NAME)
         model.save(save_path)
         sidecars: list[str] = []
         if isinstance(vec_env, VecNormalize):
             vec_env.save(save_path + "_vecnorm.pkl")
             sidecars.append("vecnorm")
+        if curriculum_cb is not None:
+            curriculum_cb.controller.save(save_path + "_curriculum.json")
+            sidecars.append("curriculum")
         sidecar_str = " + ".join(sidecars) if sidecars else "no sidecars"
-        print(f"[train] Saved -> {save_path}.zip ({sidecar_str})")
+        print(f"[apprentice] Saved -> {save_path}.zip ({sidecar_str})")
 
 
 if __name__ == "__main__":
