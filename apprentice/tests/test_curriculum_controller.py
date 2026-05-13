@@ -118,3 +118,98 @@ def test_record_episode_outcome_bounded_window():
     for _ in range(100):
         ctrl.record_episode_outcome(success=True)
     assert len(ctrl._success_window) == 50
+
+
+def test_stagnation_probe_after_threshold_steps():
+    """If target_empty hasn't moved for stagnation_threshold_steps, probe +1."""
+    cfg = _default_config()
+    cfg["stagnation_threshold_steps"] = 100_000
+    cfg["initial_target_empty"] = 5
+    ctrl = CurriculumController(cfg)
+
+    # Stay perfectly in sweet spot (sr=0.70) for a while
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 7))
+
+    # First update at step 50k → no change (in band)
+    ctrl.update(current_step=50_000)
+    assert ctrl.target_empty_rounded == 5
+
+    # At step 150k (> threshold from last_advance_step=0)
+    # → should probe +1
+    ctrl.update(current_step=150_000)
+    assert ctrl.target_empty_rounded == 6
+    assert ctrl._probe_target == 6.0
+
+
+def test_probe_success_clears_probe_state():
+    """If sr stays acceptable after probe, probe state clears."""
+    cfg = _default_config()
+    cfg["stagnation_threshold_steps"] = 100_000
+    cfg["initial_target_empty"] = 5
+    cfg["stagnation_rollback_window_steps"] = 50_000
+    ctrl = CurriculumController(cfg)
+
+    # Trigger probe
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 7))
+    ctrl.update(current_step=150_000)
+    assert ctrl._probe_target == 6.0
+
+    # Now agent does OK at new target — sr stays at 0.70
+    ctrl._success_window.clear()
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 7))
+    # After rollback window, probe should be cleared
+    ctrl.update(current_step=210_000)  # 60k after probe started, > rollback_window
+    assert ctrl._probe_target is None
+
+
+def test_probe_failure_triggers_rollback():
+    """If sr drops below rollback threshold after probe, target_empty rolls back."""
+    cfg = _default_config()
+    cfg["stagnation_threshold_steps"] = 100_000
+    cfg["initial_target_empty"] = 5
+    cfg["stagnation_rollback_window_steps"] = 50_000
+    cfg["stagnation_rollback_threshold"] = 0.40
+    ctrl = CurriculumController(cfg)
+
+    # Trigger probe to 6
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 7))
+    ctrl.update(current_step=150_000)
+    assert ctrl.target_empty_rounded == 6
+
+    # Now agent struggles at 6 — sr drops to 0.20
+    ctrl._success_window.clear()
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 2))  # 0.20
+
+    # Wait until rollback_window has passed
+    ctrl.update(current_step=210_000)  # 60k after probe started
+    # Probe failed; rollback to 5
+    assert ctrl.target_empty_rounded == 5
+    assert ctrl._probe_target is None
+
+
+def test_probe_rollback_clamps_to_min():
+    cfg = _default_config()
+    cfg["stagnation_threshold_steps"] = 100_000
+    cfg["initial_target_empty"] = 3
+    cfg["stagnation_rollback_window_steps"] = 50_000
+    cfg["min_target_empty"] = 3
+    ctrl = CurriculumController(cfg)
+
+    # Trigger probe — even though we're at min, probe just adds 1
+    for i in range(200):
+        ctrl.record_episode_outcome(success=(i % 10 < 7))
+    ctrl.update(current_step=150_000)
+    assert ctrl.target_empty_rounded == 4  # 3 + 1
+
+    # Fail probe
+    ctrl._success_window.clear()
+    for i in range(200):
+        ctrl.record_episode_outcome(success=False)
+    ctrl.update(current_step=210_000)
+    # Rollback would be 4 - 1 = 3, which is min, so clamps to 3.
+    assert ctrl.target_empty_rounded == 3

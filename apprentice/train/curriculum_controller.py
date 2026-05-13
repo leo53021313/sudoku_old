@@ -68,14 +68,22 @@ class CurriculumController:
 
     def update(self, current_step: int) -> None:
         """Possibly adjust target_empty based on recent success rate."""
-        # Reset last_adjustment by default
         self.last_adjustment = 0.0
+
+        # Phase 0: handle in-flight probe (must come BEFORE regular update,
+        # otherwise regular update might shadow probe rollback)
+        if self._probe_target is not None:
+            self._handle_active_probe(current_step)
+            if self._probe_target is None:
+                return  # probe just resolved; skip regular update this cycle
 
         # Phase 1: regular sweet-spot update
         self._regular_update(current_step)
+        if self.last_advance_direction != 0:
+            return  # regular update happened; no stagnation check needed this cycle
 
-        # Phase 2: stagnation detection / probe / rollback (implemented in Task 11)
-        # (no-op for now; Task 11 fills this in)
+        # Phase 2: stagnation detection (only if regular update did nothing)
+        self._maybe_probe_stagnation(current_step)
 
     def in_sweet_spot(self) -> bool:
         sr = self.success_rate()
@@ -118,3 +126,50 @@ class CurriculumController:
         else:
             # In sweet spot
             self.last_advance_direction = 0
+
+    def _maybe_probe_stagnation(self, current_step: int) -> None:
+        """If target_empty hasn't advanced for stagnation_threshold_steps, probe +1."""
+        if self._probe_target is not None:
+            return  # already probing
+
+        if len(self._success_window) < self._min_eps:
+            return  # not enough data yet
+
+        idle_steps = current_step - self.last_advance_step
+        if idle_steps < self._stagn_threshold:
+            return
+
+        new_te = min(self._max_te, self.target_empty + self._stagn_probe_step)
+        if int(round(new_te)) == int(round(self.target_empty)):
+            # No-op probe (already at max)
+            return
+
+        self._probe_target = new_te
+        self._probe_started_at = current_step
+        # Snapshot the pre-probe target for rollback target tracking
+        # (we already have it implicitly via probe_target - probe_step)
+
+        # Apply the probe
+        self.target_empty = new_te
+        self.last_advance_step = current_step
+        self.last_advance_direction = +1
+        self.last_adjustment = float(self._stagn_probe_step)
+
+    def _handle_active_probe(self, current_step: int) -> None:
+        """If a probe is in flight, decide whether to roll back or clear it."""
+        elapsed = current_step - self._probe_started_at
+        if elapsed < self._stagn_rollback_window:
+            return  # give the probe more time to evaluate
+
+        sr = self.success_rate()
+        if sr < self._stagn_rollback_thresh:
+            # Probe failed — roll back to one step below probe_target
+            rollback_te = max(self._min_te, self._probe_target - 1)
+            self.target_empty = float(rollback_te)
+            self.last_advance_step = current_step
+            self.last_advance_direction = -1
+            self.last_adjustment = -1.0
+            self._probe_target = None
+        elif sr >= self._lo:
+            # Probe succeeded or at least not catastrophic — clear probe
+            self._probe_target = None
