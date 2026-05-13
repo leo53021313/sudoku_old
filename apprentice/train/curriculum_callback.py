@@ -11,9 +11,6 @@ Responsibilities:
 
 from __future__ import annotations
 
-import os
-from typing import Any
-
 from stable_baselines3.common.callbacks import BaseCallback
 
 from apprentice.train.curriculum_controller import CurriculumController
