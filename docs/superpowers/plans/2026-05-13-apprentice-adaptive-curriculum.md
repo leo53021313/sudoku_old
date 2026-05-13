@@ -281,7 +281,7 @@ Replace with:
 python -m apprentice.train.train --timesteps 1000 --n-envs 2 --verbose 1
 ```
 
-Expected: completes without error. Policy parameter count should INCREASE by ~370K relative to Task 2's count (an extra Linear(1650, 128) for policy + Linear(128, 128) for value).
+Expected: completes without error. Policy parameter count will actually DECREASE by ~2M relative to Task 2's count. Reason: the old `pi: []` config means the action_net is `Linear(1650, 1458)` = 2.4M params; the new `pi: [128]` config routes through a 128-dim bottleneck (Linear(1650, 128) + Linear(128, 1458) ≈ 400K). Total expected: ~2.9M params (was ~4.9M).
 
 - [ ] **Step 3: Commit**
 
@@ -291,7 +291,8 @@ git commit -m "feat(apprentice): D1 — add policy hidden layer
 
 net_arch from {pi: [], vf: [128]} to {pi: [128], vf: [128, 128]}.
 Policy now has explicit 128-unit hidden layer (was direct features → 1458 logits).
-Adds ~370K parameters, ~10% of total."
+Reduces head params from ~2.6M to ~0.6M by routing logits through the 128-d bottleneck
+(the old direct features → 1458 linear dominated the param count)."
 ```
 
 ---
