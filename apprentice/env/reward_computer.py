@@ -5,7 +5,7 @@ Reward structure (action-justification model):
 For ANY action ('fill' or 'eliminate'):
   1. If the action would destroy the puzzle (wrong fill, or eliminate the
      correct solution value): -1, wrong_count++, terminate if >= MAX_WRONG.
-  2. If correct fill completes the board: +20 (terminates).
+  2. If correct fill completes the board: +50 (terminates).
   3. Otherwise, ask the human-style solver: what is the SIMPLEST cookbook
      technique that JUSTIFIES this action? Reward = 1.0 + TECH_BONUS[that_tech].
      - "Justifies" means: technique T's reasoning, applied to the current
