@@ -110,8 +110,9 @@ class RewardComputer:
         is_bad = (int(v) == int(env.solution[r, c]))
 
         if is_bad:
+            # Penalty only — do NOT remove the solution candidate, otherwise
+            # (r,c) becomes unsolvable for the rest of the episode.
             env.wrong_count += 1
-            self._discard_candidate(r, c, v)
             terminated = env.wrong_count >= MAX_WRONG
             return -1.0, terminated
 

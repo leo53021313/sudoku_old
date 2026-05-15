@@ -190,8 +190,10 @@ def test_correct_hidden_single_gets_tech2_bonus():
 # ── Eliminate-mode tests (route II) ───────────────────────────────────────────
 
 
-def test_bad_eliminate_removes_solution_value_gets_minus_one():
-    """Eliminating v == solution[r,c] is wrong; -1 + wrong_count++."""
+def test_bad_eliminate_preserves_solution_candidate():
+    """Eliminating v == solution[r,c] is wrong; -1 + wrong_count++, but the
+    solution candidate is NOT removed — otherwise (r,c) becomes unsolvable
+    for the rest of the episode (see spec §1.2)."""
     sol = _solved_grid()
     board = sol.copy()
     board[5, 5] = 0  # solution[5,5] = 4
@@ -202,8 +204,8 @@ def test_bad_eliminate_removes_solution_value_gets_minus_one():
     assert reward == -1.0
     assert env.wrong_count == 1
     assert not terminated
-    # The candidate IS removed (agent lives with the bad eliminate)
-    assert 4 not in env.candidates_cache[5][5]
+    # The solution candidate IS preserved — cell remains solvable.
+    assert 4 in env.candidates_cache[5][5]
 
 
 def test_bad_eliminate_terminates_at_max_wrong():
