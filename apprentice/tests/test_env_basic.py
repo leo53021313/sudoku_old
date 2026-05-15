@@ -281,3 +281,51 @@ def test_reset_clears_tried_bad_elim(db_path):
     assert len(env._tried_bad_elim) == 2
     env.reset(seed=42)
     assert env._tried_bad_elim == set()
+
+
+def test_action_masks_excludes_tried_bad_elim_after_wrong_eliminate(db_path):
+    """After a wrong eliminate of (r, c, v) (v == solution[r,c]), action_masks()
+    must forbid eliminate(r, c, v) on subsequent steps."""
+    env = SudokuGymEnv(db_path=db_path)
+    env.reset(seed=42)
+    # Find an empty cell.
+    target = None
+    for r in range(9):
+        for c in range(9):
+            if env.board[r, c] == 0:
+                target = (r, c)
+                break
+        if target is not None:
+            break
+    assert target is not None, "no empty cell to test against"
+    r, c = target
+    v = int(env.solution[r, c])
+    # Submit a wrong eliminate at the cell's solution value.
+    action = SudokuGymEnv.encode("eliminate", r, c, v)
+    env.step(action)
+    mask = env.action_masks()
+    base = r * 81 + c * 9 + (v - 1)
+    assert mask[729 + base] == False, "eliminate(r,c,v) should be masked after one wrong eliminate"
+
+
+def test_action_masks_still_allows_fill_for_tried_bad_elim(db_path):
+    """After a wrong eliminate of (r, c, v), fill(r, c, v) — which is the
+    CORRECT fill at that cell — must remain available in the mask."""
+    env = SudokuGymEnv(db_path=db_path)
+    env.reset(seed=42)
+    target = None
+    for r in range(9):
+        for c in range(9):
+            if env.board[r, c] == 0:
+                target = (r, c)
+                break
+        if target is not None:
+            break
+    assert target is not None, "no empty cell to test against"
+    r, c = target
+    v = int(env.solution[r, c])
+    action = SudokuGymEnv.encode("eliminate", r, c, v)
+    env.step(action)
+    mask = env.action_masks()
+    base = r * 81 + c * 9 + (v - 1)
+    assert mask[base] == True, "fill(r,c,v) should remain available — v is the correct solution"

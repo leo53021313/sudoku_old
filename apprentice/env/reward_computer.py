@@ -118,6 +118,8 @@ class RewardComputer:
             # Penalty only — do NOT remove the solution candidate, otherwise
             # (r,c) becomes unsolvable for the rest of the episode.
             env.wrong_count += 1
+            # Record the triple so action_masks() forbids re-trying it this episode.
+            env._tried_bad_elim.add((r, c, v))
             terminated = env.wrong_count >= MAX_WRONG
             return -1.0, terminated
 

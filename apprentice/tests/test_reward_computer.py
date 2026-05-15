@@ -15,6 +15,7 @@ class _StubEnv:
             for c in range(9):
                 self.candidate_count_grid[r, c] = len(candidates[r][c])
         self.wrong_count = 0
+        self._tried_bad_elim: set[tuple[int, int, int]] = set()
 
 
 def _solved_grid():
@@ -325,3 +326,18 @@ def test_unknown_mode_raises():
     rc = RewardComputer(env)
     with pytest.raises(ValueError):
         rc.compute("teleport", 0, 0, 1)
+
+
+def test_bad_eliminate_records_triple_in_tried_bad_elim():
+    """A wrong eliminate (v == solution[r,c]) records the triple in
+    env._tried_bad_elim so action_masks() can forbid re-trying it (see spec §4.2)."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[5, 5] = 0  # solution[5,5] = 4
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    rc = RewardComputer(env)
+    assert env._tried_bad_elim == set()
+    rc.compute("eliminate", 5, 5, 4)  # wrong: 4 IS the solution
+    assert (5, 5, 4) in env._tried_bad_elim
+    assert len(env._tried_bad_elim) == 1

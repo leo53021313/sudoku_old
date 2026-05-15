@@ -178,6 +178,11 @@ class SudokuGymEnv(gym.Env):
         out too. The CORRECTNESS of the action (whether v matches solution)
         is NOT checked here — that would leak the solution; correctness is
         evaluated by RewardComputer and contributes to wrong_count instead.
+
+        After the candidate-based legality pass, also forbid any (r, c, v)
+        eliminate that has already failed this episode. The fill half for the
+        same triple is left True — it's the correct fill at that cell, and
+        we want the policy to be able to choose it.
         """
         mask = np.zeros(self.N_ACTIONS, dtype=bool)
         for r in range(9):
@@ -188,6 +193,9 @@ class SudokuGymEnv(gym.Env):
                     base = r * 81 + c * 9 + (v - 1)
                     mask[base] = True                       # fill
                     mask[self._ELIM_OFFSET + base] = True   # eliminate
+        for (r, c, v) in self._tried_bad_elim:
+            base = r * 81 + c * 9 + (v - 1)
+            mask[self._ELIM_OFFSET + base] = False          # forbid repeat
         return mask
 
     def set_difficulty_distribution(self, dist: dict[int, float]) -> None:
