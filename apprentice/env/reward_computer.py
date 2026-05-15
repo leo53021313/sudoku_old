@@ -95,7 +95,7 @@ class RewardComputer:
         self._commit_fill(r, c, v)
 
         if bool(np.all(env.board != 0)):
-            return 20.0, True
+            return 50.0, True
 
         if tech_id is not None:
             return 1.0 + TECH_BONUS.get(tech_id, 0.0), False

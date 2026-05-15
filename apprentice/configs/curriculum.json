@@ -4,7 +4,7 @@
   "max_target_empty": 55,
 
   "target_rate": 0.70,
-  "tolerance_band": [0.55, 0.85],
+  "tolerance_band": [0.50, 0.85],
   "step_size": 10.0,
 
   "window_size": 200,

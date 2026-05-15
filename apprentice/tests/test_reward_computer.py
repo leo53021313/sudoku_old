@@ -49,7 +49,7 @@ def _candidates_from_board(board):
     return cands
 
 
-def test_correct_fill_completes_board_gives_plus_20():
+def test_correct_fill_completes_board_gives_plus_50():
     sol = _solved_grid()
     board = sol.copy()
     board[8, 8] = 0  # one empty cell
@@ -59,7 +59,7 @@ def test_correct_fill_completes_board_gives_plus_20():
     # solution[8,8] == 9
     reward, terminated = rc.compute("fill", 8, 8, 9)
     assert terminated
-    assert reward == pytest.approx(20.0)
+    assert reward == pytest.approx(50.0)
 
 
 def test_wrong_fill_gets_minus_one_and_continues():
