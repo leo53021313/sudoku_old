@@ -84,10 +84,17 @@ class SudokuGymEnv(gym.Env):
         # solution until only `target_empty` cells remain. None = use puzzle as-is.
         self.target_empty: int | None = None
 
+        # Per-episode set of (r, c, v) triples whose eliminate turned out to be
+        # the solution. action_masks() forbids these from being re-tried.
+        self._tried_bad_elim: set[tuple[int, int, int]] = set()
+
         self._reward_computer = RewardComputer(self)
 
     def reset(self, *, seed=None, options=None, _retries=0):
         super().reset(seed=seed)
+
+        # Per-episode state: clear before either reset branch decides the board.
+        self._tried_bad_elim = set()
 
         if options is not None and "board" in options:
             self.board    = np.array(options["board"], dtype=np.int8).copy()

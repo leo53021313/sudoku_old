@@ -264,3 +264,20 @@ def test_max_wrong_static_when_target_empty_none():
     env.set_target_empty(None)
     env.reset(seed=42)
     assert env.max_wrong_fills == 33
+
+
+def test_tried_bad_elim_initially_empty(db_path):
+    """A fresh SudokuGymEnv has an empty _tried_bad_elim set (per-episode state)."""
+    env = SudokuGymEnv(db_path=db_path)
+    assert env._tried_bad_elim == set()
+
+
+def test_reset_clears_tried_bad_elim(db_path):
+    """reset() clears the per-episode tried-bad-elim set so episodes don't
+    inherit stale wrong-elim records from prior episodes."""
+    env = SudokuGymEnv(db_path=db_path)
+    env._tried_bad_elim.add((0, 0, 1))
+    env._tried_bad_elim.add((5, 5, 4))
+    assert len(env._tried_bad_elim) == 2
+    env.reset(seed=42)
+    assert env._tried_bad_elim == set()
