@@ -90,6 +90,68 @@ def test_wrong_fill_terminates_at_max_wrong():
     assert env.wrong_count == 20
 
 
+def test_wrong_fill_does_not_commit_board():
+    """Wrong fill must not write v into board[r,c] — the cell stays empty so
+    the agent can try other values in subsequent steps (see spec §1.1)."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[8, 8] = 0  # solution[8,8] = 9
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    rc = RewardComputer(env)
+    # Wrong: agent fills 5 when solution is 9.
+    rc.compute("fill", 8, 8, 5)
+    assert env.board[8, 8] == 0
+
+
+def test_wrong_fill_locally_removes_value_from_candidates():
+    """After a wrong fill of v at (r,c), v is discarded from (r,c)'s candidate
+    set so the action mask blocks repeating the same wrong fill at that cell.
+    Other candidates at (r,c) remain available."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[8, 8] = 0  # solution[8,8] = 9
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    # Force 5 to be in (8,8)'s candidates so we can verify removal.
+    env.candidates_cache[8][8] = {5, 9}
+    env.candidate_count_grid[8, 8] = 2
+    rc = RewardComputer(env)
+    rc.compute("fill", 8, 8, 5)  # wrong (solution is 9)
+    assert 5 not in env.candidates_cache[8][8]
+    assert 9 in env.candidates_cache[8][8]  # solution still available
+    assert env.candidate_count_grid[8, 8] == 1
+
+
+def test_wrong_fill_does_not_damage_related_cells():
+    """Wrong fill of v at (r,c) must NOT remove v from any related cell's
+    candidates (same row, column, or box). Under the old behavior _commit_fill
+    propagated v removal to all related empty cells, destroying their
+    solvability when v was actually their correct solution somewhere."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[0, 0] = 0  # solution[0,0] = 5
+    board[0, 1] = 0  # same row as (0,0)
+    board[1, 0] = 0  # same column as (0,0)
+    board[2, 2] = 0  # same box as (0,0)
+    cands = _candidates_from_board(board)
+    env = _StubEnv(board, sol, cands)
+    # Force 7 into (0,0)'s candidates so the wrong fill is over a real candidate.
+    # Also force 7 into each related cell's candidates so we can detect
+    # propagation (if any).
+    for (r, c) in [(0, 0), (0, 1), (1, 0), (2, 2)]:
+        env.candidates_cache[r][c].add(7)
+        env.candidate_count_grid[r, c] = len(env.candidates_cache[r][c])
+    rc = RewardComputer(env)
+    rc.compute("fill", 0, 0, 7)  # wrong: solution[0,0] = 5
+    # Local removal at (0,0) is allowed.
+    assert 7 not in env.candidates_cache[0][0]
+    # Related cells must STILL contain 7 — no propagation.
+    assert 7 in env.candidates_cache[0][1], "row neighbor lost candidate"
+    assert 7 in env.candidates_cache[1][0], "col neighbor lost candidate"
+    assert 7 in env.candidates_cache[2][2], "box neighbor lost candidate"
+
+
 def test_naked_single_fill_at_either_target_gets_tech1_bonus():
     """Action-justification model: when two cells are both naked singles, an agent
     that fills either one gets the tech-1 bonus (+1.0) — regardless of which one

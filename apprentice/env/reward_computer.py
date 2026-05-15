@@ -83,8 +83,13 @@ class RewardComputer:
         is_correct = (int(v) == int(env.solution[r, c]))
 
         if not is_correct:
+            # Penalty only — do NOT commit the wrong value to the board, and do
+            # NOT propagate candidate removal to related cells. The solution is
+            # unique, so v is known wrong at (r,c) — local discard is honest and
+            # blocks the same wrong fill via the action mask next step.
             env.wrong_count += 1
-            self._commit_fill(r, c, v)
+            env.candidates_cache[r][c].discard(v)
+            env.candidate_count_grid[r, c] = len(env.candidates_cache[r][c])
             terminated = env.wrong_count >= MAX_WRONG
             return -1.0, terminated
 
