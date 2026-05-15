@@ -7,14 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Structure
 
-This repo contains **three independent training systems** in separate subfolders:
+This repo contains **four independent training systems** in separate subfolders:
 
 ```
 sudoku_old/
 ├── data/puzzle_pool.db        ← shared puzzle database (all versions)
 ├── legacy/                    ← archived PyTorch PPO + PyQt6 GUI version
 ├── sb3/                       ← frozen SB3 MaskablePPO baseline (PPO_8 HPs)
-└── reasoner/                  ← ACTIVE: route-II reasoner (fill+eliminate, justification reward)
+├── reasoner/                  ← frozen reference: route-II reasoner (fill+eliminate, justification reward)
+└── apprentice/                ← ACTIVE: reasoner + adaptive curriculum + cold-start (26-ch obs)
 ```
 
 **Shared database**: `data/puzzle_pool.db` at repo root. `legacy/` and `sb3/` reference it as `"../data/puzzle_pool.db"` (run from inside their subfolder). `reasoner/` runs from repo root and resolves the path as `_REPO_ROOT / "data" / "puzzle_pool.db"`.
@@ -22,7 +23,13 @@ sudoku_old/
 ## Running
 
 ```bash
-# Active version (reasoner — route II); run from REPO ROOT, not from inside reasoner/
+# Active version (apprentice — reasoner + adaptive curriculum); run from REPO ROOT
+python -m apprentice.train.train
+python -m apprentice.train.train --load-model auto                # resume newest ckpt
+python -m apprentice.train.train --curriculum-config apprentice/configs/curriculum_aggressive.json
+python -m apprentice.train.train --no-curriculum                  # debug: disable adaptive curriculum
+
+# Frozen reference (reasoner — route II); run from REPO ROOT, not from inside reasoner/
 python -m reasoner.train.train
 python -m reasoner.train.train --load-model auto                  # resume newest ckpt
 python -m reasoner.train.train --timesteps 100000000 --load-model auto
@@ -97,6 +104,30 @@ python main_train.py
 
 ---
 
+## apprentice/ — Active Reasoner + Adaptive Curriculum
+
+**Differences vs reasoner/:** 26-ch obs (+ naked-single & hidden-single flags), `CurriculumController` adaptive on `target_empty` (sweet-spot formula, NOT stage-based), dynamic `max_steps`/`max_wrong` scaled by `target_empty`, `net_arch={"pi":[128],"vf":[128,128]}`, `ent_coef=0.05`. **Cold-start required**: obs shape change vs reasoner means ckpts are NOT interchangeable.
+
+**Run from repo root**: `python -m apprentice.train.train [--load-model auto] [--curriculum-config <path>] [--no-curriculum]`. Checkpoints: `apprentice/models/apprentice_ckpt_<N>_steps.zip` with sidecars `<ckpt>_vecnorm.pkl` + `<ckpt>_curriculum.json` (both auto-loaded on `--load-model auto`).
+
+**Key files (`apprentice/`):**
+- [apprentice/README.md](apprentice/README.md) — design summary (7 changes A3/B1/A5/D1/E2/C2/E1), TB metrics, sidecar layout
+- [apprentice/train/train.py](apprentice/train/train.py) — entry; checkpoint pattern `apprentice_ckpt_<N>_steps.zip`
+- [apprentice/train/curriculum_controller.py](apprentice/train/curriculum_controller.py) — adaptive controller (default `target_rate=0.70`, `tolerance_band=[0.55,0.85]`, `step_size=10.0`)
+- [apprentice/train/curriculum_callback.py](apprentice/train/curriculum_callback.py) — SB3 integration
+- [apprentice/configs/curriculum.json](apprentice/configs/curriculum.json) — controller hyperparams; edit between runs (NO hot reload)
+- [apprentice/env/obs_helpers.py](apprentice/env/obs_helpers.py) — naked/hidden-single grids for the 2 new obs channels
+- [apprentice/solver/](apprentice/solver/) — same 13-technique cookbook as reasoner/, mirrored by hand (NOT auto-synced)
+
+**Key design decisions (apprentice/):**
+- **Sibling, not fork**: `apprentice/solver/techniques/` mirrors `reasoner/solver/techniques/` by hand. A technique fix in one is NOT applied to the other — decide explicitly whether to cross-apply.
+- **Curriculum is active here** (unlike the inert one removed from reasoner/ in `e870443`): the adaptive `target_empty` controller is doing meaningful work — don't short-circuit it. `target_empty` is continuous; rounded int is what envs see.
+- **Cold-start required when migrating from a reasoner ckpt**: +2 obs channels make `features_extractor` weights non-interchangeable. `--load-model auto` filters by `apprentice_ckpt_*_steps.zip` for this reason — preserve the filter.
+- **Wrong-action behavior mirrors reasoner**: non-destructive (penalty + local candidate discard only). Spec: `docs/superpowers/specs/2026-05-15-apprentice-wrong-action-non-destructive-design.md`; reasoner-side reference commits `1e778b2` / `d21629a`. `MAX_WRONG=20` (same reasoning as reasoner — lowering chokes early exploration).
+- **Specs & plans live under `docs/superpowers/`**: design specs at `docs/superpowers/specs/<date>-*.md`, execution plans at `docs/superpowers/plans/<date>-*.md`. Check there before reverse-engineering recent behavior changes.
+
+---
+
 ## legacy/ — Archived PPO Training System
 
 **Data flow:**
@@ -148,15 +179,19 @@ All hardcoded constants in `legacy/app/config/schema.py`. Access via `config.get
 
 ## Testing
 
-Reasoner has the active test suite. Run from repo root:
+Reasoner and apprentice both have active test suites. Run from repo root:
 
 ```bash
 python -m pytest reasoner/tests/                     # full suite
 python -m pytest reasoner/tests/test_techniques/     # technique tests only
 python -m pytest reasoner/tests/test_techniques/test_x_wing.py -v
+
+python -m pytest apprentice/tests/                   # full apprentice suite
+python -m pytest apprentice/tests/test_techniques/   # technique tests only
+python -m pytest apprentice/tests/test_reward_computer.py -v
 ```
 
-Each `reasoner/solver/techniques/<tech>.py` has a paired `reasoner/tests/test_techniques/test_<tech>.py`. When adding a new technique, add the matching test alongside the bonus entry in `TECH_BONUS`.
+Each `reasoner/solver/techniques/<tech>.py` has a paired `reasoner/tests/test_techniques/test_<tech>.py`. When adding a new technique, add the matching test alongside the bonus entry in `TECH_BONUS`. Apprentice mirrors this structure — when cross-applying a fix between reasoner/ and apprentice/, mirror both code and tests.
 
 `legacy/` and `sb3/` have no automated test suites.
 
