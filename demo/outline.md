@@ -187,7 +187,7 @@
 - step 4 (~10s) — 數字翻牌：「**+20 → +50**」大字翻牌動畫（破關獎勵調更大）+「誘惑超過刷部分分數的賤招」副標
 - step 5 (~12s) — **真實 tensorboard 截圖**挂進來（勝率曲線 + curriculum step 圖）+ 「從 3 個空格慢慢加到 10 個——他**終於開始解出整題**」
 - step 6 (~9s) — 過渡：「光講不夠看。給大家看一下 AI 即時解數獨的題目」hero
-- step 7 (~10s + 現場桌面 visualizer 30~60s) — visualizer 大按鈕獨佔整屏：cream 底 + 粗黑邊 + 強陰影 + accent red 字「**點我看 AI 即時解數獨 →**」+ 微旋轉 + 提示文字「切換到 visualize.py 視窗」(現場演講者另開桌面 pygame 視窗執行 `python -m apprentice.demo.visualize`、不嵌網頁、零技術風險)
+- step 7 (~10s + visualizer 30~60s) — visualizer 大按鈕獨佔整屏：cream 底 + 粗黑邊 + 強陰影 + accent red 字「**點我看 AI 即時解數獨 →**」+ 微旋轉 / 按下後 iframe（pygbag 主路線）或 `<video>`（OBS 退路）播放
 
 口播節選：
 > 「我的解法是把題目反過來給他——一開始只給 3 格空的盤面⋯⋯他能穩定解、我再加一格空⋯⋯破關獎勵從 +20 拉到 +50⋯⋯他終於開始解出整題。」
@@ -279,8 +279,10 @@
 - 📦 **戀愛 hook b 系列 sticker**：「老油條女生」「**和你媽一起掉進水裡**」「該不該運動」考題 + 兩個答案都錯的陷阱箭頭
 
 ### 8. apprentice
-- ✓ **`apprentice/demo/visualize.py` 桌面 pygame 視窗** —— 現場演講者另開桌面視窗執行 `python -m apprentice.demo.visualize`、**不嵌網頁、零技術風險**（pygbag/ONNX 主路線評估後 1-2 週工作量、超出本 session 範圍、改走最乾淨路線）
-- ⚠️ **tensorboard 真實截圖**（勝率曲線 + curriculum step 圖）—— 使用者表示有素材可挂、**整片唯一可挂真截圖的地方**；待落地動作：使用者匯出截圖至 `demo/presentation/public/images/tensorboard/` 並提供確切路徑
+- ⚠️ **`apprentice/demo/visualize.py` → pygbag WASM 包裝**（**整片唯一現場可互動素材**）—— 原始檔已存在 (✓)、但 pygbag → iframe 包裝待落地
+  - 主路線：pygbag → WASM → iframe（前置工作：`prompt.md` §六 #7 + §七 #7 排程；Phase 2 寫到 Ch 4 之前是 hard deadline）
+  - 退路：OBS 錄 30s–60s mp4
+- ⚠️ **tensorboard 真實截圖**（勝率曲線 + curriculum step 圖）—— 使用者表示有素材可挂、**整片唯一可挂真截圖的地方**；待落地動作：使用者匯出截圖至 `demo/assets/tensorboard/` 並提供確切路徑
 - 📦 反向課程盤面動畫（3 空 → 4 空 → 5 空 → 7 空 → 10 空、一格一格揭示）
 - 📦 「**+20 → +50**」翻牌動畫
 - 📦 visualizer 大按鈕（cream 底 + 粗黑邊 + 強陰影 + accent red 字、微旋轉）
