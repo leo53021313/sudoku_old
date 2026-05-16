@@ -1,0 +1,632 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * Chapter 01 · coldopen — 心虛開場 / 心理學系 / 捷運靈感
+ *
+ * Neo-brutalism aesthetic:
+ *   - Cream canvas + halftone dot texture
+ *   - Hard offset shadows (zero blur)
+ *   - Sticker layering with rotation
+ *   - Space Grotesk 700/900, text-stroke for hero
+ *   - Mechanical fast animations (120-420ms)
+ *
+ * CSS prefix: .cd-
+ * ───────────────────────────────────────────────────────────────────── */
+
+.cd-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--neo-cream);
+  font-family: var(--font-display-en), var(--font-display-cn);
+  color: var(--neo-ink);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Halftone dot texture - the neo-brutalism signature backdrop */
+.cd-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--neo-ink) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Centered stage */
+.cd-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 120px;
+  z-index: 1;
+}
+
+/* ─── Step 0: 心虛開場 ─────────────────────────────────────────────── */
+
+.cd-step0 {
+  flex-direction: column;
+  gap: 56px;
+  text-align: center;
+}
+
+.cd-anxious-sticker {
+  display: inline-block;
+  padding: 48px 96px;
+  background: var(--neo-red);
+  border: 6px solid var(--neo-ink);
+  box-shadow: var(--card-shadow-xl);
+  transform: rotate(-3deg);
+  font-weight: 700;
+  font-size: 200px;
+  letter-spacing: 0.08em;
+  color: var(--neo-ink);
+  line-height: 1;
+  animation: cd-stamp-in 420ms var(--ease-overshoot) both;
+}
+
+.cd-anxious-tag {
+  position: absolute;
+  top: -32px;
+  right: -48px;
+  padding: 12px 24px;
+  background: var(--neo-yellow);
+  border: 4px solid var(--neo-ink);
+  box-shadow: 4px 4px 0 var(--neo-ink);
+  transform: rotate(8deg);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  animation: cd-bounce-in 540ms var(--ease-overshoot) 300ms both;
+}
+
+.cd-anxious-sub {
+  max-width: 1200px;
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--neo-ink);
+  animation: cd-fade-up 540ms var(--ease-sharp) 480ms both;
+}
+
+.cd-anxious-sub em {
+  background: var(--neo-yellow);
+  font-style: normal;
+  padding: 0 12px;
+  border: 3px solid var(--neo-ink);
+  box-shadow: 4px 4px 0 var(--neo-ink);
+  display: inline-block;
+  transform: rotate(-1deg);
+  margin: 0 4px;
+}
+
+/* ─── Step 1: 心理學系 ─────────────────────────────────────────────── */
+
+.cd-step1 {
+  flex-direction: column;
+  gap: 64px;
+  align-items: center;
+}
+
+.cd-major-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 64px 96px;
+  background: var(--neo-white);
+  border: 6px solid var(--neo-ink);
+  box-shadow: var(--card-shadow-xl);
+  transform: rotate(-2deg);
+  animation: cd-card-in 480ms var(--ease-overshoot) both;
+}
+
+.cd-major-kicker {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--neo-ink);
+  opacity: 0.6;
+}
+
+.cd-major-title {
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--neo-ink);
+}
+
+.cd-major-en {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 24px;
+  background: var(--neo-violet);
+  border: 4px solid var(--neo-ink);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transform: rotate(2deg);
+}
+
+.cd-major-promise {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 46px;
+  font-weight: 700;
+  color: var(--neo-ink);
+  animation: cd-fade-up 540ms var(--ease-sharp) 320ms both;
+}
+
+.cd-major-promise svg {
+  width: 56px;
+  height: 56px;
+  stroke: var(--neo-red);
+  stroke-width: 5;
+  animation: cd-wave 800ms ease-in-out infinite;
+}
+
+.cd-major-promise b {
+  background: var(--neo-yellow);
+  padding: 4px 16px;
+  border: 4px solid var(--neo-ink);
+  box-shadow: 6px 6px 0 var(--neo-ink);
+  transform: rotate(-1deg);
+  display: inline-block;
+}
+
+/* ─── Step 2: 主題揭曉 ─────────────────────────────────────────────── */
+
+.cd-step2 {
+  flex-direction: column;
+  gap: 48px;
+  align-items: center;
+  text-align: center;
+}
+
+.cd-topic-kicker {
+  display: inline-block;
+  padding: 12px 32px;
+  background: var(--neo-ink);
+  color: var(--neo-cream);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  animation: cd-slide-in-left 360ms var(--ease-sharp) both;
+}
+
+.cd-topic-hero {
+  position: relative;
+  font-family: var(--font-display-en), var(--font-display-cn);
+  font-size: 280px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--neo-ink);
+  text-align: center;
+  animation: cd-hero-in 720ms var(--ease-overshoot) 200ms both;
+}
+
+.cd-topic-hero span.cd-em {
+  background: var(--neo-red);
+  padding: 0 20px;
+  display: inline-block;
+  border: 6px solid var(--neo-ink);
+  transform: rotate(-2deg);
+  color: var(--neo-cream);
+}
+
+.cd-topic-hero span.cd-em-yellow {
+  background: var(--neo-yellow);
+  padding: 0 20px;
+  display: inline-block;
+  border: 6px solid var(--neo-ink);
+  transform: rotate(1deg);
+}
+
+.cd-topic-decor {
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cd-topic-decor.cd-d1 {
+  top: 8%;
+  left: 6%;
+  width: 120px;
+  height: 120px;
+  background: var(--neo-violet);
+  border: 5px solid var(--neo-ink);
+  transform: rotate(15deg);
+  animation: cd-float 4s ease-in-out infinite;
+}
+
+.cd-topic-decor.cd-d2 {
+  top: 12%;
+  right: 8%;
+  font-size: 96px;
+  color: var(--neo-yellow);
+  -webkit-text-stroke: 4px var(--neo-ink);
+  font-weight: 700;
+  animation: cd-spin-slow 12s linear infinite;
+}
+
+.cd-topic-decor.cd-d3 {
+  bottom: 12%;
+  left: 10%;
+  width: 80px;
+  height: 80px;
+  background: var(--neo-red);
+  border: 5px solid var(--neo-ink);
+  border-radius: 50%;
+  box-shadow: 8px 8px 0 var(--neo-ink);
+}
+
+.cd-topic-decor.cd-d4 {
+  bottom: 15%;
+  right: 10%;
+  font-size: 80px;
+  font-weight: 700;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--neo-ink);
+  transform: rotate(-12deg);
+}
+
+/* ─── Step 3-4: 捷運靈感 + sticker 串聯 ──────────────────────────── */
+
+.cd-train-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Train interior backdrop - parallax depth layers */
+.cd-train-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0, transparent 49%, rgba(0,0,0,0.10) 49%, rgba(0,0,0,0.10) 51%, transparent 51%, transparent 100%) 0 0/100px 100%,
+    linear-gradient(0deg, transparent 0, transparent 49%, rgba(0,0,0,0.06) 49%, rgba(0,0,0,0.06) 51%, transparent 51%, transparent 100%) 0 0/100% 80px;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+.cd-train-window {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 60%;
+  border: 8px solid var(--neo-ink);
+  background: var(--neo-violet);
+  box-shadow: var(--card-shadow-xl);
+  z-index: 1;
+}
+
+.cd-train-window::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  background:
+    linear-gradient(135deg, transparent 0%, transparent 40%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.4) 50%, transparent 50%);
+}
+
+.cd-prompt-text {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 60px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+  z-index: 5;
+  animation: cd-fade-up 480ms var(--ease-sharp) both;
+}
+
+.cd-prompt-text em {
+  background: var(--neo-yellow);
+  font-style: normal;
+  padding: 0 16px;
+  border: 4px solid var(--neo-ink);
+  box-shadow: 6px 6px 0 var(--neo-ink);
+  display: inline-block;
+  transform: rotate(-1deg);
+}
+
+.cd-thought-cloud {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 40px;
+  border: 5px solid var(--neo-ink);
+  background: var(--neo-white);
+  box-shadow: var(--card-shadow-lg);
+  z-index: 10;
+}
+
+.cd-thought-cloud .cd-cloud-label {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--neo-ink);
+  opacity: 0.55;
+}
+
+.cd-thought-cloud .cd-cloud-body {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--neo-ink);
+}
+
+.cd-thought-cloud .cd-cloud-body em {
+  background: var(--neo-red);
+  font-style: normal;
+  padding: 0 8px;
+  color: var(--neo-cream);
+}
+
+.cd-thought-cloud.cd-girl {
+  bottom: 12%;
+  left: 6%;
+  background: var(--neo-yellow);
+  transform: rotate(-4deg);
+  animation: cd-stamp-in 480ms var(--ease-overshoot) 240ms both;
+}
+
+.cd-thought-cloud.cd-flappy {
+  top: 12%;
+  right: 5%;
+  background: var(--neo-violet);
+  transform: rotate(3deg);
+  max-width: 540px;
+}
+
+.cd-thought-cloud.cd-army {
+  bottom: 12%;
+  right: 8%;
+  background: var(--neo-red);
+  transform: rotate(2deg);
+  max-width: 480px;
+}
+
+.cd-thought-cloud.cd-army .cd-cloud-label,
+.cd-thought-cloud.cd-army .cd-cloud-body {
+  color: var(--neo-cream);
+}
+
+.cd-thought-cloud.cd-army .cd-cloud-label {
+  opacity: 0.85;
+}
+
+.cd-thought-cloud.cd-army .cd-cloud-body em {
+  background: var(--neo-ink);
+  color: var(--neo-yellow);
+}
+
+/* Enter animations for staggered stickers */
+.cd-enter-1 { animation: cd-stamp-in 480ms var(--ease-overshoot) 0ms both; }
+.cd-enter-2 { animation: cd-stamp-in 480ms var(--ease-overshoot) 240ms both; }
+.cd-enter-3 { animation: cd-stamp-in 480ms var(--ease-overshoot) 480ms both; }
+
+/* ─── Step 5: Boom + punchline ─────────────────────────────────────── */
+
+.cd-step5 {
+  flex-direction: column;
+  gap: 80px;
+  align-items: center;
+  text-align: center;
+}
+
+.cd-boom-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cd-boom-burst::before,
+.cd-boom-burst::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 8px solid var(--neo-ink);
+}
+
+.cd-boom-burst::before {
+  width: 800px;
+  height: 800px;
+  background: var(--neo-yellow);
+  animation: cd-burst-1 800ms var(--ease-overshoot) both;
+}
+
+.cd-boom-burst::after {
+  width: 600px;
+  height: 600px;
+  background: var(--neo-red);
+  animation: cd-burst-2 800ms var(--ease-overshoot) 120ms both;
+}
+
+.cd-boom-card {
+  position: relative;
+  padding: 80px 120px;
+  background: var(--neo-cream);
+  border: 8px solid var(--neo-ink);
+  box-shadow: var(--card-shadow-xl);
+  transform: rotate(-2deg);
+  z-index: 5;
+  animation: cd-card-in 540ms var(--ease-overshoot) 240ms both;
+}
+
+.cd-boom-kicker {
+  display: inline-block;
+  margin-bottom: 24px;
+  padding: 8px 24px;
+  background: var(--neo-ink);
+  color: var(--neo-cream);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+}
+
+.cd-boom-title {
+  font-size: 240px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--neo-ink);
+}
+
+.cd-boom-title .cd-em-red {
+  background: var(--neo-red);
+  color: var(--neo-cream);
+  padding: 0 24px;
+  display: inline-block;
+}
+
+.cd-boom-punchline {
+  position: relative;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--neo-ink);
+  max-width: 1400px;
+  z-index: 5;
+  animation: cd-fade-up 540ms var(--ease-sharp) 720ms both;
+}
+
+.cd-boom-punchline em {
+  background: var(--neo-yellow);
+  font-style: normal;
+  padding: 4px 16px;
+  border: 5px solid var(--neo-ink);
+  box-shadow: 6px 6px 0 var(--neo-ink);
+  display: inline-block;
+  transform: rotate(-1deg);
+  margin: 0 6px;
+}
+
+/* ─── Animations ───────────────────────────────────────────────────── */
+
+@keyframes cd-stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(var(--rot, -3deg)) scale(0.6) translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--rot, -3deg)) scale(1) translateY(0);
+  }
+}
+
+@keyframes cd-bounce-in {
+  0%   { opacity: 0; transform: rotate(8deg) scale(0); }
+  60%  { opacity: 1; transform: rotate(8deg) scale(1.15); }
+  100% { opacity: 1; transform: rotate(8deg) scale(1); }
+}
+
+@keyframes cd-card-in {
+  from {
+    opacity: 0;
+    transform: rotate(-2deg) translateY(80px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-2deg) translateY(0);
+  }
+}
+
+@keyframes cd-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cd-slide-in-left {
+  from { opacity: 0; transform: translateX(-80px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cd-hero-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(40px);
+    letter-spacing: 0.1em;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    letter-spacing: -0.04em;
+  }
+}
+
+@keyframes cd-wave {
+  0%, 100% { transform: rotate(-10deg); }
+  50%      { transform: rotate(10deg); }
+}
+
+@keyframes cd-float {
+  0%, 100% { transform: rotate(15deg) translateY(0); }
+  50%      { transform: rotate(15deg) translateY(-16px); }
+}
+
+@keyframes cd-spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes cd-burst-1 {
+  from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+}
+
+@keyframes cd-burst-2 {
+  from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+}
+
+/* ─── Reduced motion ───────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-anxious-sticker,
+  .cd-anxious-tag,
+  .cd-anxious-sub,
+  .cd-major-card,
+  .cd-major-promise,
+  .cd-topic-kicker,
+  .cd-topic-hero,
+  .cd-thought-cloud,
+  .cd-enter-1, .cd-enter-2, .cd-enter-3,
+  .cd-boom-burst::before, .cd-boom-burst::after,
+  .cd-boom-card,
+  .cd-boom-punchline,
+  .cd-prompt-text {
+    animation: none !important;
+  }
+  .cd-major-promise svg,
+  .cd-topic-decor {
+    animation: none !important;
+  }
+}

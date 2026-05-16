@@ -44,7 +44,7 @@
 
 - step 1 (~14s) — 第一塊揭示：**supervised** + 「看著答案抄筆記」+ 「老師給你題目跟答案、你硬背」插畫
 - step 2 (~13s) — 第二塊揭示：**unsupervised** + 「自己分類整理」+ 折衣服圖示
-- step 3 (~15s) — 第三塊揭示：**RL** + 「試錯加獎懲」+ 訓練狗握手圖示 + **AlphaGo** 標籤 sticker（accent red 底、黑邊、旋轉 -2°）
+- step 3 (~15s) — 第三塊揭示：**RL** + 「試錯加獎懲」+ 訓練狗握手圖示 + **AlphaGo** 標籤 sticker（accent red 底、黑邊、微旋轉）
 - step 4 (~8s) — 全螢幕單句 cliffhanger「那 ChatGPT 跟 Claude 又是哪一招？」（換語氣 / 換主題）
 
 口播節選：
@@ -103,7 +103,7 @@
 
 **開發計畫**：
 
-- step 1 (~13s) — 「我那時候還很天真」+ prompt 對話框「**幫我寫一個訓練 AI 解數獨的程式**」+ 獨立崩盤句「⋯⋯**結果我錯了**」（黑底白字、旋轉 1°）
+- step 1 (~13s) — 「我那時候還很天真」+ prompt 對話框「**幫我寫一個訓練 AI 解數獨的程式**」+ 獨立崩盤句「⋯⋯**結果我錯了**」（黑底白字、微旋轉）
 - step 2 (~14s) — 「**800 多行的單一檔案**」程式碼 sticker（單檔等比例縮小成一坨黑色文字塊）+ 角標「`torch_agent.py`」+ 「什麼都塞在裡面」
 - step 3 (~13s) — debug 痛點：「每改一個地方都東倒西歪」+ 紅色叉叉飛來飛去動畫 + 「debug 成本爆炸」punchline
 - step 4 (~10s) — 第一件學到 hero 標語：「**架構、演算法都得自己先想清楚、再請 AI 分工**」+ 過渡「放棄這個版本、轉而當個套皮仔」
@@ -126,12 +126,12 @@
 
 **開發計畫**：
 
-- step 1 (~10s) — 過渡：「正當我以為成了套皮仔⋯⋯」 + 獨立崩盤句「**⋯⋯我又錯了**」（黑底白字、旋轉 -1°）
+- step 1 (~10s) — 過渡：「正當我以為成了套皮仔⋯⋯」 + 獨立崩盤句「**⋯⋯我又錯了**」（黑底白字、微旋轉）
 - step 2 (~9s) — 套皮仔策略：「社群現成 Python 工具箱」標籤 sticker + 「**只要他填對一格就給分數**」計分表 hero
 - step 3 (~12s) — **戀愛 hook a 出場**：「剛認識的新女生」sticker + 加分動畫（+ + + 浮起）+ 「聊天都覺得對方也喜歡你」
 - step 4 (~10s) — 「AI 得分急遽增長」曲線爬升（CSS / SVG 概念示意）+ 「一直給你加分」對位
 - step 5 (~12s) — 瓶頸：曲線卡住 + 「**拿那些必拿的固定分數就不思進取**」+ 「一直沒辦法完整解出一道題」
-- step 6 (~10s) — **戀愛 hook a 收**：「**備胎**」紅 stamp sticker（旋轉 -3°）+ 「看似有進展、結果什麼都沒發生」
+- step 6 (~10s) — **戀愛 hook a 收**：「**備胎**」紅 stamp sticker（微旋轉）+ 「看似有進展、結果什麼都沒發生」
 - step 7 (~7s) — 揭穿：「**偷吃步**」紅 stamp + 「**計分標準寫錯了、AI 就會找漏洞作弊**」hero + 過渡進 ch7
 
 口播節選：
@@ -155,11 +155,11 @@
 
 - step 1 (~11s) — 過渡：「我只好整個計分獎勵系統重寫」hero + 「核心想法只有一個」副標
 - step 2 (~14s) — 顛倒驗證宣告：「**用人類玩數獨的解題技巧、反過來驗證 AI 的每一步**」full-screen 標語
-- step 3 (~19s) — **13 招大階梯**：13 張小 sticker 從低（naked single / hidden single）排到高（X-Wing / Swordfish / **XY-Wing**），**X-Wing 跟 XYZ-Wing 最大、最華麗**（accent yellow / accent violet 底、黑邊、旋轉 -3° / 4°）
+- step 3 (~19s) — **13 招大階梯**：13 張小 sticker 從低（naked single / hidden single）排到高（X-Wing / Swordfish / **XY-Wing**），**X-Wing 跟 XYZ-Wing 最大、最華麗**（accent yellow / accent violet 底、黑邊、微旋轉）
 - step 4 (~17s) — 舊 vs 新對比動畫：左「填對一格就給分」（只有一招亮）vs 右「**可以用哪一招解釋**」（每張技巧都可以亮、高招分數更高）
 - step 5 (~13s) — Action 擴增：「多了**劃掉這格不可能是這個數**」 + 消去動作示意動畫 + 「消去類技巧才能展示出來」
 - step 6 (~14s) — 慘烈結果：「練了 **兩千多萬次**」大字 + 「完整解出一道題的機率還是 **0**」紅底 hero
-- step 7 (~22s) — **戀愛 hook b 全面展開**：「老油條女生陷阱題」sticker（旋轉 -2°）+ 「**和你媽一起掉進水裡**」考題 sticker + 「該不該運動：說要 → 嫌她胖 / 說不用 → 不關心」兩個答案都錯的陷阱箭頭
+- step 7 (~22s) — **戀愛 hook b 全面展開**：「老油條女生陷阱題」sticker（微旋轉）+ 「**和你媽一起掉進水裡**」考題 sticker + 「該不該運動：說要 → 嫌她胖 / 說不用 → 不關心」兩個答案都錯的陷阱箭頭
 - step 8 (~20s) — 死結：「AI 永遠拿不到整題解完那個大獎」+ 「就跟我不知道陷阱題的正確解答一樣」+ 過渡「反向思考」鋪墊
 
 口播節選：
@@ -177,7 +177,7 @@
 - 破關獎勵翻牌 anchor：「我同時把破關獎勵調更大——從 **+20 拉到 +50**」+ 「讓完成整題的訊號更明確、誘惑超過固定刷取部分分數的招數」—— 來源 `script.md` L287-291 + 真實程式碼 `reasoner/env/reward_computer.py:8 (=20)` + `apprentice/env/reward_computer.py:8 (=50)`
 - 突破 anchor：「從 3 個空格慢慢加到 10 個——他**終於開始解出整題**」—— 來源 `script.md` L293
 - 真實素材 anchor：**tensorboard 截圖**（勝率曲線 / curriculum step 圖）—— 使用者確認有素材可挂
-- visualizer 大按鈕設計：cream 底 + black border-4 + hard shadow + accent red 字 + sticker 旋轉幾度、「點我看 AI 即時解數獨 →」—— 來源 `prompt.md` §六 #7
+- visualizer 大按鈕設計：cream 底 + 粗黑邊 + 強陰影 + accent red 字 + sticker 微旋轉、「點我看 AI 即時解數獨 →」—— 來源 `prompt.md` §六 #7
 
 **開發計畫**：
 
@@ -187,7 +187,7 @@
 - step 4 (~10s) — 數字翻牌：「**+20 → +50**」大字翻牌動畫（破關獎勵調更大）+「誘惑超過刷部分分數的賤招」副標
 - step 5 (~12s) — **真實 tensorboard 截圖**挂進來（勝率曲線 + curriculum step 圖）+ 「從 3 個空格慢慢加到 10 個——他**終於開始解出整題**」
 - step 6 (~9s) — 過渡：「光講不夠看。給大家看一下 AI 即時解數獨的題目」hero
-- step 7 (~10s + visualizer 30~60s) — visualizer 大按鈕獨佔整屏：cream 底 + border-4 黑 + hard shadow 12px + accent red 字「**點我看 AI 即時解數獨 →**」+ 旋轉 -2° / 按下後 iframe（pygbag 主路線）或 `<video>`（OBS 退路）播放
+- step 7 (~10s + 現場桌面 visualizer 30~60s) — visualizer 大按鈕獨佔整屏：cream 底 + 粗黑邊 + 強陰影 + accent red 字「**點我看 AI 即時解數獨 →**」+ 微旋轉 + 提示文字「切換到 visualize.py 視窗」(現場演講者另開桌面 pygame 視窗執行 `python -m apprentice.demo.visualize`、不嵌網頁、零技術風險)
 
 口播節選：
 > 「我的解法是把題目反過來給他——一開始只給 3 格空的盤面⋯⋯他能穩定解、我再加一格空⋯⋯破關獎勵從 +20 拉到 +50⋯⋯他終於開始解出整題。」
@@ -227,9 +227,9 @@
 - step 9 (~12s) — plasticity 機制：「每改一次 reward function、每談一場戀愛、每學一個新東西——**每次都把我們重新塑造一次**」標語
 - step 10 (~14s) — **MBTI 自我故事**：「我真的是一個**極度的 I 人**」+ **「INFJ」**標籤 sticker + MBTI 圓餅「100% I」視覺
 - step 11 (~14s) — **業務工作變 E**：「逼自己跳脫舒適圈、做了一份**業務工作**」業務工作 sticker + 「天天逼自己跟陌生人講話、才慢慢變得比較 E」對照動畫
-- step 12 (~16s) — 不被擊敗：「從挫敗中學習就行了」hero + **警語 sticker**「**人生第一次的外向、換來一輩子的內向**」（黑底紅字、旋轉 -2°）
+- step 12 (~16s) — 不被擊敗：「從挫敗中學習就行了」hero + **警語 sticker**「**人生第一次的外向、換來一輩子的內向**」（黑底紅字、微旋轉）
 - step 13 (~12s) — 職場祝福：「繼續嘗試跟其他女生聊天——不是每個女生都那麼老油條」+ 「祝大家未來在職場上**不被挫敗給擊敗**」hero
-- step 14 (~22s) — **電費小偷結尾笑話 verbatim**：「最後再補個笑話」+ 「想必大家未來出職場後都是**薪水小偷**」（對位 sticker）+ 「但我不一樣、我是**電費小偷**」（電費小偷大字 sticker、accent red 底、旋轉 -3°、final punchline）+ 「我這兩個月一直用班上的電腦瘋狂訓練我的 AI」收尾
+- step 14 (~22s) — **電費小偷結尾笑話 verbatim**：「最後再補個笑話」+ 「想必大家未來出職場後都是**薪水小偷**」（對位 sticker）+ 「但我不一樣、我是**電費小偷**」（電費小偷大字 sticker、accent red 底、微旋轉、final punchline）+ 「我這兩個月一直用班上的電腦瘋狂訓練我的 AI」收尾
 
 口播節選：
 > 「這兩個月、我不只在訓練 AI、AI 也在訓練我⋯⋯AI 沒有天生會解數獨、跟你出生不會講話、跟你不是天生就懂怎麼跟人相處——一樣⋯⋯我是電費小偷、我這兩個月一直用班上的電腦瘋狂訓練我的 AI。」
@@ -268,7 +268,7 @@
 - 📦 「**只要他填對一格就給分數**」計分表 sticker
 - 📦 **「新女生加分」sticker**（加分動畫 + + + 浮起、純構造）
 - 📦 曲線爬升 → 卡住動畫（CSS / SVG 概念示意、**禁挂偽造 tensorboard 截圖** — `prompt.md` §五紅線）
-- 📦 **「備胎」紅 stamp sticker**（旋轉 -3°）
+- 📦 **「備胎」紅 stamp sticker**（微旋轉）
 - 📦 「**偷吃步**」紅 stamp + 「**找漏洞作弊**」hero
 
 ### 7. reasoner
@@ -279,13 +279,11 @@
 - 📦 **戀愛 hook b 系列 sticker**：「老油條女生」「**和你媽一起掉進水裡**」「該不該運動」考題 + 兩個答案都錯的陷阱箭頭
 
 ### 8. apprentice
-- ✓ **`apprentice/demo/visualize.py`** 真實 visualizer（**整片唯一現場可互動素材**）
-  - 主路線：pygbag → WASM → iframe（前置工作：`prompt.md` §六 #7 + §七 #7 排程；Phase 2 寫到 Ch 4 之前是 hard deadline）
-  - 退路：OBS 錄 30s–60s mp4
-- ✓ **tensorboard 真實截圖**（勝率曲線 + curriculum step 圖）—— 使用者表示有素材可挂、**整片唯一可挂真截圖的地方**
+- ✓ **`apprentice/demo/visualize.py` 桌面 pygame 視窗** —— 現場演講者另開桌面視窗執行 `python -m apprentice.demo.visualize`、**不嵌網頁、零技術風險**（pygbag/ONNX 主路線評估後 1-2 週工作量、超出本 session 範圍、改走最乾淨路線）
+- ⚠️ **tensorboard 真實截圖**（勝率曲線 + curriculum step 圖）—— 使用者表示有素材可挂、**整片唯一可挂真截圖的地方**；待落地動作：使用者匯出截圖至 `demo/presentation/public/images/tensorboard/` 並提供確切路徑
 - 📦 反向課程盤面動畫（3 空 → 4 空 → 5 空 → 7 空 → 10 空、一格一格揭示）
 - 📦 「**+20 → +50**」翻牌動畫
-- 📦 visualizer 大按鈕（cream + black border-4 + hard shadow + accent red 字、旋轉 -2°）
+- 📦 visualizer 大按鈕（cream 底 + 粗黑邊 + 強陰影 + accent red 字、微旋轉）
 
 ### 9. callback
 - 📦 「腦科學 RL = AI RL」對等動畫 + 中間 `=` 大字
@@ -295,7 +293,7 @@
 - 📦 plasticity 三欄對位 sticker（AI 解數獨 / 出生講話 / 跟人相處 → 一樣）
 - 📦 **「INFJ」MBTI sticker + 100% I 圓餅視覺**
 - 📦 **業務工作 sticker**（跟陌生人講話對照動畫）
-- 📦 **警語 sticker「人生第一次的外向、換來一輩子的內向」**（黑底紅字、旋轉 -2°）
+- 📦 **警語 sticker「人生第一次的外向、換來一輩子的內向」**（黑底紅字、微旋轉）
 - 📦 「不被挫敗給擊敗」職場祝福 hero
-- 📦 **電費小偷 final 大字 sticker**（accent red 底、黑邊、旋轉 -3°、整片最強 punchline 之一）
+- 📦 **電費小偷 final 大字 sticker**（accent red 底、黑邊、微旋轉、整片最強 punchline 之一）
 - 📦 「**薪水小偷**」對位 sticker

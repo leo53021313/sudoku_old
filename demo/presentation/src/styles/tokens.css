@@ -1,0 +1,75 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * Theme · neo-brutalism (overridden from bauhaus-bold base)
+ *
+ *   Cream canvas + pure ink black + hot-red / vivid-yellow / soft-violet
+ *   accents. Space Grotesk display (700/900 only). Sharp corners (0
+ *   radius). Thick black borders (4px default). Hard offset shadows
+ *   (8/12/16px, ZERO blur). Mechanical motion — fast, snappy, no
+ *   overshoot.
+ *
+ *   See demo/web_style.md for full design system spec.
+ *
+ *   character knobs:
+ *     • hero numbers   — Space Grotesk 900, near-zero tracking, MASSIVE
+ *     • rule           — 4px solid black
+ *     • card           — 0 radius, 4px black border, 8px hard shadow
+ *     • surface        — cream paper (#FFFDF5)
+ *     • motion         — fast & mechanical (100-300ms)
+ * ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* ─── palette ─── */
+  --shell:        #000000;                  /* outer letterbox (pure black) */
+  --surface:      #FFFDF5;                  /* CREAM canvas */
+  --surface-2:    #FFFFFF;                  /* pure white contrast panel */
+  --surface-3:    #FFD93D;                  /* VIVID YELLOW alternate */
+  --text:         #000000;                  /* pure black ink */
+  --text-2:       #000000;
+  --text-mute:    #000000;
+  --text-faint:   rgba(0, 0, 0, 0.55);
+  --rule:         #000000;
+  --accent:       #FF6B6B;                  /* HOT RED — primary action */
+  --accent-soft:  rgba(255, 107, 107, 0.20);
+  --accent-glow:  rgba(255, 107, 107, 0.50);
+
+  /* ─── neo-brutalism extended palette ─── */
+  --neo-cream:    #FFFDF5;
+  --neo-ink:      #000000;
+  --neo-white:    #FFFFFF;
+  --neo-red:      #FF6B6B;
+  --neo-yellow:   #FFD93D;
+  --neo-violet:   #C4B5FD;
+
+  /* ─── fonts ─── */
+  --font-display-cn: "Noto Sans SC", "Source Han Sans SC", -apple-system, sans-serif;
+  --font-display-en: "Space Grotesk", "Inter", "Helvetica Neue", sans-serif;
+  --font-body:       "Space Grotesk", "Noto Sans SC", -apple-system, sans-serif;
+  --font-mono:       "Space Mono", "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --font-features:   "tnum", "ss01";
+
+  /* ─── motion: mechanical & snappy ─── */
+  --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);    /* slight overshoot for sticker snap */
+  --ease-sharp:     cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-quick:     120ms;
+  --dur-base:      240ms;
+  --dur-slow:      420ms;
+  --dur-cinematic: 900ms;
+
+  /* ─── design identity: heavy borders + offset shadows ─── */
+  --r-card:        0;                                 /* SIGNATURE — sharp rectangles */
+  --r-stage:       0;
+  --rule-w:        4px;                               /* SIGNATURE — thick lines */
+  --rule-style:    solid;
+  --hero-num-font:    var(--font-display-en);
+  --hero-num-style:   normal;
+  --hero-num-weight:  700;
+  --hero-num-track:   -0.04em;
+  --stage-pad-x:   80px;
+  --stage-pad-y:   60px;
+  --card-shadow:        8px 8px 0 var(--neo-ink);    /* SIGNATURE — hard offset, zero blur */
+  --card-shadow-lg:    12px 12px 0 var(--neo-ink);
+  --card-shadow-xl:    16px 16px 0 var(--neo-ink);
+  --shadow-stage:
+    0 60px 160px rgba(0, 0, 0, 0.55),
+    0 0 0 6px var(--neo-ink);                         /* thick black frame around stage */
+  --stage-border:  6px solid var(--neo-ink);
+}
