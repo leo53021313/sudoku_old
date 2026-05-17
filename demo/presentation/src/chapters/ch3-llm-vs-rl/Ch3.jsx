@@ -1,8 +1,9 @@
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import Ch3Step1 from './Ch3Step1.jsx';
 import Ch3Step2 from './Ch3Step2.jsx';
+import Ch3Step3 from './Ch3Step3.jsx';
 
-const STEPS = { 1: Ch3Step1, 2: Ch3Step2 };
+const STEPS = { 1: Ch3Step1, 2: Ch3Step2, 3: Ch3Step3 };
 
 export function Ch3() {
   const { stepId } = usePresentationContext();
