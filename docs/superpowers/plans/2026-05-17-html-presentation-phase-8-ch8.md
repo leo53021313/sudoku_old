@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch8 apprentice — 反向思考 → 3 格空 → 反向課程動畫 3→10 → +20→+50 翻牌 → 光講不夠看 → visualizer 大按鈕. 6 steps, ~66s + visualizer 30~60s. First use of `motif/flip-20-to-50` (s4). No punchlines but ch8 is breakthrough chapter, ends with visualizer launch button using Windows custom URL scheme.
 
 **Source spec:** [outline.md §8](../../../demo/outline.md) · script.md L273-L299
@@ -49,14 +51,15 @@ export function Ch8() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch8Step1() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32, gap: 24,
+      fontFamily: 'Space Grotesk', gap: 24,
     }}>
       {/* Fade-out black overlay (one-shot, mirrors ch7 s8's black → cream transition) */}
       <motion.div
@@ -76,10 +79,7 @@ export default function Ch8Step1() {
           fontWeight: 900, fontSize: '4rem', textAlign: 'center', lineHeight: 1.4,
         }}
       >
-        <span style={{
-          background: '#FF6B6B', color: '#FFF', padding: '4px 24px',
-          border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-        }}>反向思考</span>
+        <Sticker variant="kicker" bg="#FF6B6B" color="#FFF">反向思考</Sticker>
         <br/>
         先解簡單的陷阱題答案
       </motion.div>
@@ -104,7 +104,7 @@ export default function Ch8Step1() {
       >
         AI 也是、我把題目反過來給他 →
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -451,37 +451,29 @@ export default function Ch8Step5() {
 ```jsx
 import { motion } from 'motion/react';
 import { useState } from 'react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch8Step6() {
   const [hover, setHover] = useState(false);
 
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.a
         href="sudoku-demo:run"
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         initial={{ scale: 0.8, opacity: 0 }}
-        animate={{
-          scale: hover ? 1.05 : 1,
-          opacity: 1,
-          boxShadow: hover ? '20px 20px 0 0 #000' : '16px 16px 0 0 #000',
-        }}
+        animate={{ scale: hover ? 1.05 : 1, opacity: 1 }}
         transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: hover ? '#E25555' : '#FF6B6B',
-          color: '#FFFDF5',
-          padding: '48px 96px',
-          border: '6px solid #000',
-          fontWeight: 900, fontSize: '4rem', textDecoration: 'none',
-          rotate: -2, cursor: 'pointer', display: 'inline-block',
-        }}
+        style={{ textDecoration: 'none', cursor: 'pointer', display: 'inline-block' }}
       >
-        點我看 AI 即時解數獨 →
+        <Sticker variant="hub-mega" bg={hover ? '#E25555' : '#FF6B6B'} color="#FFFDF5" rotation={-2}>
+          點我看 AI 即時解數獨 →
+        </Sticker>
       </motion.a>
 
       <div style={{
@@ -491,7 +483,7 @@ export default function Ch8Step6() {
         點擊後會自動啟動桌面 pygame 視窗（透過 Windows custom URL scheme），不需手動 Alt+Tab。<br/>
         詳細部署見 demo/visualizer-launch/README.md
       </div>
-    </main>
+    </div>
   );
 }
 ```

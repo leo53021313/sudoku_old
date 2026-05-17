@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch4 data-hunt — Kaggle → supervised 拒絕 → websudoku 受害者 punchline → 封 IP + proxy 池. 4 steps, ~50s, 1 punchline (s3 receives A+C+E light). First use of `motif/red-stamp` (s2 stamp) and `motif/ink-splatter` (s2 polish + s3 punchline).
 
 **Source spec:** [outline.md §4](../../../demo/outline.md) · script.md L99-L133
@@ -52,62 +54,49 @@ export function Ch4() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch4Step1() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
-      <motion.div
-        initial={{ scale: 0, opacity: 0, rotate: 0 }}
-        animate={{ scale: 1, opacity: 1, rotate: 2 }}
-        transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFD93D', color: '#000',
-          padding: '24px 56px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          fontWeight: 900, fontSize: '4rem',
-        }}
-      >
-        Kaggle
-      </motion.div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          <Sticker variant="hub-lg" bg="#FFD93D" rotation={2}>Kaggle</Sticker>
+          <div style={{
+            marginTop: 32, fontWeight: 700, fontSize: '1.75rem',
+            textAlign: 'center', maxWidth: 800,
+          }}>
+            題目+完整答案 整理好的資料集
+          </div>
+        </HubSatellite.Hub>
 
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        style={{
-          marginTop: 32, fontWeight: 700, fontSize: '1.75rem',
-          textAlign: 'center', maxWidth: 800,
-        }}
-      >
-        題目+完整答案 整理好的資料集
-      </motion.div>
-
-      {/* 3 data cards stagger */}
-      <div style={{ marginTop: 48, display: 'flex', gap: 16 }}>
-        {[0, 1, 2].map(i => (
-          <motion.div
-            key={i}
-            initial={{ y: 30, scale: 0.8, opacity: 0 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.9 + i * 0.1, ease: [0.34, 1.56, 0.64, 1] }}
-            style={{
-              width: 140, height: 100, background: '#FFFFFF',
-              border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-              padding: 16, fontWeight: 700, fontSize: 14,
-              transform: `rotate(${[-3, 1, 4][i]}deg)`,
-            }}
-          >
-            dataset #{i + 1}
+        <HubSatellite.Satellite position="bl">
+          <Sticker variant="sat-md" bg="#FFFFFF" rotation={-3}>
+            dataset #1
             <div style={{ marginTop: 12, color: '#999' }}>n=10k</div>
-          </motion.div>
-        ))}
-      </div>
+          </Sticker>
+        </HubSatellite.Satellite>
+        <HubSatellite.Satellite position="b">
+          <Sticker variant="sat-md" bg="#FFFFFF" rotation={1}>
+            dataset #2
+            <div style={{ marginTop: 12, color: '#999' }}>n=10k</div>
+          </Sticker>
+        </HubSatellite.Satellite>
+        <HubSatellite.Satellite position="br">
+          <Sticker variant="sat-md" bg="#FFFFFF" rotation={4}>
+            dataset #3
+            <div style={{ marginTop: 12, color: '#999' }}>n=10k</div>
+          </Sticker>
+        </HubSatellite.Satellite>
+      </HubSatellite>
 
-      {/* 但問題來了 — 紅叉叉 burst climax */}
+      {/* 但問題來了 — 紅叉叉 burst climax (motif-like full-stage overlay, kept absolute) */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: [0, 1.2, 1], opacity: 1 }}
@@ -126,7 +115,7 @@ export default function Ch4Step1() {
           ✗ 但問題來了
         </div>
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -137,37 +126,42 @@ export default function Ch4Step1() {
 import { motion } from 'motion/react';
 import { RedStamp } from '../../motifs/RedStamp.jsx';
 import { InkSplatter } from '../../motifs/InkSplatter.jsx';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch4Step2() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 64, fontFamily: 'Space Grotesk', padding: 32,
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Space Grotesk',
     }}>
-      {/* Red stamp from above with bounce + ink splatter light variant on impact */}
-      <div style={{ position: 'relative' }}>
-        <RedStamp active rotation={-5} size="large">supervised 路線 · 拒絕</RedStamp>
-        {/* Light ink-splatter on stamp impact, 4 dots, radius 50 */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <InkSplatter active count={4} radius={60} centerX="50%" centerY="50%" />
-        </div>
-      </div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          {/* Red stamp from above with bounce + ink splatter light variant on impact */}
+          <div style={{ position: 'relative' }}>
+            <RedStamp active rotation={-5} size="large">supervised 路線 · 拒絕</RedStamp>
+            {/* Light ink-splatter on stamp impact, 4 dots, radius 50 */}
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              <InkSplatter active count={4} radius={60} centerX="50%" centerY="50%" />
+            </div>
+          </div>
+        </HubSatellite.Hub>
 
-      {/* Right comparison */}
-      <motion.div
-        initial={{ x: 60, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-        style={{
-          background: '#FFD93D', color: '#000',
-          padding: '24px 40px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          fontWeight: 900, fontSize: 32, rotate: 3,
-        }}
-      >
-        我要 AI · 自己摸出規則
-      </motion.div>
-    </main>
+        <HubSatellite.Satellite position="r">
+          <motion.div
+            initial={{ x: 60, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <Sticker variant="sat-lg" bg="#FFD93D" rotation={3}>
+              我要 AI · 自己摸出規則
+            </Sticker>
+          </motion.div>
+        </HubSatellite.Satellite>
+      </HubSatellite>
+    </div>
   );
 }
 ```

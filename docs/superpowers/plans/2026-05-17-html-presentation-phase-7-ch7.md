@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch7 reasoner — 重寫宣告 → 顛倒驗證 → 13 招階梯 → 舊 vs 新 → Action 擴增 → 機率 0 → **老油條陷阱 ★★★** → 死結. 8 steps, ~138s, 2 punchlines (s6 light A+B+C+E + s7 ★★★ 6-beat A+E+G×2 + B×2). First use of `motif/13-stairs` (s3), `motif/sudoku-board` (s5), `motif/girl-veteran` (s7).
 
 **Source spec:** [outline.md §7](../../../demo/outline.md) · script.md L201-L269
@@ -54,6 +56,7 @@ export function Ch7() {
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch7Step1() {
   const { triggerShake } = usePresentationContext();
@@ -65,11 +68,11 @@ export default function Ch7Step1() {
   }, [triggerShake]);
 
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
@@ -94,17 +97,12 @@ export default function Ch7Step1() {
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0 0 0)' }}
           transition={{ duration: 0.4, delay: 0.7, ease: 'easeOut' }}
-          style={{
-            background: '#FFD93D', color: '#000',
-            padding: '4px 32px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-            display: 'inline-block',
-            fontSize: '5rem', rotate: -2, marginTop: 16,
-          }}
+          style={{ display: 'inline-block', marginTop: 16 }}
         >
-          重寫
+          <Sticker variant="hub-lg" bg="#FFD93D" rotation={-2}>重寫</Sticker>
         </motion.span>
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -113,14 +111,15 @@ export default function Ch7Step1() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch7Step2() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
@@ -137,31 +136,23 @@ export default function Ch7Step2() {
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0 0 0)' }}
           transition={{ duration: 0.4, delay: 1.3 }}
-          style={{
-            background: '#FF6B6B', color: '#FFF',
-            padding: '2px 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-            display: 'inline-block', rotate: -2,
-          }}
+          style={{ display: 'inline-block' }}
         >
-          反過來
+          <Sticker variant="kicker" bg="#FF6B6B" color="#FFF" rotation={-2}>反過來</Sticker>
         </motion.span>
         {' '}
         <motion.span
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0 0 0)' }}
           transition={{ duration: 0.4, delay: 1.6 }}
-          style={{
-            background: '#FFD93D', color: '#000',
-            padding: '2px 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-            display: 'inline-block', rotate: 2,
-          }}
+          style={{ display: 'inline-block' }}
         >
-          驗證
+          <Sticker variant="kicker" bg="#FFD93D" rotation={2}>驗證</Sticker>
         </motion.span>
         {' '}
         AI 的每一步
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -399,47 +390,49 @@ export default function Ch7Step4() {
 ```jsx
 import { motion } from 'motion/react';
 import { SudokuBoard } from '../../motifs/SudokuBoard.jsx';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch7Step5() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32, gap: 24,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        style={{ fontWeight: 900, fontSize: '3rem', textAlign: 'center' }}
+        style={{ fontWeight: 900, fontSize: '3rem', textAlign: 'center', marginBottom: 24 }}
       >
         多了一倍可以做的事
       </motion.div>
 
-      {/* Sudoku board placeholder (shell motif, [E] real SVG to be built later) */}
-      <SudokuBoard />
+      <HubSatellite>
+        <HubSatellite.Hub>
+          {/* Sudoku board placeholder (shell motif, [E] real SVG to be built later) */}
+          <SudokuBoard />
+        </HubSatellite.Hub>
 
-      <div style={{ display: 'flex', gap: 32, fontWeight: 900, fontSize: 20 }}>
-        <span style={{
-          background: '#10B981', color: '#FFF',
-          padding: '12px 24px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-        }}>填一個數字</span>
-        <span style={{
-          background: '#FF6B6B', color: '#FFF',
-          padding: '12px 24px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-        }}>劃掉這格不可能是這個數 ✗</span>
-      </div>
+        <HubSatellite.Satellite position="l">
+          <Sticker variant="sat-md" bg="#10B981" color="#FFF">填一個數字</Sticker>
+        </HubSatellite.Satellite>
+        <HubSatellite.Satellite position="r">
+          <Sticker variant="sat-md" bg="#FF6B6B" color="#FFF">劃掉這格不可能是這個數 ✗</Sticker>
+        </HubSatellite.Satellite>
+      </HubSatellite>
 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.0 }}
-        style={{ fontWeight: 700, fontSize: '1.25rem', color: '#666', marginTop: 8 }}
+        style={{ fontWeight: 700, fontSize: '1.25rem', color: '#666', marginTop: 24 }}
       >
         消去類技巧才能展示出來
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```

@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch9 callback — final chapter, longest, 13 steps, ~204s. Mostly motif callbacks (girl-new, girl-veteran, 13-stairs, flip-20-to-50, crash-line, boom-double-ring) plus tensorboard real screenshots. 3 punchlines: s5 (戀愛 a callback light A+C), **s11 ★★ 警語**「人生第一次的外向 · 換來一輩子的內向」(A+C+G), **s13 ★★★ 電費小偷 final** (A+B+C+E+G + boom-ring 首尾呼應 ch1 s8).
 
 **Source spec:** [outline.md §9](../../../demo/outline.md) · script.md L303-L375
@@ -58,14 +60,16 @@ Per asset-production.md ch9: tensorboard screenshots should be exported to `demo
 ```jsx
 import { motion } from 'motion/react';
 import { AssetPlaceholder } from '../../components/AssetPlaceholder.jsx';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step1() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32, gap: 24,
+      fontFamily: 'Space Grotesk', gap: 24,
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
@@ -76,47 +80,53 @@ export default function Ch9Step1() {
         AI 還在訓練中⋯⋯<span style={{ color: '#000', fontWeight: 900 }}>我跟對方還在磨合期</span>
       </motion.div>
 
-      <div style={{ display: 'flex', gap: 32 }}>
-        <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
-        >
-          <AssetPlaceholder type="[✓]" width={420} height={260} todo="success_rate 曲線截圖 (export from tensorboard, save to public/images/tensorboard/success-rate.png)" />
-        </motion.div>
-        <motion.div
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
-        >
-          <AssetPlaceholder type="[✓]" width={420} height={260} todo="curriculum target_empty 截圖 (save to public/images/tensorboard/curriculum-target-empty.png)" />
-        </motion.div>
-      </div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.0 }}
+              style={{ fontWeight: 700, fontSize: '1.25rem' }}
+            >
+              但你可以看到 ·{' '}
+              <Sticker variant="kicker" bg="#FFD93D">AI 是有在進步的</Sticker>
+            </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 1.0 }}
-        style={{ fontWeight: 700, fontSize: '1.25rem' }}
-      >
-        但你可以看到 · <span style={{ background: '#FFD93D', padding: '2px 12px', border: '3px solid #000' }}>AI 是有在進步的</span>
-      </motion.div>
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.9, delay: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
+            >
+              <Sticker variant="hub-lg" bg="#000" color="#FFFDF5">
+                最後我想跟大家講一件事
+              </Sticker>
+            </motion.div>
+          </div>
+        </HubSatellite.Hub>
 
-      <motion.div
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.9, delay: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          marginTop: 16, fontWeight: 900, fontSize: '3rem',
-          background: '#000', color: '#FFFDF5',
-          padding: '12px 32px', border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-        }}
-      >
-        最後我想跟大家講一件事
-      </motion.div>
-    </main>
+        <HubSatellite.Satellite position="l">
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
+          >
+            <AssetPlaceholder type="[✓]" width={420} height={260} todo="success_rate 曲線截圖 (export from tensorboard, save to public/images/tensorboard/success-rate.png)" />
+          </motion.div>
+        </HubSatellite.Satellite>
+        <HubSatellite.Satellite position="r">
+          <motion.div
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
+          >
+            <AssetPlaceholder type="[✓]" width={420} height={260} todo="curriculum target_empty 截圖 (save to public/images/tensorboard/curriculum-target-empty.png)" />
+          </motion.div>
+        </HubSatellite.Satellite>
+      </HubSatellite>
+    </div>
   );
 }
 ```
@@ -130,6 +140,7 @@ Also append to `TODO.md`:
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step2() {
   return (
@@ -157,13 +168,10 @@ export default function Ch9Step2() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FF6B6B', color: '#FFFDF5',
-          padding: '32px 64px', border: '8px solid #000', boxShadow: '20px 20px 0 0 #000',
-          fontWeight: 900, fontSize: '6rem', rotate: -2, lineHeight: 1,
-        }}
       >
-        AI · 也在訓練我
+        <Sticker variant="hub-mega" bg="#FF6B6B" color="#FFFDF5" rotation={-2}>
+          AI · 也在訓練我
+        </Sticker>
       </motion.div>
     </main>
   );
@@ -174,76 +182,79 @@ export default function Ch9Step2() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step3() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
-      fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
+      fontFamily: 'Space Grotesk', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
     }}>
-      {/* Left: brain (RL 腦科學) */}
-      <motion.div
-        initial={{ clipPath: 'inset(0 100% 0 0)' }}
-        animate={{ clipPath: 'inset(0 0 0 0)' }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        style={{
-          flex: '0 0 40%', background: '#000', color: '#FFFDF5',
-          height: '60vh',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: 32, gap: 16,
-          border: '6px solid #000',
-        }}
-      >
-        <div style={{ fontSize: 96 }}>🧠</div>
-        <div style={{ fontWeight: 900, fontSize: '2rem' }}>腦科學 RL</div>
-      </motion.div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          {/* "=" yellow circle stamp */}
+          <motion.div
+            initial={{ scale: 0, rotate: 0 }}
+            animate={{ scale: 1, rotate: -10 }}
+            transition={{ duration: 0.5, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+            style={{
+              background: '#FFD93D', color: '#000',
+              width: 120, height: 120, borderRadius: '50%',
+              border: '8px solid #000', boxShadow: '12px 12px 0 0 #000',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 900, fontSize: 64,
+            }}
+          >
+            =
+          </motion.div>
+        </HubSatellite.Hub>
 
-      {/* Center: "=" yellow circle stamp */}
-      <motion.div
-        initial={{ scale: 0, rotate: 0 }}
-        animate={{ scale: 1, rotate: -10 }}
-        transition={{ duration: 0.5, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFD93D', color: '#000',
-          width: 120, height: 120, borderRadius: '50%',
-          border: '8px solid #000', boxShadow: '12px 12px 0 0 #000',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 900, fontSize: 64, margin: '0 -40px', zIndex: 5,
-        }}
-      >
-        =
-      </motion.div>
+        <HubSatellite.Satellite position="l">
+          {/* brain (RL 腦科學) */}
+          <motion.div
+            initial={{ clipPath: 'inset(0 100% 0 0)' }}
+            animate={{ clipPath: 'inset(0 0 0 0)' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <Sticker variant="hub-lg" bg="#000" color="#FFFDF5">
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div style={{ fontSize: 96 }}>🧠</div>
+                <div style={{ fontWeight: 900, fontSize: '2rem' }}>腦科學 RL</div>
+              </div>
+            </Sticker>
+          </motion.div>
+        </HubSatellite.Satellite>
 
-      {/* Right: neural net (AI 訓練) */}
-      <motion.div
-        initial={{ clipPath: 'inset(0 0 0 100%)' }}
-        animate={{ clipPath: 'inset(0 0 0 0)' }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        style={{
-          flex: '0 0 40%', background: '#FFFDF5', color: '#000',
-          height: '60vh',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: 32, gap: 16,
-          border: '6px solid #000',
-        }}
-      >
-        <div style={{ fontSize: 96 }}>🕸️</div>
-        <div style={{ fontWeight: 900, fontSize: '2rem' }}>AI 訓練 RL</div>
-      </motion.div>
+        <HubSatellite.Satellite position="r">
+          {/* neural net (AI 訓練) */}
+          <motion.div
+            initial={{ clipPath: 'inset(0 0 0 100%)' }}
+            animate={{ clipPath: 'inset(0 0 0 0)' }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <Sticker variant="hub-lg" bg="#FFFDF5">
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div style={{ fontSize: 96 }}>🕸️</div>
+                <div style={{ fontWeight: 900, fontSize: '2rem' }}>AI 訓練 RL</div>
+              </div>
+            </Sticker>
+          </motion.div>
+        </HubSatellite.Satellite>
 
-      {/* Hero below */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 1.0 }}
-        style={{
-          position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center',
-          fontWeight: 900, fontSize: '2.5rem',
-        }}
-      >
-        其實是 <span style={{ background: '#FFD93D', padding: '4px 16px', border: '4px solid #000' }}>同一件事</span>
-      </motion.div>
-    </main>
+        <HubSatellite.Satellite position="b">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
+            style={{ fontWeight: 900, fontSize: '2.5rem', textAlign: 'center' }}
+          >
+            其實是 <Sticker variant="kicker" bg="#FFD93D">同一件事</Sticker>
+          </motion.div>
+        </HubSatellite.Satellite>
+      </HubSatellite>
+    </div>
   );
 }
 ```
@@ -252,74 +263,82 @@ export default function Ch9Step3() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step4() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32, gap: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        style={{ fontWeight: 900, fontSize: '3rem', textAlign: 'center' }}
+        style={{ fontWeight: 900, fontSize: '3rem', textAlign: 'center', marginBottom: 32 }}
       >
-        AI 在<span style={{ background: '#FFD93D', padding: '0 16px', border: '4px solid #000' }}>模仿</span>人類
+        AI 在<Sticker variant="kicker" bg="#FFD93D">模仿</Sticker>人類
       </motion.div>
 
-      {/* Plane left + arrow ← + bird right */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 48, marginTop: 32 }}>
-        <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          style={{ fontSize: 200 }}
-        >
-          ✈️
-        </motion.div>
-
-        <motion.svg
-          width="120" height="40" viewBox="0 0 120 40"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          style={{ overflow: 'visible' }}
-        >
-          <motion.path
-            d="M 10 20 L 20 10 L 10 20 L 110 20 L 100 30 L 110 20 L 100 10"
-            fill="none" stroke="#000" strokeWidth="6" strokeLinecap="square"
+      <HubSatellite>
+        <HubSatellite.Hub>
+          {/* arrow ← in the middle */}
+          <motion.svg
+            width="120" height="40" viewBox="0 0 120 40"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-          />
-        </motion.svg>
+            style={{ overflow: 'visible' }}
+          >
+            <motion.path
+              d="M 10 20 L 20 10 L 10 20 L 110 20 L 100 30 L 110 20 L 100 10"
+              fill="none" stroke="#000" strokeWidth="6" strokeLinecap="square"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+            />
+          </motion.svg>
+        </HubSatellite.Hub>
 
-        <motion.div
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1, y: [0, -6, 0] }}
-          transition={{
-            x: { duration: 0.5, delay: 0.4 },
-            opacity: { duration: 0.5, delay: 0.4 },
-            y: { duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 1 },
-          }}
-          style={{ fontSize: 200 }}
-        >
-          🐦
-        </motion.div>
-      </div>
+        <HubSatellite.Satellite position="l">
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            style={{ fontSize: 200 }}
+          >
+            ✈️
+          </motion.div>
+        </HubSatellite.Satellite>
+
+        <HubSatellite.Satellite position="r">
+          <motion.div
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1, y: [0, -6, 0] }}
+            transition={{
+              x: { duration: 0.5, delay: 0.4 },
+              opacity: { duration: 0.5, delay: 0.4 },
+              y: { duration: 1.2, repeat: Infinity, ease: 'easeInOut', delay: 1 },
+            }}
+            style={{ fontSize: 200 }}
+          >
+            🐦
+          </motion.div>
+        </HubSatellite.Satellite>
+      </HubSatellite>
 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.2 }}
-        style={{ fontWeight: 700, fontSize: '1.5rem', color: '#666', textAlign: 'center' }}
+        style={{ fontWeight: 700, fontSize: '1.5rem', color: '#666', textAlign: 'center', marginTop: 32 }}
       >
         就像飛機 · 是人類模仿鳥類才造出來
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -553,14 +572,15 @@ export default function Ch9Step6() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step7() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32, gap: 16,
+      fontFamily: 'Space Grotesk', gap: 16,
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
@@ -585,16 +605,12 @@ export default function Ch9Step7() {
           initial={{ letterSpacing: '0.3em', opacity: 0 }}
           animate={{ letterSpacing: '0.05em', opacity: 1 }}
           transition={{ duration: 1, delay: 1.2 }}
-          style={{
-            background: '#C4B5FD', color: '#000',
-            padding: '8px 32px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-            display: 'inline-block', marginTop: 16, fontSize: '4rem',
-          }}
+          style={{ display: 'inline-block', marginTop: 16 }}
         >
-          plasticity
+          <Sticker variant="hub-lg" bg="#C4B5FD">plasticity</Sticker>
         </motion.span>
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```
@@ -668,6 +684,7 @@ export default function Ch9Step8() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step9() {
   return (
@@ -714,12 +731,9 @@ export default function Ch9Step9() {
       >
         每次都把我們
         <br/>
-        <span style={{
-          background: '#FFD93D', padding: '4px 24px',
-          border: '6px solid #000', boxShadow: '10px 10px 0 0 #000', display: 'inline-block', marginTop: 16,
-        }}>
-          重新塑造一次
-        </span>
+        <div style={{ display: 'inline-block', marginTop: 16 }}>
+          <Sticker variant="hub-md" bg="#FFD93D">重新塑造一次</Sticker>
+        </div>
       </motion.div>
     </main>
   );
@@ -1001,6 +1015,7 @@ export default function Ch9Step11() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch9Step12() {
   return (
@@ -1029,13 +1044,11 @@ export default function Ch9Step12() {
       >
         祝大家未來在職場上
         <br/>
-        <span style={{
-          background: '#FF6B6B', color: '#FFFDF5',
-          padding: '8px 32px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          display: 'inline-block', marginTop: 16, rotate: -2,
-        }}>
-          不被挫敗給擊敗
-        </span>
+        <div style={{ display: 'inline-block', marginTop: 16 }}>
+          <Sticker variant="hub-md" bg="#FF6B6B" color="#FFFDF5" rotation={-2}>
+            不被挫敗給擊敗
+          </Sticker>
+        </div>
       </motion.div>
 
       <motion.div

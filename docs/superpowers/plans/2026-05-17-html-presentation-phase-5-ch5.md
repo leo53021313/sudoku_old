@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch5 legacy — 天真期 → 丟 prompt 給 Claude → 「結果我錯了」#1 崩盤 → 838 行單檔 → debug 爆炸 → 第一件學到. 4 steps, ~51s, 1 punchline (s1 receives A+C light). **First use of `motif/crash-line`** (s1, will be reused in ch6 s1 and ch9 s11). Polish ink-splatter on s4.
 
 **Source spec:** [outline.md §5](../../../demo/outline.md) · script.md L141-L163

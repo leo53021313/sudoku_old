@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch3 llm-vs-rl — 「LLM = 模仿」vs「我這套 = 自己摸出規則」對比 → cliffhanger「OK 純 RL、第一步找資料」. 3 steps, ~35s, polish FX on s3 (halftone-burst 微縮).
 
 **Architecture:** Standard chapter pattern. First use of `motif/halftone-burst` (polish-tier micro version, radius 60px).
@@ -262,14 +264,15 @@ export default function Ch3Step2() {
 ```jsx
 import { motion } from 'motion/react';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch3Step3() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
@@ -281,24 +284,16 @@ export default function Ch3Step3() {
         }}
       >
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <span style={{
-            background: '#FF6B6B', color: '#FFFDF5',
-            padding: '0 32px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-            rotate: -2, display: 'inline-block',
-          }}>OK</span>
+          <Sticker variant="hub-md" bg="#FF6B6B" color="#FFFDF5" rotation={-2}>OK</Sticker>
           {/* Halftone burst micro on OK highlight finish */}
           <div style={{ position: 'absolute', inset: 0 }}>
             <HalftoneBurst active size={120} centerX="50%" centerY="50%" />
           </div>
         </div>
-        <div>所以我要走 <span style={{
-          background: '#FFD93D', color: '#000',
-          padding: '0 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-          rotate: 2, display: 'inline-block',
-        }}>純 RL</span></div>
+        <div>所以我要走 <Sticker variant="hub-md" bg="#FFD93D" rotation={2}>純 RL</Sticker></div>
         <div style={{ fontSize: '3rem', marginTop: 32 }}>第一步是找資料</div>
       </motion.div>
-    </main>
+    </div>
   );
 }
 ```

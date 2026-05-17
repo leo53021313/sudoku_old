@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development.
 
+> **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>` (parent provides), `<HubSatellite>` (hub + named-anchor satellites) and `<Sticker variant="hub-md|hub-lg|hub-mega|sat-lg|sat-md|sat-sm|kicker">` from `src/components/`. Inline `position: 'absolute'` + hard-coded `%` offsets are PROHIBITED in step files (motif components are exempt — `HalftoneBurst`, `InkSplatter`, `SpotlightVignette`, etc. continue to use viewport-relative positioning). JSX snippets in this plan that follow the hub+satellite or sticker pattern have been pre-translated; snippets for other layouts (split-screen, charts, etc.) are illustrative — translate them to primitive calls when executing. See [`docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md`](../specs/2026-05-17-presentation-layout-system-design.md) for tokens, variant table, and acceptance criteria.
+
 **Goal:** Build ch6 sb3 — 套皮仔 → 「我又錯了」#2 崩盤 → 新女生加分 → 曲線爬升 → 卡平段 → **備胎 ★★★** → 偷吃步揭穿. 7 steps, ~73s, 2 punchlines (s1 light A+C + s6 ★★★ full A+B+C+E+G). First use of `motif/girl-new` (s3) and all 4 climax-FX motifs being used as primary (spotlight-vignette / halftone-burst / ink-splatter / screen-shake all converge in s6 ★★★).
 
 **Source spec:** [outline.md §6](../../../demo/outline.md) · script.md L167-L199
@@ -121,50 +123,55 @@ export default function Ch6Step1() {
 
 ```jsx
 import { motion } from 'motion/react';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch6Step2() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 64, fontFamily: 'Space Grotesk', padding: 32,
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Space Grotesk',
     }}>
-      {/* Left: Python toolbox sticker */}
-      <motion.div
-        initial={{ x: -100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        style={{
-          background: '#C4B5FD', color: '#000',
-          padding: '20px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          fontWeight: 900, fontSize: 24, rotate: -3, maxWidth: 360, lineHeight: 1.3,
-        }}
-      >
-        社群現成<br/>Python 工具箱
-      </motion.div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          {/* Hub: scoring rule card */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+          >
+            <Sticker variant="hub-md" bg="#FFFFFF">
+              <div style={{ textAlign: 'center', lineHeight: 1.3, fontSize: '2rem' }}>
+                只要他<br/>
+                <Sticker variant="kicker" bg="#FFD93D">填對一格</Sticker>
+                <br/>就給分數
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 1.0 }}
+                  style={{ marginTop: 16, fontSize: '3rem', color: '#FF6B6B' }}
+                >+1</motion.div>
+              </div>
+            </Sticker>
+          </motion.div>
+        </HubSatellite.Hub>
 
-      {/* Right: scoring rule card */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFFFFF', color: '#000',
-          padding: '32px 48px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          fontWeight: 900, fontSize: '2rem', textAlign: 'center', lineHeight: 1.3,
-        }}
-      >
-        只要他<br/>
-        <span style={{ background: '#FFD93D', padding: '4px 16px', border: '4px solid #000', boxShadow: '4px 4px 0 0 #000' }}>填對一格</span>
-        <br/>就給分數
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 1.0 }}
-          style={{ marginTop: 16, fontSize: '3rem', color: '#FF6B6B' }}
-        >+1</motion.div>
-      </motion.div>
-    </main>
+        <HubSatellite.Satellite position="l">
+          {/* Satellite: Python toolbox sticker */}
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            <Sticker variant="sat-lg" bg="#C4B5FD" rotation={-3}>
+              社群現成<br/>Python 工具箱
+            </Sticker>
+          </motion.div>
+        </HubSatellite.Satellite>
+      </HubSatellite>
+    </div>
   );
 }
 ```
@@ -174,6 +181,7 @@ export default function Ch6Step2() {
 ```jsx
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch6Step3() {
   const [plusses, setPlusses] = useState([]);
@@ -200,14 +208,12 @@ export default function Ch6Step3() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFB6C1', color: '#000',
-          padding: '32px 56px', border: '6px solid #000', boxShadow: '14px 14px 0 0 #000',
-          fontWeight: 900, fontSize: '2.5rem', rotate: -4, lineHeight: 1.3,
-          textAlign: 'center',
-        }}
       >
-        剛認識的<br/>新女生 ✨
+        <Sticker variant="hub-lg" bg="#FFB6C1" rotation={-4}>
+          <div style={{ textAlign: 'center', lineHeight: 1.3 }}>
+            剛認識的<br/>新女生 ✨
+          </div>
+        </Sticker>
       </motion.div>
 
       {/* +/+/+ floating plus symbols */}
@@ -503,36 +509,40 @@ export default function Ch6Step6() {
 ```jsx
 import { motion } from 'motion/react';
 import { RedStamp } from '../../motifs/RedStamp.jsx';
+import { HubSatellite } from '../../components/HubSatellite.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch6Step7() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
-      <div style={{ position: 'absolute', top: 64, left: 64 }}>
-        <RedStamp active rotation={-8} size="medium">偷吃步</RedStamp>
-      </div>
+      <HubSatellite>
+        <HubSatellite.Hub>
+          <motion.div
+            initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
+            animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+            style={{
+              fontWeight: 900, fontSize: '3rem', textAlign: 'center', lineHeight: 1.5, maxWidth: 1200,
+            }}
+          >
+            <Sticker variant="kicker" bg="#FF6B6B" color="#FFF">計分標準寫錯了</Sticker>
+            <br/>
+            <div style={{ marginTop: 16, display: 'inline-block' }}>
+              <Sticker variant="kicker" bg="#FFD93D">AI 就會找漏洞作弊</Sticker>
+            </div>
+          </motion.div>
+        </HubSatellite.Hub>
 
-      <motion.div
-        initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
-        animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-        style={{
-          fontWeight: 900, fontSize: '3rem', textAlign: 'center', lineHeight: 1.5, maxWidth: 1200,
-        }}
-      >
-        <span style={{ background: '#FF6B6B', color: '#FFF', padding: '4px 16px', border: '4px solid #000' }}>
-          計分標準寫錯了
-        </span>
-        <br/>
-        <span style={{ background: '#FFD93D', color: '#000', padding: '4px 16px', border: '4px solid #000', marginTop: 16, display: 'inline-block' }}>
-          AI 就會找漏洞作弊
-        </span>
-      </motion.div>
-    </main>
+        <HubSatellite.Satellite position="tl">
+          <RedStamp active rotation={-8} size="medium">偷吃步</RedStamp>
+        </HubSatellite.Satellite>
+      </HubSatellite>
+    </div>
   );
 }
 ```
