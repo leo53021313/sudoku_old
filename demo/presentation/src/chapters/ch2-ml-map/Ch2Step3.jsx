@@ -1,25 +1,21 @@
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch2Step3() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{
-          background: '#000', color: '#FFFDF5',
-          padding: '12px 28px',
-          fontWeight: 900, fontSize: 18, letterSpacing: '0.1em',
-          marginBottom: 48,
-        }}
+        style={{ marginBottom: 48 }}
       >
-        機器學習 · ③/3
+        <Sticker variant="kicker" bg="ink" textColor="cream">機器學習 · ②/3</Sticker>
       </motion.div>
 
       <motion.div
@@ -28,14 +24,10 @@ export default function Ch2Step3() {
         transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
         style={{
           fontWeight: 900, fontSize: '7rem', lineHeight: 1.05,
-          letterSpacing: '-0.04em', display: 'flex', alignItems: 'baseline', gap: 16,
+          letterSpacing: '-0.04em',
         }}
       >
-        <span style={{
-          background: '#FF6B6B', color: '#FFFDF5', padding: '0 20px',
-          border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-        }}>RL</span>
-        <span style={{ fontSize: '3rem', color: '#666' }}>· reinforcement learning</span>
+        unsupervised
       </motion.div>
 
       <motion.div
@@ -47,41 +39,30 @@ export default function Ch2Step3() {
           fontWeight: 700, fontSize: '2rem', color: '#000',
         }}
       >
-        白話：<span style={{
-          background: '#FFD93D', padding: '4px 16px',
-          border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-          marginLeft: 8,
-        }}>試錯加獎懲</span>
+        白話：<Sticker variant="sat-md" bg="muted" style={{ marginLeft: 8 }}>自己分類整理</Sticker>
       </motion.div>
 
-      {/* AlphaGo red stamp drops in last (climax) */}
+      {/* Clothes piles: one messy → 3 sorted */}
       <motion.div
-        initial={{ y: -200, scale: 0, opacity: 0, rotate: -8 }}
-        animate={{ y: 0, scale: 1, opacity: 1, rotate: -2 }}
-        transition={{ duration: 0.5, delay: 1.8, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          position: 'absolute', bottom: '20%', right: 96,
-          background: '#FF6B6B', color: '#FFFDF5',
-          border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          padding: '20px 36px',
-          fontWeight: 900, fontSize: 32,
-        }}
-      >
-        AlphaGo · 打敗世界圍棋王
-      </motion.div>
-
-      {/* Dog handshake placeholder text */}
-      <motion.div
-        initial={{ opacity: 0, x: 60 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.4 }}
         style={{
-          position: 'absolute', left: 64, top: '60%',
-          fontSize: 64, fontWeight: 900,
+          position: 'absolute', right: 64, top: '50%', transform: 'translateY(-50%)',
+          display: 'flex', alignItems: 'center', gap: 24,
         }}
       >
-        🐕 ↔ 🤝
+        <div style={{ fontWeight: 900, fontSize: 18, textAlign: 'center' }}>
+          <Sticker variant="sat-md" bg="muted" style={{ marginBottom: 8 }}>👕👖👔</Sticker>
+          <div>一堆</div>
+        </div>
+        <div style={{ fontWeight: 900, fontSize: 24 }}>→</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <Sticker variant="sat-sm" bg="accent">紅</Sticker>
+          <Sticker variant="sat-sm" bg="secondary">黃</Sticker>
+          <Sticker variant="sat-sm" bg="muted">紫</Sticker>
+        </div>
       </motion.div>
-    </main>
+    </div>
   );
 }
