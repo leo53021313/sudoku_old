@@ -15,7 +15,8 @@ export function RedStamp({ active = false, children, rotation = -3, size = 'larg
         border: '6px solid #000',
         boxShadow: shadow,
         padding: '24px 48px',
-        transform: `rotate(${rotation}deg)`,
+        // Motion v12 can't merge CSS transform string with animated y/scale/opacity — use separate rotate prop.
+        rotate: rotation,
         fontFamily: 'Space Grotesk', fontWeight: 900, fontSize,
       }}
     >

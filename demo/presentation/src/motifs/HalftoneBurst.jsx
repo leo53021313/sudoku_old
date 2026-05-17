@@ -6,11 +6,12 @@ export function HalftoneBurst({ active = false, size = 600, centerX = '50%', cen
     <motion.div
       aria-hidden="true"
       initial={false}
-      animate={{
-        scale: active ? 3 : 0,
-        opacity: active ? [1, 1, 0] : 0,
+      // hold-then-fade feel: scale ramps up linearly while opacity holds briefly then fades out
+      animate={{ scale: active ? 3 : 0, opacity: active ? 1 : 0 }}
+      transition={{
+        scale:   { duration: 0.5, ease: 'easeOut' },
+        opacity: { duration: 0.5, ease: 'easeOut', delay: active ? 0.1 : 0 },
       }}
-      transition={{ duration: 0.5, ease: 'easeOut', times: active ? [0, 0.2, 1] : [0, 1] }}
       style={{
         position: 'absolute', left: centerX, top: centerY,
         width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2,

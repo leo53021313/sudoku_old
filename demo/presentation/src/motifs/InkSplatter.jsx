@@ -31,7 +31,9 @@ export function InkSplatter({ active = false, count = 8, radius = 140, centerX =
             animate={{ scale: active ? 1 : 0, opacity: active ? 1 : 0 }}
             transition={{ duration: 0.3, delay: active ? 0.08 * i : 0, ease: [0.34, 1.56, 0.64, 1] }}
             width="40" height="40" viewBox="-20 -20 40 40"
-            style={{ position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) rotate(${i * 47}deg)` }}
+            // Motion v12 can't merge CSS transform string with `animate.scale` — use separate
+            // rotate property and pre-offset left/top by -half-width (40px svg → -20px).
+            style={{ position: 'absolute', left: x - 20, top: y - 20, rotate: i * 47 }}
           >
             <path d={path} fill="#000" />
           </motion.svg>

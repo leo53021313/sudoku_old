@@ -27,7 +27,8 @@ export function CrashLine({ active = false, filled = false, text = '⋯⋯結果
         padding: '32px 48px',
         fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: '3rem',
         textAlign: 'center',
-        transform: 'rotate(1deg)',
+        // Motion v12 can't merge CSS transform string with animated scale/opacity — use separate rotate prop.
+        rotate: 1,
         transition: 'box-shadow 200ms',
         outline: flashCount === 2 ? '4px solid #FF6B6B' : 'none',
         outlineOffset: 4,
