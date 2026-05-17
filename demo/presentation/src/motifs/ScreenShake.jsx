@@ -1,4 +1,5 @@
 // Wraps children and applies a random shake to the wrapper via imperative ref
+// Per outline-visual.md §8.1 climax A
 import { useAnimate } from 'motion/react';
 import { forwardRef, useImperativeHandle } from 'react';
 
@@ -18,5 +19,13 @@ export const ScreenShake = forwardRef(function ScreenShake({ children, light = f
     },
   }), [animate, scope, light]);
 
-  return <div ref={scope} style={{ display: 'contents' }}>{children}</div>;
+  // Use full-viewport positioned div so:
+  // 1. transform applied to it visibly shakes all contained children
+  // 2. position:fixed children (like SpotlightVignette) still attach to viewport correctly during shake
+  // 3. position:absolute children using ICB still work (they look up to ICB if no positioned ancestor)
+  return (
+    <div ref={scope} style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {children}
+    </div>
+  );
 });

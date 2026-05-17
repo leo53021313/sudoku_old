@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { GlobalGrain } from '../layers/GlobalGrain.jsx';
 import { HalftoneBg } from '../layers/HalftoneBg.jsx';
 import { ChapterTint } from '../layers/ChapterTint.jsx';
@@ -94,10 +95,25 @@ export function Sandbox() {
 
         <section style={{ marginTop: 32 }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>Climax FX (overlays + screen shake)</h2>
-          <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+          <p style={{ marginTop: 8, fontSize: 14, fontWeight: 500, color: '#555' }}>
+            A = screen shake · B = halftone burst (center flash) · C = overshoot scale on target sticker · E = ink splatter (8 dots) · G = spotlight vignette (edges darken)
+          </p>
+          <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => { climaxAC.play(); triggerShake(); }} style={btn}>輕量 A+C (shake + overshoot)</button>
             <button onClick={() => { climaxFull.play(); triggerShake(); }} style={btn}>★★★ 全套 A+B+C+E+G</button>
             <button onClick={() => { climaxAC.reset(); climaxFull.reset(); }} style={btn}>reset overlays</button>
+            <motion.div
+              animate={(climaxAC.activeFX.C || climaxFull.activeFX.C) ? { scale: [0.85, 1.4, 1.0, 0.95, 1.0] } : { scale: 1 }}
+              transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+              style={{
+                marginLeft: 16, padding: '12px 24px',
+                background: '#FF6B6B', color: '#FFFDF5',
+                border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
+                fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18,
+              }}
+            >
+              C target
+            </motion.div>
           </div>
         </section>
 
