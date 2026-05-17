@@ -1,14 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { motion, useAnimate } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
-import { useClimax } from '../../climax/useClimax.js';
 import { BoomDoubleRing } from '../../motifs/BoomDoubleRing.jsx';
 import { YellowHighlight } from '../../motifs/YellowHighlight.jsx';
 import { AssetPlaceholder } from '../../components/AssetPlaceholder.jsx';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch1Step8() {
   const { beatIndex, advance, triggerShake } = usePresentationContext();
-  const climax = useClimax(['A', 'C']);
   const [stickersScope, animateStickers] = useAnimate();
   const firedClimaxRef = useRef(false);
 
@@ -35,17 +34,16 @@ export default function Ch1Step8() {
   useEffect(() => {
     if (beatIndex === 2 && !firedClimaxRef.current) {
       firedClimaxRef.current = true;
-      climax.play();
       triggerShake();
     }
-  }, [beatIndex, climax, triggerShake]);
+  }, [beatIndex, triggerShake]);
 
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk',
     }}>
       {/* 3 background stickers + MRT — wrapped in stickersScope for shake animation */}
       <div ref={stickersScope} style={{
@@ -53,27 +51,22 @@ export default function Ch1Step8() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <AssetPlaceholder type="[E]" width={720} height={400} todo="ch1 s8 捷運背景" />
-        <div style={{
-          position: 'absolute', bottom: '14%', left: '8%',
-          background: '#FFD93D', color: '#000',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(-4deg)',
-          fontWeight: 900, fontSize: 24, borderRadius: 24,
-        }}>正妹發呆中</div>
-        <div style={{
-          position: 'absolute', top: '14%', right: '8%',
-          background: '#C4B5FD', color: '#000',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(3deg)',
-          fontWeight: 900, fontSize: 22, lineHeight: 1.2,
-        }}>Code Bullet<div style={{ fontSize: 16, marginTop: 4 }}>· flappy bird</div></div>
-        <div style={{
-          position: 'absolute', bottom: '14%', right: '8%',
-          background: '#FF6B6B', color: '#FFFDF5',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(2deg)',
-          fontWeight: 900, fontSize: 24,
-        }}>沒手機·解數獨</div>
+        <div style={{ position: 'absolute', bottom: '14%', left: '8%' }}>
+          <Sticker variant="sat-md" bg="secondary" rotation={-4} style={{ borderRadius: 24 }}>
+            正妹發呆中
+          </Sticker>
+        </div>
+        <div style={{ position: 'absolute', top: '14%', right: '8%' }}>
+          <Sticker variant="sat-md" bg="muted" rotation={3}>
+            Code Bullet
+            <div style={{ fontSize: 16, marginTop: 4 }}>· flappy bird</div>
+          </Sticker>
+        </div>
+        <div style={{ position: 'absolute', bottom: '14%', right: '8%' }}>
+          <Sticker variant="sat-md" bg="accent" textColor="cream" rotation={2}>
+            沒手機·解數獨
+          </Sticker>
+        </div>
       </div>
 
       {/* Beat 0+ : BoomDoubleRing covers center */}
@@ -88,21 +81,21 @@ export default function Ch1Step8() {
           ? { scale: 1, opacity: 1 }
           : { scale: 0.8, opacity: 0 }}
         transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          position: 'relative', zIndex: 30,
-          background: '#FFFDF5', color: '#000',
-          border: '6px solid #000', boxShadow: '16px 16px 0 0 #000',
-          padding: '40px 64px', rotate: -2,
-          fontWeight: 900, fontSize: '4rem', lineHeight: 1.1,
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}
+        style={{ position: 'relative', zIndex: 30, rotate: -2 }}
       >
-        訓 練
-        <span style={{
-          background: '#FF6B6B', color: '#FFFDF5',
-          padding: '0 20px', border: '4px solid #000',
-        }}>AI</span>
-        解 數 獨
+        <Sticker
+          variant="hub-md"
+          bg="cream"
+          padding="40px 64px"
+          style={{ lineHeight: 1.1, display: 'flex', alignItems: 'center', gap: 12 }}
+        >
+          訓 練
+          <span style={{
+            background: '#FF6B6B', color: '#FFFDF5',
+            padding: '0 20px', border: '4px solid #000',
+          }}>AI</span>
+          解 數 獨
+        </Sticker>
       </motion.div>
 
       {/* Beat 2 : Punchline yellow highlight box (placeholder before; mask-reveal text on beat 2)
@@ -131,6 +124,6 @@ export default function Ch1Step8() {
           }} />
         )}
       </motion.div>
-    </main>
+    </div>
   );
 }
