@@ -6,6 +6,9 @@
 > **主題**：Neo-brutalism + cinematic depth — cream `#FFFDF5` / 純黑 / 熱紅 `#FF6B6B` / 鮮黃 `#FFD93D` / 柔紫 `#C4B5FD`，詳 `demo/web_style.md`。
 > **總時長**：約 12 分鐘口播 + 桌面 visualizer 30~60s（總 ≤ 15 分）。口播 ~3000 字 ÷ ~3.5 字/秒（含口語停頓 / 戲劇拉長）。
 > **章節數**：9 章 / 57 step（含 ch8 visualizer step）。
+> - ch1 從 6 step 加為 8 step（新增「繼續發呆」喜劇延續拍 + 拆解 sticker 累積動畫）
+> - ch8 從 7 step 縮為 6 step（tensorboard 截圖挪到 ch9 step1）
+> - ch9 從 14 step 縮為 13 step（MBTI + 業務工作合併為複合 step、降低結尾點擊密度）
 
 ---
 
@@ -63,7 +66,7 @@
 
 ---
 
-## 1. coldopen — 心虛開場 · 心理學系 · 捷運靈感（6 steps · ~60s）
+## 1. coldopen — 心虛開場 · 心理學系 · 捷運靈感（8 steps · ~70s）
 
 **信息池**（chapter agent 按需挂角標 / 副標 / sticker 文字）：
 - 自我揭露：「**心虛**」「報告太不正經、請各位同學和老師多包涵」—— 來源 `script.md` L1
@@ -82,12 +85,22 @@
   ▸ **類型** `cinematic + depth` · **進場**: 主 card 從右下 translateY+rotate 進入（overshoot）→ 箭頭從卡片左側 stroke-draw → 「敬請期待」黃 sticker 從右側 scale 0 → 1 stamp · **動畫元素 (≤2)**: card 進場 + 箭頭 stroke
 - **step 3 (~10s)** — 主題揭曉：上方 kicker「**期中主題**」黑底 cream 字 → 中央 cinematic hero「**訓 練 AI 解 數 獨**」大字（AI 用紅底、解數獨用黃底兩塊強調 box、text-stroke 描邊樣式）+ 四個漂浮裝飾形狀（紫方塊 / 黃星旋轉 / 紅圓 hard shadow / 描邊問號）
   ▸ **類型** `cinematic + depth` · **進場**: kicker 從左 slide-in → hero 從 scale 0.85 + letter-spacing 0.1em → scale 1 + letter-spacing -0.04em (overshoot 720ms) → 四裝飾物 stagger 進場（從各角飛入）· **持續微動**: 黃星 spin-slow 12s、紫方塊 float ±16px 4s
-- **step 4 (~12s)** — 過場「**靈感哪來呢？某天捷運上⋯**」+ 捷運窗景視覺（紫底窗 + 黑邊、車廂線條 backdrop）+ 第一張 sticker（黃底「正妹發呆中」放左下、微旋轉 -4°、cloud 樣式）
+- **step 4 (~10s)** — 過場「**靈感哪來呢？某天捷運上⋯**」+ 捷運窗景視覺（紫底窗 + 黑邊、車廂線條 backdrop）+ 第一張 sticker（黃底「正妹發呆中」放左下、微旋轉 -4°、cloud 樣式）
   ▸ **類型** `depth + progressive` · **進場**: 捷運背景 fade-in（300ms）→ 「靈感哪來呢」字幕從上 fade-down → 窗景 stamp-in → 正妹 sticker 從左下角 stamp-in (stagger 240ms) · **depth layers**: 背景線條 0.5 opacity 不動 / 中景窗 1.0 / 前景 sticker 1.2 視覺層次
-- **step 5 (~10s)** — 同捷運背景延續 + 第一張 sticker（正妹、左下）+ **新疊**：第二張 sticker（紫底「Code Bullet · flappy bird」放右上、微旋轉 3°） + **新疊**：第三張 sticker（紅底白字「沒手機·解數獨」放右下、微旋轉 2°）
-  ▸ **類型** `progressive` · **進場**: 左鍵觸發 → 第二張 sticker 從右上角 stamp-in（240ms）→ 第三張 sticker 從右下 stamp-in（再延 240ms）· **動畫元素 (≤2)**: 第二張 + 第三張 stamp-in、第一張不重畫
-- **step 6 (~10s)** — **BOOM · 兩個想法撞在一起**：三 sticker 在背景輕微抖動 1 拍 → 雙圈爆破覆蓋（黃外圈 + 紅內圈、border 8px、scale 0→1 overshoot）→ 中央 cream「**訓 練 AI 解 數 獨**」boom card（accent red AI 標、6px 黑邊、16px shadow、微旋轉 -2°）+ 下方 punchline「**靈感就是這麼 *莫名其妙* 地蹦出來**」（黃底高亮、微旋轉）
+  ▸ **口播對應**: script.md L15「一如往常搭捷運來上學、正大光明地看著對面的正妹發呆」
+- **step 5 (~8s)** — 同捷運背景延續 + 第一張 sticker（正妹、左下）+ **新疊**：第二張 sticker（紫底「Code Bullet · flappy bird」放右上、微旋轉 3°）
+  ▸ **類型** `progressive` · **進場**: 左鍵觸發 → 第二張 sticker 從右上角 stamp-in（240ms）+ 思考氣球線從正妹 sticker 連到 flappy bird sticker（虛線、stroke-draw 動畫 600ms）· **動畫元素 (≤2)**: 第二張 stamp-in + 思考線
+  ▸ **口播對應**: script.md L19「腦袋突然冒出 Code Bullet 訓練 AI 玩 flappy bird 的影片」
+- **step 6 (~6s)** — **繼續發呆**（喜劇延續拍）：捷運背景與兩張 sticker 維持不動 + 中央正妹 sticker 上方浮現「⋯⋯」省略號氣球（cream 底、黑邊框、輕微浮動）+ 角標小字「**然後我繼續發呆⋯**」
+  ▸ **類型** `cinematic + interactive` · **進場**: 「⋯⋯」氣球 stamp-in (300ms) + 緩慢 pulse (1s ease-in-out infinite) · **氣質**: 喜劇半拍、給觀眾笑點 + 演講者口語停頓
+  ▸ **口播對應**: script.md L21「然後我繼續發呆看著正妹」(獨立一拍、強化反差、給 Boom 鋪墊)
+  ▸ **設計來源**: 原 outline 把 L15+L19 跟 L25 合併成 2 step、丟失了 L21 這個喜劇延續拍。新增本 step 拍出「繼續發呆」的回扣節奏
+- **step 7 (~8s)** — 同捷運背景延續 + 三張 sticker（正妹左下 + flappy bird 右上 + **新疊** 紅底白字「沒手機·解數獨」放右下、微旋轉 2°）
+  ▸ **類型** `progressive` · **進場**: 第三張 sticker 從右下 stamp-in（240ms）· **動畫元素 (≤2)**: 第三張 stamp-in、其他不重畫
+  ▸ **口播對應**: script.md L25「當兵的時候大家很無聊、沒有手機、唯一能玩的就是解數獨」
+- **step 8 (~10s)** — **BOOM · 兩個想法撞在一起**：三 sticker 在背景輕微抖動 1 拍 → 雙圈爆破覆蓋（黃外圈 + 紅內圈、border 8px、scale 0→1 overshoot）→ 中央 cream「**訓 練 AI 解 數 獨**」boom card（accent red AI 標、6px 黑邊、16px shadow、微旋轉 -2°）+ 下方 punchline「**靈感就是這麼 *莫名其妙* 地蹦出來**」（黃底高亮、微旋轉）
   ▸ **類型** `cinematic + data-viz` · **進場**: 三 sticker 抖動（150ms shake）→ 雙圈爆破 stagger（黃 first 80ms / 紅 second 120ms）→ boom card 從 scale 0.8 stamp（overshoot）→ punchline mask-reveal（720ms）· **重點 climax**: 爆破環 + boom card 的 zero-blur shadow 突顯
+  ▸ **口播對應**: script.md L29「Boom，就這樣在我腦袋裡莫名其妙地把兩個想法結合在一起、訓練 AI 解數獨」+ L37「靈感就是這麼莫名其妙地蹦出來」
 
 **口播節選**：
 > 「我是心理學系畢業的⋯⋯某天搭捷運看著對面的正妹發呆⋯⋯腦袋冒出 Code Bullet 訓練 AI 玩 flappy bird⋯⋯又想到當兵解數獨⋯⋯Boom，靈感就是這麼莫名其妙地蹦出來。」
@@ -176,14 +189,18 @@
 
 **開發計畫**：
 
-- **step 1 (~13s)** — **底色切換為黑** (戲劇對比) + 「我那時候還很天真」上方字幕 + 中央 prompt 對話框 sticker「**幫我寫一個訓練 AI 解數獨的程式**」（cream 底、黑邊、shadow、模擬 chat input）+ 下方獨立崩盤句「**⋯⋯結果我錯了**」（cream 大字、6px 紅邊、微旋轉 1°）
-  ▸ **類型** `cinematic` · **進場**: 底色 cream → 黑 cinematic fade (800ms) → 字幕 fade-up → prompt 對話框 stamp-in → **climax**: 「⋯⋯結果我錯了」mask-reveal + 紅邊框 flash 一次 (200ms)
-- **step 2 (~14s)** — **「800 多行的單一檔案」程式碼 sticker** ：cream 上一坨深色文字塊（讀真實 `legacy/app/sudoku/torch_agent.py` 部分內容、syntax 高亮輕量化）+ 角標「`torch_agent.py · 838 lines`」+ 副標「**什麼都塞在裡面**」
-  ▸ **類型** `cinematic + data-viz` · **進場**: 底色慢慢回 cream → 程式碼 sticker 從下方 slide-up（佔 70% 高）→ 角標 stamp-in 右上 · **climax**: 角標 838 數字 count-up 動畫 (0 → 838、800ms) · **持續微動**: 程式碼塊內輕微捲動 (背景慢速 translateY、暗示「巨量」)
-- **step 3 (~13s)** — **debug 痛點**：cream 上「**每改一個地方都東倒西歪**」hero + 紅色叉叉飛來飛去動畫 (chaotic、6-8 個叉叉隨機位置 spawn + scale + fade) + 「**debug 成本爆炸**」hero kicker
-  ▸ **類型** `cinematic + data-viz` · **進場**: hero 文字 fade-in → 紅叉叉 burst 一波（爆炸感）→ 持續隨機 spawn 叉叉 · **climax**: 「debug 成本爆炸」punchline mask-reveal · **氣質**: chaotic、視覺亂、暗示痛苦
-- **step 4 (~10s)** — **第一件學到 hero 標語**：「**架構、演算法都得自己先想清楚、再請 AI 分工**」（cream 底、黑大字、關鍵詞「架構」「演算法」「自己」「分工」黃底高亮 sticker）+ 過渡 footer「轉而當個套皮仔 →」
-  ▸ **類型** `cinematic` · **進場**: chaotic 叉叉 fade-out → 底色穩定 → hero 標語 mask-reveal 從左到右 → 4 個關鍵詞 stagger 黃底高亮 (per word 150ms) · **climax**: 4 黃底全亮的瞬間 · **轉場**: footer 從下 slide-up、暗示下章
+- **step 1 (~13s)** — **cream 底 + 強紅邊框崩盤感** + 「我那時候還很天真」上方字幕 + 中央 prompt 對話框 sticker「**幫我寫一個訓練 AI 解數獨的程式**」（cream 底、6px 黑邊、12px shadow、模擬 chat input）+ 下方獨立崩盤句「**⋯⋯結果我錯了**」（cream 大字、6px 紅邊、16px shadow、微旋轉 1°）
+  ▸ **類型** `cinematic` · **進場**: cream 持續 → halftone dots 加密 1.5× → 字幕 fade-up → prompt 對話框 stamp-in → **climax**: 「⋯⋯結果我錯了」mask-reveal + 紅邊框 flash 兩次 (200ms 一次、200ms 間隔) + 強紅 shadow burst 從 8px → 16px
+  ▸ **設計來源**: 原版「底色切黑」會脫離 web_style.md cream 主畫布的 visual DNA、改為「cream + 6px 紅邊框 + halftone 加密 + 雙重 flash」表達崩盤感（保 brutalism 連續性、不破 visual cohesion）
+- **step 2 (~8s)** — **「800 多行的單一檔案」程式碼 sticker** ：cream 上一坨深色文字塊（讀真實 `legacy/app/sudoku/torch_agent.py` 部分內容、syntax 高亮輕量化）+ 角標「`torch_agent.py · 838 lines`」+ 副標「**什麼都塞在裡面**」
+  ▸ **類型** `cinematic + data-viz` · **進場**: 程式碼 sticker 從下方快速 slide-up（佔 70% 高、400ms）→ 角標 stamp-in 右上 · **climax**: 角標 838 數字 count-up 動畫 (0 → 838、600ms) · **持續微動**: 程式碼塊內輕微捲動 (背景慢速 translateY、暗示「巨量」)
+  ▸ **節奏修正**: 原版 14s 進場過慢、口播只有 script.md L151「他產出了一個 800 多行的單一檔案、什麼都塞在裡面」(~6s)。縮到 8s 避免演講者卡空白
+- **step 3 (~7s)** — **debug 痛點**：cream 上「**每改一個地方都東倒西歪**」hero + 紅色叉叉飛來飛去動畫 (chaotic、6-8 個叉叉隨機位置 spawn + scale + fade) + 「**debug 成本爆炸**」hero kicker
+  ▸ **類型** `cinematic + data-viz` · **進場**: hero 文字 fade-in (300ms) → 紅叉叉 burst 一波（爆炸感、500ms）→ 持續隨機 spawn 叉叉 · **climax**: 「debug 成本爆炸」punchline mask-reveal · **氣質**: chaotic、視覺亂、暗示痛苦
+  ▸ **節奏修正**: 原版 13s、口播 script.md L153 「後面我每改一個地方都東倒西歪、我自己都看不懂、debug 成本爆炸」(~7s)。縮到 7s 對齊
+- **step 4 (~15s)** — **第一件學到 hero 標語**：「**架構、演算法都得自己先想清楚、再請 AI 分工**」（cream 底、黑大字、關鍵詞「架構」「演算法」「自己」「分工」黃底高亮 sticker）+ 過渡 footer「轉而當個套皮仔 →」
+  ▸ **類型** `cinematic` · **進場**: chaotic 叉叉 fade-out → 底色穩定 → hero 標語慢速 mask-reveal 從左到右 (1200ms) → 4 個關鍵詞 stagger 黃底高亮 (per word 250ms) · **climax**: 4 黃底全亮的瞬間 · **轉場**: footer 從下 slide-up、暗示下章
+  ▸ **節奏修正**: 原 10s → 15s。把 step 2+3 省下來的 12s 挪一半到此 step、讓金句節奏放慢、給觀眾消化 + 演講者口播 script L157-163「我學到的第一件事」+「自己手刻整套訓練系統就是浪費時間」雙段口播時間
 
 **口播節選**：
 > 「丟一句『幫我寫一個訓練 AI 解數獨的程式』給 Claude⋯⋯結果我錯了。他產出 800 多行的單一檔案⋯⋯架構自己要先想清楚、再請 AI 分工。」
@@ -216,7 +233,8 @@
 - **step 6 (~10s)** — **戀愛 hook a 收**：cinematic 全屏 → 中央「**備胎**」紅 stamp sticker (旋轉 -3°、超大 stamp-in、shadow 16px、scale 1.4 → 1 砸下感) + 副標「看似有進展 · 結果什麼都沒發生」
   ▸ **類型** `cinematic` · **進場**: 黑色閃一下 (100ms flash) → 「備胎」stamp 從天上砸下 (scale 1.4 → 1, overshoot, 紅邊 flash) → 副標 fade-up · **climax**: stamp 砸下瞬間
 - **step 7 (~7s)** — 揭穿全屏：「**偷吃步**」紅 stamp 左上 + 「**計分標準寫錯了 · AI 就會找漏洞作弊**」hero 中央（cream 底、黑大字、紅底 + 黃底 雙色強調）
-  ▸ **類型** `cinematic` · **進場**: 紅 stamp stamp-in → hero 文字 mask-reveal → 雙色強調 box stagger fade-in · **轉場**: 暗示下章「我只好整個計分獎勵系統重寫」
+  ▸ **類型** `cinematic` · **進場**: 紅 stamp stamp-in → hero 文字 mask-reveal → 雙色強調 box stagger fade-in
+  ▸ **D1 修正**: 原版這裡轉場 footer「我只好整個計分獎勵系統重寫」與 ch 7 step 1 主 hero「我只好整個計分獎勵系統重寫」是同一句、口播 (script.md L201) 只念一次但畫面出兩次。改為純做「偷吃步 / 找漏洞作弊」punchline 收尾、轉場留給 ch 7 step 1 開「重寫」hero
 
 **口播節選**：
 > 「填對一格就給分數⋯⋯剛開始得分急遽增長⋯⋯結果只把你當備胎⋯⋯計分標準寫錯了、AI 就會找漏洞作弊。」
@@ -261,7 +279,7 @@
 
 ---
 
-## 8. apprentice — 反向課程 + visualizer（7 steps · ~75s + visualizer 30~60s）
+## 8. apprentice — 反向課程 + visualizer（6 steps · ~66s + visualizer 30~60s）
 
 > 本章為視覺高潮 + 整片唯一可挂真實 tensorboard 截圖（使用者表示有素材可挂）+ 現場 visualizer cue。
 
@@ -279,25 +297,28 @@
   ▸ **類型** `cinematic` · **進場**: 底色 fade → hero mask-reveal + 「反向思考」紅底高亮 → footer slide-up · **氣質**: 開朗、解題感
 - **step 2 (~12s)** — **反向課程登場**：中央 9×9 數獨盤面（黑邊、cream 格子、Space Grotesk 700 數字、90% 已填）+ 副標「**只有 3 格空**」+「他一定解得出來」kicker
   ▸ **類型** `data-viz + cinematic` · **進場**: 盤面從 scale 0.85 stamp-in → 「只有 3 格空」mask-reveal → 3 個空格 highlight 紅色 outline pulse · **climax**: 3 個空格 pulse 同步
-- **step 3 (~12s)** — **反向課程動畫**：盤面從 3 空 → 4 空 → 5 空 → 7 空 → 10 空（一格一格自動揭示、每次格子被「擦掉」變空、500ms 一格、scale 0.95 → 1 transition）+ 副標「**讓難度跟著他的能力走**」 + 計數器「空格: 3 → 10」count-up
+- **step 3 (~12s)** — **反向課程動畫**：盤面從 **3 → 4 → 5 → 6 → 7 → 8 → 9 → 10** 空（連續一格一格自動揭示、每次格子被「擦掉」變空、~500ms 一格、scale 0.95 → 1 transition、共約 3.5s）+ 副標「**讓難度跟著他的能力走**」 + 計數器「空格: 3 → 10」count-up
+  ▸ **節奏對齊**: 原版用 3→4→5→7→10 跳格（不連續）、口播 script.md L281「他能穩定解、我再加一格空、**再加一格**⋯⋯」是「一格一格」的延續感、所以改為連續 3→4→5→6→7→8→9→10 八步
   ▸ **類型** `data-viz + progressive` · **進場**: 自動進入動畫 (~5s 完成 3→10)、計數器同步 count-up · **持續微動**: 完成後盤面輕微 shake 暗示「難度持續上升」
 - **step 4 (~10s)** — **數字翻牌**：cinematic 全屏 → cream 底 + 中央 **「+20 → +50」**大字翻牌動畫 (3D flip rotateY 600ms、shadow 翻面換邊)、20 紅色、50 黃色 + 副標「**破關獎勵調更大**」+ 下方「誘惑超過刷部分分數的賤招」
   ▸ **類型** `data-viz + cinematic` · **進場**: 「+20」stamp-in → hold 500ms → flip 3D → 「+50」snap (overshoot、shadow 加深) → 副標 fade-up · **climax**: flip 完成瞬間
-- **step 5 (~12s)** — **真實 tensorboard 截圖**：左側「success_rate」截圖 + 右側「curriculum target_empty」截圖（圖片 cinematic slide-in、加 6px 黑邊 + 12px shadow 框）+ 上方 hero 「**3 → 10 · 他終於開始解出整題**」+ 角標「真實訓練資料 · apprentice」
-  ▸ **類型** `data-viz + cinematic` · **進場**: 左圖從左 slide-in → 右圖從右 slide-in (stagger 300ms) → 上方 hero mask-reveal · **持續微動**: 圖框輕微浮動 · **氣質**: 真實感、最強說服力 · **資料來源**: ⚠️ 待使用者匯出截圖至 `demo/presentation/public/images/tensorboard/` 並提供路徑
-- **step 6 (~9s)** — 過渡：「**光講不夠看**」hero kicker + 「**給大家看一下 AI 即時解數獨的題目**」副標 + 中央向下大箭頭（指向下一 step 的 visualizer 大按鈕）
+- **step 5 (~9s)** — 過渡：「**光講不夠看**」hero kicker + 「**給大家看一下 AI 即時解數獨的題目**」副標 + 中央向下大箭頭（指向下一 step 的 visualizer 大按鈕）
   ▸ **類型** `cinematic` · **進場**: 「光講不夠看」mask-reveal → 「給大家看」fade-up → 向下大箭頭 stroke-draw + bounce · **持續微動**: 箭頭 bounce 上下
-- **step 7 (~10s + visualizer 30~60s)** — **visualizer 大按鈕** 獨佔整屏：cream 底 + **「點我看 AI 即時解數獨 →」**超大按鈕（粗黑邊 6px、強 hard shadow 16px、accent red 文字、微旋轉 -2°、hover 時 scale 1.05 + shadow 變深）+ 提示文字「**切換到 visualize.py 視窗**」(現場演講者另開桌面 pygame 視窗執行 `python -m apprentice.demo.visualize`、不嵌網頁、零技術風險)
-  ▸ **類型** `cinematic + interactive` · **進場**: 按鈕從 scale 0.8 stamp-in（overshoot）+ 提示文字 fade-up · **互動**: hover 按鈕 → scale 1.05 + shadow 16px → 20px + 紅底深一階 (mechanical feedback、模仿物理 button) · **氣質**: 全片最強 cinematic moment、留給演講者切換實機
+  ▸ ⚠️ **原 step 5「tensorboard 截圖」已挪去 ch 9 step 1**——因 script.md L293→L297→L299 直接從「終於解出整題」跳到「光講不夠看」、中間沒有口播提及訓練曲線、tensorboard 在此步會卡空白。挪到 ch 9 開頭「AI 還在訓練中、但有在進步」當視覺證據
+- **step 6 (~10s + visualizer 30~60s)** — **visualizer 大按鈕** 獨佔整屏：cream 底 + **「點我看 AI 即時解數獨 →」**超大按鈕（粗黑邊 6px、強 hard shadow 16px、accent red 文字、微旋轉 -2°、hover 時 scale 1.05 + shadow 變深）。按鈕 `href="sudoku-demo:run"` —— **點擊直接觸發 Windows custom URL scheme**、自動啟動桌面 pygame 視窗、不需要演講者手動 Alt+Tab
+  ▸ **類型** `cinematic + interactive` · **進場**: 按鈕從 scale 0.8 stamp-in（overshoot）· **互動**: hover 按鈕 → scale 1.05 + shadow 16px → 20px + 紅底深一階 (mechanical feedback、模仿物理 button) · **氣質**: 全片最強 cinematic moment、留給演講者切換實機
+  ▸ **啟動機制**: HTML 端 `<a href="sudoku-demo:run">` → 觸發瀏覽器 custom protocol → 對應到 HKCU registry → 跑 `demo/visualizer-launch/launcher.bat` → `cd <repo root> && python -m apprentice.demo.visualize` → pygame 視窗 0.5-1s 內 pop-up 並自動搶到最上層（pygame 預設行為）→ AI 解數獨 30-60s → 演講者關閉視窗 → 簡報自動回最上層
+  ▸ **portable 部署**：所有 .bat 都從 `%~dp0` 自動偵測 `sudoku_old/` 根目錄、不寫死路徑。新機只需跑一次 `demo/visualizer-launch/install.bat`（自動 `pip install -r requirements-demo.txt` + 自動寫 HKCU registry、不需 admin）。詳見 [demo/visualizer-launch/README.md](visualizer-launch/README.md)
+  ▸ ⚠️ **此決策 override `prompt.md` 第六節 #7**：原 #7「禁止演講者手動切桌面 pygame」+「主路線 pygbag iframe」已被取代。`apprentice/demo/visualize.py` 用 SB3 MaskablePPO + PyTorch、ONNX 轉換不確定性高（27-ConstraintHead features extractor 可能無法直接 export）、實測工作量 3-7 天。改走 URL scheme 桌面啟動：零 WASM 風險、保留現場 live inference 氣勢、演講者操作從 2 步（點 + Alt+Tab）變 1 步（只點）。`prompt.md` 第六節 #7 待同步修正
 
 **口播節選**：
 > 「我把題目反過來給他——一開始只給 3 格空⋯⋯破關獎勵 +20 拉到 +50⋯⋯3 空慢慢加到 10、他終於開始解出整題。光講不夠看、給大家看一下 AI 即時解數獨。」
 
 ---
 
-## 9. callback — AI 也在訓練我（14 steps · ~190s）
+## 9. callback — AI 也在訓練我（13 steps · ~192s）
 
-> **結尾長章例外**：超過 OUTLINE-FORMAT 建議的「每章 3~8 步」上限，因 script.md L303-375 結尾為壓軸大段、無法切兩章保持節奏。
+> **結尾長章例外**：超過 OUTLINE-FORMAT 建議的「每章 3~8 步」上限，因 script.md L303-375 結尾為壓軸大段、無法切兩章保持節奏。原 14 step 已合併 MBTI + 業務工作 (step 10+11 → step 10) 縮成 13 step、降低結尾點擊密度。
 
 **信息池**：
 - 過渡 anchor：「最後因為時間不太夠、我這個 AI 還在訓練中、但是你可以看到 AI 是有在進步的⋯⋯**我跟對方還在磨合期**⋯⋯最後我想跟大家講一件事」—— 來源 `script.md` L303-307
@@ -309,7 +330,7 @@
 - plasticity 引出：「最後再跟大家分享一個我最喜歡的心理學底層概念——**大腦可塑性 plasticity**」—— 來源 `script.md` L347-349
 - plasticity 三項對等：「AI 沒有天生會解數獨、跟你出生不會講話、跟你不是天生就懂怎麼跟人相處——**一樣**」—— 來源 `script.md` L351
 - plasticity 機制：「每改一次 reward function、每談一場戀愛、每學一個新東西——底層都是 reward 加加減減、**每次都把我們重新塑造一次**」—— 來源 `script.md` L353-355
-- **MBTI 自我故事 anchor**：「我真的是一個**極度的 I 人**、之前測 MBTI 我有 **100% 的時間都偏向 I 人**、**INFJ**」—— 來源 `script.md` L359-361 + 使用者補充 INFJ
+- **MBTI 自我故事 anchor**：「我真的是一個**極度的 I 人**、之前測 MBTI 我有 **100% 的時間都偏向 I 人**、明明我很 E」—— 來源 `script.md` L359-361（注意：script 沒提 INFJ、所以畫面 sticker 改用「極度 I 人」與口播對齊）
 - **業務工作變 E anchor**：「我後來逼自己跳脫舒適圈、去做了一份**業務工作**、天天逼自己跟陌生人講話、才慢慢變得比較 E」—— 來源 `script.md` L363
 - 不被擊敗 anchor：「遇到不會回答的魔王陷阱題沒有關係、我們只要從**挫敗中學習**就行了。但是不要停滯不前——跟一個女生聊天、結果**人生第一次的外向、換來一輩子的內向**」—— 來源 `script.md` L367-369
 - 職場祝福 anchor：「繼續嘗試跟其他女生聊天——不是每個女生都那麼老油條。也祝大家未來在職場上能夠保有同樣的精神——**不被挫敗給擊敗**」—— 來源 `script.md` L371-373
@@ -317,8 +338,10 @@
 
 **開發計畫**：
 
-- **step 1 (~10s)** — 過渡：cream 底 + 上方「AI 還在訓練中⋯⋯**我跟對方還在磨合期**」字幕 + 中央「**最後我想跟大家講一件事**」hero
-  ▸ **類型** `cinematic` · **進場**: 字幕 fade-down → hero mask-reveal 慢動 (900ms) · **氣質**: 過渡、收斂、為金句鋪墊
+- **step 1 (~12s)** — 過渡：cream 底 + 上方「AI 還在訓練中⋯⋯**我跟對方還在磨合期**」字幕 + **左右雙圖：真實 tensorboard 截圖**（左 success_rate 曲線、右 curriculum target_empty 圖；6px 黑邊 + 12px shadow 框）+ 下方「**但你可以看到 · AI 是有在進步的**」副標 + 中央「**最後我想跟大家講一件事**」hero（黑大字、stamp-in）
+  ▸ **類型** `data-viz + cinematic` · **進場**: 字幕 fade-down → 左圖從左 slide-in → 右圖從右 slide-in (stagger 200ms) → 副標 fade-up → hero mask-reveal 慢動 (900ms) · **氣質**: 過渡、收斂、為金句鋪墊；真實素材給 callback「AI 在進步」具象視覺證據
+  ▸ **資料來源**: ⚠️ 待使用者匯出截圖至 `demo/presentation/public/images/tensorboard/` 並提供路徑——對應 script.md L303「AI 還在訓練中、但是你可以看到 AI 是有在進步的」
+  ▸ **設計來源**: 本 step 整合原 ch 8 step 5「tensorboard 截圖」素材——挪到這裡因為 script 在此處才有對應口播（「AI 還在訓練中、但是你可以看到 AI 是有在進步的」）
 - **step 2 (~14s)** — **核心金句 cinematic full-bleed**：「**這兩個月 · 我不只在訓練 AI / AI · 也在訓練我**」（cream 底、accent red 巨字、6px 黑邊框、letter-spacing 動畫）
   ▸ **類型** `cinematic` · **進場**: 文字 mask-reveal 慢動 1200ms + letter-spacing 0.05em → 0em 收緊 · **climax**: 「AI 也在訓練我」最後三字砸下 (stamp + 紅底 flash) · **氣質**: 全片金句、最重的 hero
 - **step 3 (~12s)** — **RL 對等動畫**：split-screen 左「**腦科學 RL**」（黑底 cream 字、大腦 sticker）/ 右「**AI 訓練 RL**」（cream 底黑字、神經網路 sticker）+ 中央「**=**」大字（黃底圓形 sticker、stamp-in）+ 下方「**其實是同一件事**」hero
@@ -347,15 +370,17 @@
   ▸ **類型** `comparison + cinematic` · **進場**: 三欄 stagger fade-up (each 200ms 間隔) → 中央「一樣」從 scale 0 砸下 (overshoot + 紅邊 flash) · **climax**: 「一樣」砸下瞬間
 - **step 9 (~12s)** — **plasticity 機制**：cinematic + 中央「**每次都把我們重新塑造一次**」hero + 上方副標「每改一次 reward function、每談一場戀愛、每學一個新東西」(三項 stagger reveal)
   ▸ **類型** `cinematic + progressive` · **進場**: 副標三項 stagger fade-up (each 240ms 間隔) → 主 hero mask-reveal 慢動 + 「重新塑造」黃底高亮 · **氣質**: 哲思、慢動
-- **step 10 (~14s)** — **MBTI 自我故事**：cream 底 + 上方「我真的是一個 **極度的 I 人**」kicker + 中央 **MBTI 圓餅視覺**（圓餅完整黑邊、I 紫色填滿 100%、E 0%、cream 中心）+ 右側「**INFJ**」標籤 sticker（紫底、6px 黑邊、微旋轉 -3°、stamp-in） + 下方副標「大家可能覺得我在講幹話、明明我很 E」
-  ▸ **類型** `data-viz + interactive` · **進場**: kicker fade-down → 圓餅進場 (從 0% → 100% I 填滿動畫、1.5s) → 「INFJ」sticker 砸下 (overshoot) → 副標 fade-up · **climax**: 圓餅 100% I 填滿瞬間 + INFJ 砸下
-- **step 11 (~14s)** — **業務工作變 E**：cream 底 + 上方「**逼自己跳脫舒適圈**」kicker + 中央 **「業務工作」標籤 sticker** (黃底、微旋轉 2°、stamp-in) + 下方 **I → E 漸變條** (水平條、從紫色 I → 紅色 E、indicator 動畫從 I 慢慢移到中間) + 副標「天天逼自己跟陌生人講話 · 才慢慢變得比較 E」
-  ▸ **類型** `data-viz + progressive` · **進場**: kicker fade → 業務 sticker stamp-in → 漸變條 fade-in → indicator 從 I 端 (0%) 移到 60% (4s 動畫) → 副標 stagger · **持續微動**: indicator 輕微抖動暗示「仍在進化」
-- **step 12 (~16s)** — **不被擊敗 · 警語 cinematic full-bleed**：上方「從挫敗中學習就行了」kicker + 中央 **警語 sticker**「**人生第一次的外向 · 換來一輩子的內向**」（黑底紅字、6px 紅邊、16px shadow、微旋轉 -2°、超大字）+ 下方副標「但是不要停滯不前」
-  ▸ **類型** `cinematic` · **進場**: 底色閃黑 (200ms flash) → 警語 sticker 從 scale 1.3 → 1 snap (overshoot + 紅邊 flash) → 副標 fade-up · **climax**: 警語 sticker 砸下、整片最重的一拍
-- **step 13 (~12s)** — **職場祝福**：cream 底回歸 + 上方「繼續嘗試跟其他女生聊天」kicker + 中央「**祝大家未來在職場上 · 不被挫敗給擊敗**」hero（黑大字、「不被挫敗給擊敗」紅底高亮、cream 字）+ 下方「不是每個女生都那麼老油條」副標
+- **step 10 (~22s)** — **MBTI 自我故事 + 業務工作變 E**（合併原 step 10+11）：cream 底 + 上方「我真的是一個 **極度的 I 人**」kicker
+  - **第一拍 (0-9s)**：中央 **MBTI 圓餅視覺**（圓餅完整黑邊、I 紫色填滿 100%、E 0%、cream 中心）+ 右側「**極度 I 人**」標籤 sticker（紫底、6px 黑邊、微旋轉 -3°、stamp-in）+ 副標「明明我很 E」（黃底高亮）
+  - **第二拍 (9-22s)**：圓餅 sticker 縮到左側 30% 寬、右側 70% 拉出 **「業務工作」標籤 sticker** (黃底、微旋轉 2°、stamp-in) + **I → E 漸變條** (水平條、從紫色 I → 紅色 E、indicator 動畫從 I 0% 移到 60%、4s) + 副標「天天逼自己跟陌生人講話 · 才慢慢變得比較 E」
+  ▸ **類型** `data-viz + progressive` · **進場**: kicker fade-down → 圓餅 0% → 100% I 填滿動畫 (1.5s) → 「極度 I 人」sticker 砸下 (overshoot) → 副標 fade-up · **第二拍觸發**: 步內第二拍由 step 內動畫自動觸發（hold 1.5s 後）、不需要演講者額外點擊 → 圓餅縮側 (600ms ease) → 業務 sticker stamp-in → 漸變條 fade-in → indicator 移動 (4s) → 副標 stagger · **climax**: 圓餅 100% I 填滿瞬間 + indicator 抵達 60% 瞬間
+  ▸ **合併來源**: 原 step 10 (14s MBTI) + step 11 (14s 業務工作) = 28s。合併為單一複合 step (22s)、保兩段資訊密度但縮一個點擊節點（ch 9 從 14 step → 13 step、降低結尾點擊密度）。對應 script.md L359-365 連續一段、原本就沒有 `---` 分隔
+- **step 11 (~16s)** — **不被擊敗 · 警語 cinematic full-bleed**：cream 底（halftone dots 加密 1.5×）+ 上方「從挫敗中學習就行了」kicker + 中央 **警語 sticker**「**人生第一次的外向 · 換來一輩子的內向**」（cream 底、accent red 大字、6px 紅邊框、20px hard shadow、微旋轉 -2°、超大字）+ 下方副標「但是不要停滯不前」
+  ▸ **類型** `cinematic` · **進場**: halftone dots 加密 (400ms) → 警語 sticker 從 scale 1.3 → 1 snap (overshoot + 紅邊 flash 兩次、200ms 一次) + shadow burst 從 8px → 20px → 副標 fade-up · **climax**: 警語 sticker 砸下、整片最重的一拍 + shadow burst
+  ▸ **設計來源**: 原版用「黑底紅字」會脫離 web_style.md cream 主畫布的 visual DNA。改為「cream + accent red 大字 + 6px 紅邊 + 20px shadow + halftone 加密」表達警語的重量感（保 brutalism 連續性、力道靠 shadow + flash + halftone 加密、不靠切黑底）
+- **step 12 (~12s)** — **職場祝福**：cream 底回歸 + 上方「繼續嘗試跟其他女生聊天」kicker + 中央「**祝大家未來在職場上 · 不被挫敗給擊敗**」hero（黑大字、「不被挫敗給擊敗」紅底高亮、cream 字）+ 下方「不是每個女生都那麼老油條」副標
   ▸ **類型** `cinematic` · **進場**: kicker fade-down → hero mask-reveal + 紅底高亮 slide-in → 副標 fade-up · **氣質**: 正能量、收斂、為最後笑話鋪墊
-- **step 14 (~22s)** — **電費小偷結尾笑話 verbatim** cinematic 最終：
+- **step 13 (~22s)** — **電費小偷結尾笑話 verbatim** cinematic 最終：
   - 上方 kicker「最後再補個笑話」fade-in
   - 中央上「想必大家未來出職場後都是 · **薪水小偷**」對位 sticker (黑底 cream 字、微旋轉 2°)
   - 中央下「但我不一樣 · 我是 **電費小偷**」FINAL sticker（accent red 底、cream 大字、6px 黑邊、16px hard shadow、微旋轉 -3°、超大、stamp-in）
@@ -364,7 +389,7 @@
   ▸ **類型** `cinematic` · **進場**: kicker fade-in → 「薪水小偷」sticker stamp-in (stagger 600ms) → **「電費小偷」FINAL sticker 砸下** (scale 1.5 → 1 snap、overshoot bounce、紅邊 flash、shadow burst 從 8px → 16px) → 底部 footer progressive type (字逐字打字效果 1.5s) → 「— END —」浮現 · **climax**: 電費小偷 sticker 砸下瞬間 + shadow burst (全片最強 reveal) · **氣質**: punchline 爆破、收尾、留 3-4s 讓觀眾笑
 
 **口播節選**：
-> 「這兩個月、我不只在訓練 AI、AI 也在訓練我⋯⋯大腦可塑性 plasticity⋯⋯我真的是極度的 I 人、INFJ⋯⋯祝大家在職場上不被挫敗給擊敗。我是電費小偷、我這兩個月一直用班上的電腦瘋狂訓練我的 AI。」
+> 「這兩個月、我不只在訓練 AI、AI 也在訓練我⋯⋯大腦可塑性 plasticity⋯⋯我真的是極度的 I 人、明明我很 E⋯⋯祝大家在職場上不被挫敗給擊敗。我是電費小偷、我這兩個月一直用班上的電腦瘋狂訓練我的 AI。」
 
 ---
 
@@ -427,12 +452,14 @@
 ### 8. apprentice
 - 📦 「**反向思考**」hero + 紅底高亮
 - 📦 9×9 數獨盤面（黑邊 + cream 格子 + Space Grotesk 700 數字、90% 已填、3 空 highlight）
-- 📦 反向課程動畫：3 → 4 → 5 → 7 → 10 空（一格一格擦掉 + 計數器 count-up）
+- 📦 反向課程動畫：3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 空（連續一格一格擦掉 + 計數器 count-up、對齊 script「再加一格、再加一格」口語）
 - 📦 **「+20 → +50」3D flip 翻牌動畫**（紅 → 黃、shadow 加深）
 - ⚠️ **tensorboard 真實截圖**（success_rate 曲線 + curriculum target_empty 圖）——使用者匯出至 `demo/presentation/public/images/tensorboard/` 並提供路徑、**整片唯一可挂真截圖的地方**
 - 📦 「光講不夠看」+ 向下大箭頭 stroke-draw + bounce
-- 📦 **visualizer 大按鈕**（cream 底 + 粗黑邊 + 強陰影 + accent red 字、微旋轉、hover scale + shadow 加深 mechanical feedback）
-- ✓ **`apprentice/demo/visualize.py` 桌面 pygame 視窗**——現場演講者另開桌面視窗執行 `python -m apprentice.demo.visualize`（pygbag/iframe 為主路線、退路為現場直接跑、實作時決定）
+- 📦 **visualizer 大按鈕**（cream 底 + 粗黑邊 + 強陰影 + accent red 字、微旋轉、hover scale + shadow 加深 mechanical feedback、`href="sudoku-demo:run"`）
+- ✓ **`apprentice/demo/visualize.py` 桌面 pygame 視窗**——透過 Windows custom URL scheme `sudoku-demo:` 自動啟動，演講者不需 Alt+Tab
+- ✓ **`demo/visualizer-launch/` 一鍵啟動套件**（install.bat / uninstall.bat / launcher.bat / requirements-demo.txt / README.md）——所有 .bat 自動偵測 `sudoku_old/` 根目錄、portable 到任何 Windows 機器
+- ⛔ **「tensorboard 截圖」已從 ch 8 移除**——挪去 ch 9 step 1 當「AI 在進步」的視覺證據
 
 ### 9. callback
 - 📦 cinematic hero「**AI 也在訓練我**」大字 mask reveal + letter-spacing 收緊 + 紅底 flash
@@ -442,7 +469,7 @@
 - 📦 戀愛 b 4 個魔王考題 sticker grid（2×2）+ hover 互動
 - 📦 plasticity 三欄對位 sticker（AI 解數獨 / 出生講話 / 跟人相處）→ 中央「**一樣**」snap
 - 📦 plasticity 機制 hero「每次都把我們重新塑造一次」+ 三項 stagger
-- 📦 **MBTI 圓餅視覺**（0% → 100% I 填滿動畫）+ **「INFJ」紫色標籤 sticker**
+- 📦 **MBTI 圓餅視覺**（0% → 100% I 填滿動畫）+ **「極度 I 人」紫色標籤 sticker**（原版用「INFJ」、改為 script.md L359 verbatim 字眼）
 - 📦 **業務工作 sticker** + I → E 漸變條（indicator 從 I 移到中間）
 - 📦 **警語 sticker「人生第一次的外向 · 換來一輩子的內向」**（黑底紅字、6px 紅邊、16px shadow、微旋轉、超大）
 - 📦 「**不被挫敗給擊敗**」職場祝福 hero（紅底高亮）
@@ -463,3 +490,76 @@
 - **無障礙**：`prefers-reduced-motion` 媒體查詢內、所有 stamp / overshoot / parallax 動畫切回 instant；hover 互動需有 focus 版本（鍵盤 tab）
 - **效能**：所有動畫用 `transform` + `opacity` 屬性（GPU-friendly）；避免 `width/height` 變動觸發 layout；code wall 視窗化（virtual scroll）避免 838 行全 DOM
 - **演講者模式**：URL `?presenter=1` 開啟（第二螢幕顯示「下一 step 預覽 + 口播 cue」）、現場用單螢幕模式
+
+---
+
+## 反向索引 · script.md 行號 → outline step
+
+> **用途**：每次改 `script.md` 一段口播時、查本表可立刻知道要動 outline.md 的哪幾個 step。
+> **格式**：script.md 行號區間 → 章節 step + 內容摘要。
+> **依 script.md 章節分段順序排列**。
+
+| script.md 行號 | 對應 outline step | 內容摘要 |
+|---|---|---|
+| L1 | ch 1 step 1 | 心虛開場、報告太不正經、請各位同學和老師多包涵 |
+| L5 | ch 1 step 2 | 心理學系畢業 + 敬請期待伏筆 |
+| L9 | ch 1 step 3 | 期中主題：訓練 AI 解數獨 |
+| L13-L17 | ch 1 step 4 | 捷運上正大光明看著正妹發呆 |
+| L19 | ch 1 step 5 | 腦袋冒出 Code Bullet flappy bird |
+| L21 | ch 1 step 6 | 繼續發呆看著正妹（喜劇延續拍） |
+| L25 | ch 1 step 7 | 當兵沒手機解數獨 |
+| L29 | ch 1 step 8 | Boom · 兩個想法撞在一起：訓練 AI 解數獨 |
+| L35-L37 | ch 1 step 8 punchline | 靈感就是這麼莫名其妙地蹦出來 |
+| L41-L45 | ch 2 lead-in | 機器學習的世界長什麼樣 |
+| L49-L55 | ch 2 step 1 | supervised：看著答案抄筆記 |
+| L57-L61 | ch 2 step 2 | unsupervised：折衣服分顏色 |
+| L63-L67 | ch 2 step 3 | RL：試錯加獎懲、AlphaGo |
+| L71 | ch 2 step 4 | cliffhanger：那 ChatGPT 跟 Claude 又是哪一招？ |
+| L75-L77 | ch 3 step 1 | LLM = supervised + RLHF |
+| L81-L89 | ch 3 step 2 | LLM 模仿 vs 我的 AI 自己摸出規則 |
+| L93-L95 | ch 3 step 3 | OK 純 RL、第一步找資料 |
+| L99-L107 | ch 4 step 1+2 | Kaggle / supervised 路線拒絕 |
+| L111-L121 | ch 4 step 3 | 霸榜目標 + websudoku 受害者 |
+| L125-L133 | ch 4 step 4 | 20 題被封 IP + proxy 池 |
+| L141-L147 | ch 5 step 1 | 我那時候很天真 / 丟一句 prompt / 我錯了 |
+| L151 | ch 5 step 2 | 800 多行的單一檔案 |
+| L153 | ch 5 step 3 | 每改一個地方都東倒西歪 / debug 成本爆炸 |
+| L157-L163 | ch 5 step 4 | 第一件學到 / 架構自己先想清楚 / 套皮仔 |
+| L167-L173 | ch 6 step 1+2 | 社群工具箱 / 套皮仔 / 我又錯了 |
+| L177 | ch 6 step 2 | 填對一格就給分數 |
+| L181-L185 | ch 6 step 3 | 新女生加分（戀愛 hook a 出場） |
+| L187 | ch 6 step 4+5 | 卡平段 / 不思進取 |
+| L189 | ch 6 step 6 | 備胎（戀愛 hook a 收） |
+| L195-L199 | ch 6 step 7 | 偷吃步 / 計分標準寫錯 / 找漏洞作弊 |
+| L201-L205 | ch 7 step 1+2 | 整個計分系統重寫 / 用人類技巧反過來驗證 |
+| L209-L211 | ch 7 step 3 | 13 招技巧名（naked / hidden / X-Wing / Swordfish / XY-Wing） |
+| L215-L225 | ch 7 step 4 | 舊（填對一格給分）vs 新（用哪一招解釋）對比 |
+| L229-L233 | ch 7 step 5 | Action 擴增：填數字 + 劃掉候選 |
+| L237 | ch 7 step 6 | 兩千多萬次 · 完整解出機率 0 |
+| L241-L257 | ch 7 step 7 | 老油條陷阱題（戀愛 hook b 展開） |
+| L265-L269 | ch 7 step 8 | 死結：永遠拿不到「整題解完」大獎 |
+| L273-L275 | ch 8 step 1 | 反向思考 |
+| L277-L279 | ch 8 step 2 | 一開始只給 3 格空 |
+| L281-L285 | ch 8 step 3 | 再加一格、再加一格⋯⋯3→4→5→6→7→8→9→10 |
+| L287-L291 | ch 8 step 4 | 破關獎勵 +20 → +50 |
+| L293 | ch 8 lead-out | 3 → 10、他終於開始解出整題 |
+| L297-L299 | ch 8 step 5+6 | 光講不夠看 / 給大家看 AI 即時解數獨 + visualizer 按鈕 |
+| L303-L307 | ch 9 step 1 | AI 還在訓練中 / 磨合期 / 最後一件事（tensorboard 截圖此處挂） |
+| L309 | ch 9 step 2 | 核心金句：這兩個月、我不只在訓練 AI、AI 也在訓練我 |
+| L313-L317 | ch 9 step 3 | 腦科學 RL = AI RL、其實是同一件事 |
+| L319 | ch 9 step 4 | 飛機 / 鳥：AI 在模仿人類 |
+| L323-L329 | ch 9 step 5 | 戀愛 a callback：回訊息加分 / 已讀扣分 |
+| L333-L343 | ch 9 step 6 | 戀愛 b callback：4 個魔王考題 |
+| L347-L349 | ch 9 step 7 | 大腦可塑性 plasticity 引出 |
+| L351 | ch 9 step 8 | plasticity 三欄對等（AI 解數獨 / 出生講話 / 跟人相處） |
+| L353-L355 | ch 9 step 9 | plasticity 機制：每次都把我們重新塑造一次 |
+| L359-L361 | ch 9 step 10 第一拍 | 極度 I 人 + MBTI 100% I 圓餅 |
+| L363-L365 | ch 9 step 10 第二拍 | 業務工作變 E + I→E 漸變條 |
+| L367-L369 | ch 9 step 11 | 人生第一次的外向 · 換來一輩子的內向 |
+| L371-L373 | ch 9 step 12 | 職場祝福：不被挫敗給擊敗 |
+| L375 | ch 9 step 13 | 電費小偷 final（薪水小偷 + 電費小偷 + END） |
+
+**注意事項**：
+- 同一行可能對應到多個 step（例如 L201 = ch 6 step 7 提示 + ch 7 step 1 主 hero）
+- 同一個 step 可能對應多行 script（例如 ch 9 step 10 合併 L359-365）
+- 演講者改 script 一段時、本表配合 outline 章節「**口播對應**」欄位（部分 step 已標）反查
