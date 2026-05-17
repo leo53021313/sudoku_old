@@ -1,57 +1,46 @@
 import { motion } from 'motion/react';
+import { Sticker } from '../../components/Sticker.jsx';
 
 export default function Ch1Step2() {
   return (
-    <main style={{
-      position: 'relative', zIndex: 20, height: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 32, fontFamily: 'Space Grotesk', padding: 32,
+    <div style={{
+      position: 'relative', zIndex: 20, height: '100%',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      gap: 32, fontFamily: 'Space Grotesk',
     }}>
-      {/* Psychology degree card — slide in from bottom-right with overshoot */}
       <motion.div
-        initial={{ x: 200, y: 80, scale: 0.8, opacity: 0 }}
-        animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFFFFF', color: '#000',
-          border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          padding: '48px 64px', rotate: -2,
-          fontWeight: 900, fontSize: '3.75rem', lineHeight: 1.1,
-          textAlign: 'center',
-        }}
+        initial={{ y: -40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
       >
-        心 理 學 系
-        <div style={{ fontSize: '1.875rem', marginTop: 12, color: '#000' }}>· 畢業</div>
+        <Sticker variant="kicker" bg="ink" textColor="cream">先簡單自我介紹</Sticker>
       </motion.div>
 
-      {/* Red arrow drawn by stroke-dasharray animation */}
-      <motion.svg
-        width="120" height="40" viewBox="0 0 120 40"
-        style={{ overflow: 'visible' }}
-      >
-        <motion.path
-          d="M 10 20 L 100 20 M 90 10 L 100 20 L 90 30"
-          fill="none" stroke="#FF6B6B" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.6, delay: 0.6, ease: 'easeOut' }}
-        />
-      </motion.svg>
-
-      {/* 敬請期待 yellow stamp — scales in from 0 */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
+        initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.4, delay: 1.1, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFD93D', color: '#000',
-          border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          padding: '32px 48px', rotate: 3,
-          fontWeight: 900, fontSize: '2.25rem',
-        }}
+        transition={{ duration: 0.6, delay: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
       >
-        敬請期待
+        <Sticker variant="hub-md" bg="cream" rotation={-2}>
+          心 理 學 系
+          <div style={{ fontSize: '1.75rem', marginTop: 16, letterSpacing: '0.1em' }}>· 畢 業 ·</div>
+        </Sticker>
       </motion.div>
-    </main>
+
+      <motion.div
+        initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
+        animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
+        transition={{ duration: 0.7, delay: 1.1, ease: 'easeOut' }}
+        style={{ marginTop: 16, fontSize: 22, fontWeight: 700, textAlign: 'center', lineHeight: 1.5, maxWidth: 760 }}
+      >
+        跨領域來資展會學 AI ·{' '}
+        <span style={{
+          background: '#FFD93D', padding: '2px 12px',
+          border: '3px solid #000', boxShadow: '4px 4px 0 0 #000',
+          marginLeft: 4,
+        }}>非本科生</span>
+      </motion.div>
+    </div>
   );
 }
