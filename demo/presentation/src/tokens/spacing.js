@@ -9,4 +9,7 @@ export const spacing = {
   12: 48,
   16: 64,
   24: 96,
+  32: 128,   // hub-satellite gap (large) / inter-cluster padding
+  40: 160,   // section padding (large)
+  48: 192,   // hero-to-cluster vertical gap when both present
 };
