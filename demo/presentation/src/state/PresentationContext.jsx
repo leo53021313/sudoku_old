@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import { usePresentation } from './usePresentation.js';
 import { useUrlSync, parseUrl } from './useUrlSync.js';
 import { useKeyMouseControls } from './useKeyMouseControls.js';
@@ -11,6 +11,11 @@ export function PresentationProvider({ children }) {
   const [presenter, setPresenter] = useState(initial.presenter);
   const [progressVisible, setProgressVisible] = useState(false);
 
+  // Shared shake controller — ScreenShake (mounted in App.jsx) attaches its imperative
+  // handle to this ref. Any chapter step can call triggerShake() via context.
+  const shakeRef = useRef(null);
+  const triggerShake = () => shakeRef.current?.play();
+
   useUrlSync(pres, presenter);
   useKeyMouseControls({
     advance: pres.advance,
@@ -19,7 +24,13 @@ export function PresentationProvider({ children }) {
   });
 
   return (
-    <Ctx.Provider value={{ ...pres, presenter, setPresenter, progressVisible, setProgressVisible }}>
+    <Ctx.Provider value={{
+      ...pres,
+      presenter, setPresenter,
+      progressVisible, setProgressVisible,
+      shakeRef,
+      triggerShake,
+    }}>
       {children}
     </Ctx.Provider>
   );
