@@ -1,22 +1,30 @@
 import { PresentationProvider, usePresentationContext } from './state/PresentationContext.jsx';
+import { Sandbox } from './pages/Sandbox.jsx';
+import { ProgressBar } from './components/ProgressBar.jsx';
+import { ChapterNav } from './components/ChapterNav.jsx';
+import { BeatIndicator } from './components/BeatIndicator.jsx';
+import { PresenterPanel } from './components/PresenterPanel.jsx';
+import { FadeBridge } from './layers/FadeBridge.jsx';
 
-function CurrentBeat() {
-  const { chapterId, stepId, beatIndex, beat, totalBeats, globalBeatIdx } = usePresentationContext();
+function Frame() {
+  const { chapterId } = usePresentationContext();
+  // Phase 0: route always shows Sandbox. Phase 1+ will switch on chapterId/stepId.
   return (
-    <div className="p-8 font-grotesk">
-      <div className="text-sm">beat {globalBeatIdx + 1} / {totalBeats}</div>
-      <div className="text-3xl font-black mt-4">ch {chapterId} · step {stepId} · beat {beatIndex} ({beat.id})</div>
-      <div className="mt-2 text-base">cue: {beat.cue ?? '—'}</div>
-      <div className="text-base">wait: {beat.wait ?? '—'}</div>
-      <div className="mt-4 text-sm text-gray-600">Left-click / Space / → advance · Right-click / ← retreat · Esc progress</div>
-    </div>
+    <>
+      <Sandbox />
+      <FadeBridge chapterId={chapterId} />
+      <BeatIndicator />
+      <ProgressBar />
+      <ChapterNav />
+      <PresenterPanel />
+    </>
   );
 }
 
 export default function App() {
   return (
     <PresentationProvider>
-      <CurrentBeat />
+      <Frame />
     </PresentationProvider>
   );
 }
