@@ -1,16 +1,49 @@
-# React + Vite
+# Presentation · HTML 演講簡報
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Click-driven Neo-brutalism presentation. See:
+- [demo/outline.md](../outline.md) — narrative + beat structure
+- [demo/outline-visual.md](../outline-visual.md) — visual DNA + motif + climax library
+- [demo/asset-production.md](../asset-production.md) — asset routes
+- [demo/script.md](../script.md) — 口播 source of truth
 
-Currently, two official plugins are available:
+## Dev
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd demo/presentation
+npm install
+npm run dev
+```
 
-## React Compiler
+Open <http://localhost:5173/>. Currently shows the **Sandbox** page (Phase 0). Chapter pages arrive in Phase 1+.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Test
 
-## Expanding the ESLint configuration
+```bash
+npm run test:run
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## URL params
+
+- `?ch=N&step=M&beat=X` — jump to specific position
+- `?presenter=1` — toggle Speaker Mode (cue + wait overlay)
+
+## Controls
+
+- Left-click / SPACE / → : advance one beat
+- Right-click / ← : retreat one beat
+- Esc : toggle progress bar
+
+## Phase 0 scope (complete)
+
+- Vite + React + Tailwind v4 + Motion stack
+- Design tokens (colors / typography / spacing / zindex / chapters)
+- Beat state machine (85 beats from outline.md, advance / retreat / URL sync)
+- Global visual layers (grain / halftone-drift / chapter-tint / ambient-shapes / fade-bridge)
+- Shared components (progress / chapter-nav / beat-indicator / presenter-panel / sticker / hero / asset-placeholder)
+- Motif Library: 8 full + 5 shells = 13 total
+- Climax FX (A/B/C/E/G) via useClimax hook
+- /sandbox verification page
+
+## Phase 1+ scope (next)
+
+Per-chapter steps will be added under `src/chapters/ch<N>-<name>/`. See [Phase 0 plan](../../docs/superpowers/plans/2026-05-17-html-presentation-phase-0.md) for the foundation.
