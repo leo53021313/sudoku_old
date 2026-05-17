@@ -46,3 +46,7 @@ html, body, #root {
   70%  { opacity: 1; }
   100% { opacity: 0; }
 }
+
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
