@@ -4,3 +4,11 @@
 > Updated as each chapter's plan completes.
 
 (none yet — populated during Phase 1-9)
+
+## Phase 0 reserved motif shells
+
+- ch6 s3 — motif/girl-new — 粉紅新女生 sticker + +/+/+ 浮動
+- ch7 s7 — motif/girl-veteran — 老油條陷阱題 sticker + ❌ 箭頭
+- ch7 s3 — motif/13-stairs — 13 招階梯 SVG
+- ch7 s5 / ch8 s2-s3 — motif/sudoku-board — 9×9 盤面 SVG
+- ch8 s4 — motif/flip-20-to-50 — 3D flip 翻牌
