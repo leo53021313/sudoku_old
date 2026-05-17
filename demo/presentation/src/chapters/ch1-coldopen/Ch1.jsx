@@ -2,11 +2,13 @@ import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import Ch1Step1 from './Ch1Step1.jsx';
 import Ch1Step2 from './Ch1Step2.jsx';
 import Ch1Step3 from './Ch1Step3.jsx';
+import Ch1Step4 from './Ch1Step4.jsx';
 
 const STEPS = {
   1: Ch1Step1,
   2: Ch1Step2,
   3: Ch1Step3,
+  4: Ch1Step4,
 };
 
 export function Ch1() {
