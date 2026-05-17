@@ -1,8 +1,10 @@
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import Ch2Step1 from './Ch2Step1.jsx';
+import Ch2Step2 from './Ch2Step2.jsx';
+import Ch2Step3 from './Ch2Step3.jsx';
 
 const STEPS = {
-  1: Ch2Step1,
+  1: Ch2Step1, 2: Ch2Step2, 3: Ch2Step3,
 };
 
 export function Ch2() {
