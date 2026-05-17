@@ -1,13 +1,15 @@
 // 4-6 floating shapes per chapter — per outline-visual.md §9.6
 import { getChapter } from '../tokens/chapters.js';
 
+// Anchor coords pin shape centre into the outer 15% ambient band.
+// Values are pixel offsets in the 1920×1080 design canvas.
 const POSITION_STYLE = {
-  tl: { top: '5%',  left: '5%'  },
-  tr: { top: '5%',  right: '5%' },
-  bl: { bottom: '8%', left: '5%' },
-  br: { bottom: '8%', right: '5%' },
-  ml: { top: '50%', left: '3%',  transform: 'translateY(-50%)' },
-  mr: { top: '50%', right: '3%', transform: 'translateY(-50%)' },
+  tl: { top: 40,    left: 56  },
+  tr: { top: 40,    right: 56 },
+  bl: { bottom: 40, left: 56  },
+  br: { bottom: 40, right: 56 },
+  ml: { top: '50%', left: 24,  transform: 'translateY(-50%)' },
+  mr: { top: '50%', right: 24, transform: 'translateY(-50%)' },
   mc: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
 };
 
@@ -52,7 +54,7 @@ function Shape({ shape, color, outline }) {
 export function AmbientShapes({ chapterId }) {
   const ch = getChapter(chapterId);
   return (
-    <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+    <div aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
       {ch.ambientShapes.map((s, i) => (
         <div
           key={i}
