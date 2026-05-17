@@ -4,6 +4,7 @@ import Ch1Step2 from './Ch1Step2.jsx';
 import Ch1Step3 from './Ch1Step3.jsx';
 import Ch1Step4 from './Ch1Step4.jsx';
 import Ch1Step5 from './Ch1Step5.jsx';
+import Ch1Step6 from './Ch1Step6.jsx';
 
 const STEPS = {
   1: Ch1Step1,
@@ -11,6 +12,7 @@ const STEPS = {
   3: Ch1Step3,
   4: Ch1Step4,
   5: Ch1Step5,
+  6: Ch1Step6,
 };
 
 export function Ch1() {
