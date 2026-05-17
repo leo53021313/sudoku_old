@@ -37,7 +37,7 @@ The deck (Phase 0–2 implemented, Phase 3–9 planned) currently builds every s
 
 - **`<Stage>`** (new) — root that owns the 1920×1080 canvas. ResizeObserver on `window` recomputes `scale = min(vw/1920, vh/1080)` on resize; applies `transform: scale(N)` + `transform-origin: top left` to the canvas wrapper. Non-16:9 viewports get letterboxed (top/bottom or left/right cream bands), which the ambient layer naturally fills.
 - **`<SafeArea>`** (new) — inner content frame with `padding: 108px 144px` (7.5% each side at 1920×1080). All step content is rendered inside.
-- **`<HubSatellite>`** (new) — layout primitive for the dominant pattern: one central hub + 1–8 satellites at named anchor positions (`tl`/`t`/`tr`/`l`/`r`/`bl`/`b`/`br`). Maintains a `gap` (default 48px) between hub edge and nearest satellite edge. Satellites cannot enter the hub's bounding box + gap.
+- **`<HubSatellite>`** (new) — layout primitive for the dominant pattern: one central hub + 1–8 satellites at named anchor positions (`tl`/`t`/`tr`/`l`/`r`/`bl`/`b`/`br`). Container auto-fits the hub child (`display: inline-flex`, sized to content, capped at `stage.cluster.maxWidth/maxHeight`). Satellites are absolutely positioned outside the hub box, offset by `gap` (default 48px) from the hub edge — implemented via CSS edge anchors (`bottom: 100%` / `top: 100%` / `left: 100%` / `right: 100%`) plus margin equal to gap. It is the step author's responsibility to size the hub so the cluster (hub + satellite extents) fits inside `<SafeArea>`.
 - **`<Sticker variant="...">`** (extended) — single source of truth for the brutalism sticker style. Variants: `hub`, `sat-lg`, `sat-md`, `sat-sm`, `kicker`. Each variant locks font-size, padding, border, and shadow to design tokens.
 - **`<AmbientShapes>`** (existing, repositioned) — render shapes outside the SafeArea inner box (in the outer 15% ring). Density and shapes already configured per-chapter in `tokens/chapters.js`; this spec only changes where they render (outer ring, not anywhere on canvas).
 
@@ -64,8 +64,13 @@ export const stage = {
   aspectRatio: 16 / 9,
   safePadding: { x: 144, y: 108 },   // 7.5% each side → safe area 85% (1632×918)
   cluster: {
-    maxWidth: 1344,                  // 70% of 1920
-    maxHeight: 756,                  // 70% of 1080
+    // Cluster auto-fits the hub child; these are upper bounds, not target sizes.
+    // Container is sized to its hub via inline flex; satellites sit outside the
+    // hub edge offset by gap. max-width/height cap the hub so it never exceeds
+    // safe area dimensions (1632×918). It is the step author's responsibility
+    // to leave room for satellite extents on the chosen anchor sides.
+    maxWidth: 1632,                  // safe area inner width (cap on hub size)
+    maxHeight: 918,                  // safe area inner height (cap on hub size)
     hubToSatelliteGap: 48,           // default <HubSatellite gap={48}>
   },
   ambient: {
@@ -78,11 +83,13 @@ export const stage = {
 
 | variant | use case | font-size | padding | border | shadow | min-size |
 |---|---|---|---|---|---|---|
-| `hub` | Central window / hero card | 4–8rem | 56–96px | 6px | 12–20px | — (content-driven) |
-| `sat-lg` | Primary satellite (default) | **1.75rem** | **20×32px** | **4px** | **10×10px** | min-width 160px |
-| `sat-md` | Secondary satellite | 1.5rem | 16×24px | 4px | 8×8px | min-width 140px |
-| `sat-sm` | Accent (`⋯⋯` bubble) | 1.25rem | 12×20px | 3px | 6×6px | min-width 80px |
-| `kicker` | Top/bottom caption | 1–1.25rem | 12×28px | 3px | 6×6px | — |
+| `hub-md` | Medium hub / sub-hero card | **4rem** | **48×64px** | 6px | massive (16×16) | — |
+| `hub-lg` | Large hub (default for `<HubSatellite.Hub>`) | **6rem** | **56×72px** | 6px | massive (16×16) | — |
+| `hub-mega` | Climax / punchline mega hero | **8rem** | **64×96px** | 8px | burst (20×20) | — |
+| `sat-lg` | Primary satellite (default) | **1.75rem** | **20×32px** | 4px | lg (12×12) | min-width 160px |
+| `sat-md` | Secondary satellite | 1.5rem | 16×24px | 4px | md (8×8) | min-width 140px |
+| `sat-sm` | Accent (`⋯⋯` bubble) | 1.25rem | 12×20px | 3px | md (8×8) | min-width 80px |
+| `kicker` | Top/bottom caption | 1.25rem | 12×28px | 3px | sm (4×4) | — |
 
 **Hard rules:** all satellites must use `sat-lg` / `sat-md` / `sat-sm`. Custom inline `style={{ fontSize, padding }}` for sticker-like elements is **forbidden** post-refactor. New ESLint rule (optional) can flag inline `position: 'absolute'` outside `<HubSatellite>`.
 
@@ -140,7 +147,7 @@ Each plan doc (`docs/superpowers/plans/2026-05-17-html-presentation-phase-3-ch3.
 
 > **Layout primitives (mandatory):** all step JSX must compose via `<Stage>` (already present in `App.jsx`), `<SafeArea>`, `<HubSatellite>` / `<Sticker variant=...>` from `src/components/`. Inline `position: absolute` + hard-coded `%` offsets are prohibited except inside motif components (`HalftoneBurst`, `InkSplatter`, `SpotlightVignette` etc.). See `docs/superpowers/specs/2026-05-17-presentation-layout-system-design.md` for tokens and variant table.
 
-The JSX snippets currently in those plans are illustrative — implementers will translate them to primitive calls when they execute that phase. The plans themselves don't need full JSX rewrites in this Phase B pass; just the prelude + a TODO note next to any step that explicitly used a layout pattern incompatible with `<HubSatellite>` (e.g. split-screen steps in ch3 s2 / ch6 s5).
+In addition to the prelude, scan each plan's JSX snippets and **rewrite only those whose original layout matches the hub+satellite or sticker pattern** to use `<HubSatellite>` / `<Sticker variant=...>` calls. Steps whose original layout is fundamentally different (split-screen, full-page chart, motif-heavy punchline) keep their illustrative JSX **unchanged** — leave them for the implementer to translate at execution time. The principle: do not force a primitive onto a step where the primitive doesn't fit.
 
 ## Out of scope
 
