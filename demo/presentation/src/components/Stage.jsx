@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { stage, computeStageScale } from '../tokens/stage.js';
 
 export function Stage({ children }) {
@@ -7,7 +7,6 @@ export function Stage({ children }) {
       ? 1
       : computeStageScale(window.innerWidth, window.innerHeight)
   );
-  const wrapperRef = useRef(null);
 
   useEffect(() => {
     const handle = () => setScale(computeStageScale(window.innerWidth, window.innerHeight));
@@ -18,7 +17,6 @@ export function Stage({ children }) {
 
   return (
     <div
-      ref={wrapperRef}
       style={{
         position: 'fixed', inset: 0,
         overflow: 'hidden',

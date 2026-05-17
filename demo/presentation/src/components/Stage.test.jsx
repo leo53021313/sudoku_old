@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, act } from '@testing-library/react';
 import { computeStageScale, stage } from '../tokens/stage.js';
 import { Stage } from './Stage.jsx';
 
@@ -30,5 +30,28 @@ describe('<Stage>', () => {
     expect(canvas.style.width).toBe(`${stage.width}px`);
     expect(canvas.style.height).toBe(`${stage.height}px`);
     expect(canvas.querySelector('[data-testid="child"]')).not.toBeNull();
+  });
+
+  it('updates scale when window resizes', () => {
+    // jsdom default viewport is 1024×768 — pick a target that produces a distinct scale
+    const { container } = render(<Stage><div /></Stage>);
+    const canvas = container.querySelector('[data-stage-canvas]');
+    const initialTransform = canvas.style.transform;
+
+    // Resize viewport to 3840×2160 (4K) → scale 2.0
+    Object.defineProperty(window, 'innerWidth',  { value: 3840, configurable: true });
+    Object.defineProperty(window, 'innerHeight', { value: 2160, configurable: true });
+    act(() => { window.dispatchEvent(new Event('resize')); });
+
+    expect(canvas.style.transform).toBe('scale(2)');
+    expect(canvas.style.transform).not.toBe(initialTransform);
+  });
+
+  it('removes the resize listener on unmount', () => {
+    const spy = vi.spyOn(window, 'removeEventListener');
+    const { unmount } = render(<Stage><div /></Stage>);
+    unmount();
+    expect(spy).toHaveBeenCalledWith('resize', expect.any(Function));
+    spy.mockRestore();
   });
 });
