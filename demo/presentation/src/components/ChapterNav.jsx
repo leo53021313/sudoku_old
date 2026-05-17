@@ -4,21 +4,26 @@ import { chapters } from '../tokens/chapters.js';
 
 export function ChapterNav() {
   const { chapterId, jumpTo } = usePresentationContext();
-  const [hover, setHover] = useState(false);
+  const [hoverZone, setHoverZone] = useState(false);
+  const [hoverNav, setHoverNav] = useState(false);
+  const visible = hoverZone || hoverNav;
 
   useEffect(() => {
-    const onMove = (e) => setHover(e.clientX > window.innerWidth - 200 && e.clientY < 60);
+    // Trigger zone wide enough to cover the full nav (~320px) so all 9 buttons stay reachable
+    const onMove = (e) => setHoverZone(e.clientX > window.innerWidth - 360 && e.clientY < 80);
     window.addEventListener('mousemove', onMove);
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
   return (
     <nav
+      onMouseEnter={() => setHoverNav(true)}
+      onMouseLeave={() => setHoverNav(false)}
       style={{
         position: 'fixed', top: 8, right: 8, zIndex: 90,
-        opacity: hover ? 0.95 : 0,
-        transition: hover ? 'opacity 0.4s' : 'opacity 0.8s',
-        pointerEvents: hover ? 'auto' : 'none',
+        opacity: visible ? 0.95 : 0,
+        transition: visible ? 'opacity 0.4s' : 'opacity 0.8s',
+        pointerEvents: visible ? 'auto' : 'none',
         background: '#FFFDF5', border: '4px solid #000', padding: 8,
         display: 'flex', gap: 4, fontFamily: 'Space Grotesk', fontWeight: 900,
       }}

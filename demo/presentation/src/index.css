@@ -28,6 +28,12 @@ html, body, #root {
   background-color: var(--color-neo-bg);
   font-family: var(--font-grotesk);
   color: var(--color-neo-ink);
+
+  /* Disable text selection on the slide canvas — left-click is a "next beat" trigger,
+     so accidental drag/double-click should NOT highlight content. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @keyframes halftone-drift {
