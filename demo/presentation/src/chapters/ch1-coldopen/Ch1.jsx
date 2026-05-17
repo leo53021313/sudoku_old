@@ -1,9 +1,8 @@
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
+import Ch1Step1 from './Ch1Step1.jsx';
 
-// Step component lookup — each step file exports default component.
-// Placeholder mapping; real Ch1StepN files added in later tasks.
 const STEPS = {
-  // Filled in by later tasks
+  1: Ch1Step1,
 };
 
 export function Ch1() {
