@@ -29,3 +29,8 @@ html, body, #root {
   font-family: var(--font-grotesk);
   color: var(--color-neo-ink);
 }
+
+@keyframes halftone-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 0 -20px; }
+}
