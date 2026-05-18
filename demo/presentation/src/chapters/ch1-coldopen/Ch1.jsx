@@ -1,4 +1,5 @@
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
+import { AiBackdrop } from '../../components/AiBackdrop.jsx';
 import Ch1Step1 from './Ch1Step1.jsx';
 import Ch1Step2 from './Ch1Step2.jsx';
 import Ch1Step3 from './Ch1Step3.jsx';
@@ -22,13 +23,20 @@ const STEPS = {
 export function Ch1() {
   const { stepId } = usePresentationContext();
   const Step = STEPS[stepId];
-  if (!Step) {
-    return (
-      <main style={{ position: 'relative', zIndex: 20, padding: 32, fontFamily: 'Space Grotesk' }}>
-        <div style={{ fontSize: 24, fontWeight: 900 }}>ch 1 · step {stepId}</div>
-        <div style={{ marginTop: 16, color: '#666' }}>(component not yet implemented)</div>
-      </main>
-    );
-  }
-  return <Step key={stepId} />;
+  const showMrtBackdrop = stepId >= 4 && stepId <= 7;
+  return (
+    <>
+      {showMrtBackdrop && (
+        <AiBackdrop src="/images/ai/ch1/mrt-window.png" alt="台北捷運車廂內視" />
+      )}
+      {Step ? (
+        <Step key={stepId} />
+      ) : (
+        <main style={{ position: 'relative', zIndex: 20, padding: 32, fontFamily: 'Space Grotesk' }}>
+          <div style={{ fontSize: 24, fontWeight: 900 }}>ch 1 · step {stepId}</div>
+          <div style={{ marginTop: 16, color: '#666' }}>(component not yet implemented)</div>
+        </main>
+      )}
+    </>
+  );
 }
