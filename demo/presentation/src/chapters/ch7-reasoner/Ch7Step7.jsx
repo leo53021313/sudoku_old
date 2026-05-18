@@ -4,13 +4,12 @@ import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
 
 export default function Ch7Step7() {
   const { beatIndex, advance, triggerShake } = usePresentationContext();
-  const climaxA = useClimax(['A', 'E', 'G']);  // beat 3
-  const climaxB = useClimax(['A', 'E', 'G']);  // beat 4
+  const climaxA = useClimax(['A', 'G']);  // beat 3
+  const climaxB = useClimax(['A', 'G']);  // beat 4
   const climaxBoth = useClimax(['B']);         // beat 5 (double burst)
   const firedA = useRef(false);
   const firedB = useRef(false);
@@ -49,8 +48,6 @@ export default function Ch7Step7() {
       fontFamily: 'Space Grotesk', padding: 32, gap: 24,
     }}>
       <SpotlightVignette active={climaxA.activeFX.G || climaxB.activeFX.G} />
-      <InkSplatter active={climaxA.activeFX.E} count={8} radius={140} centerX="30%" centerY="60%" />
-      <InkSplatter active={climaxB.activeFX.E} count={8} radius={140} centerX="70%" centerY="60%" />
       <HalftoneBurst active={climaxBoth.activeFX.B} centerX="30%" centerY="65%" size={400} />
       <HalftoneBurst active={climaxBoth.activeFX.B} centerX="70%" centerY="65%" size={400} />
 

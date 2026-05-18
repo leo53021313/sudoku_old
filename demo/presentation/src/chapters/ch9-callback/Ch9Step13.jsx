@@ -5,13 +5,12 @@ import { useClimax } from '../../climax/useClimax.js';
 import { BoomDoubleRing } from '../../motifs/BoomDoubleRing.jsx';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 const FOOTER_TEXT = '我這兩個月一直用班上的電腦 · 瘋狂訓練我的 AI';
 
 export default function Ch9Step13() {
   const { beatIndex, triggerShake } = usePresentationContext();
-  const climax = useClimax(['A', 'B', 'C', 'E', 'G']);
+  const climax = useClimax(['A', 'B', 'C', 'G']);
   const firedRef = useRef(false);
 
   useEffect(() => {
@@ -31,7 +30,6 @@ export default function Ch9Step13() {
     }}>
       <SpotlightVignette active={climax.activeFX.G} />
       <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="55%" size={800} />
-      <InkSplatter active={climax.activeFX.E} count={8} radius={200} centerX="50%" centerY="55%" />
 
       {/* Beat 0+ kicker */}
       <motion.div

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { YellowHighlight } from '../../motifs/YellowHighlight.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 const KEYWORDS = ['架構', '演算法', '自己', '分工'];
 
@@ -60,14 +59,6 @@ function KeywordSpan({ idx, active, text }) {
   return (
     <span style={{ position: 'relative', display: 'inline-block' }}>
       <YellowHighlight active={active} padding="2px 12px">{text}</YellowHighlight>
-      {active && (
-        <div style={{
-          position: 'absolute', left: '50%', top: '120%',
-          width: 0, height: 0, pointerEvents: 'none',
-        }}>
-          <InkSplatter active count={1} radius={30} centerX="50%" centerY="50%" />
-        </div>
-      )}
     </span>
   );
 }

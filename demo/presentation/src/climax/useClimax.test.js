@@ -6,7 +6,7 @@ describe('useClimax', () => {
   it('returns an object with play/active/setActive', () => {
     const { result } = renderHook(() => useClimax(['A', 'C']));
     expect(typeof result.current.play).toBe('function');
-    expect(result.current.activeFX).toEqual({ A: false, B: false, C: false, E: false, G: false });
+    expect(result.current.activeFX).toEqual({ A: false, B: false, C: false, G: false });
   });
 
   it('activates fx codes on play()', async () => {
@@ -16,7 +16,6 @@ describe('useClimax', () => {
     expect(result.current.activeFX.B).toBe(true);
     expect(result.current.activeFX.G).toBe(true);
     expect(result.current.activeFX.C).toBe(false);
-    expect(result.current.activeFX.E).toBe(false);
   });
 
   it('reset() clears all activeFX', async () => {

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const ALL_FX = ['A', 'B', 'C', 'E', 'G'];
+const ALL_FX = ['A', 'B', 'C', 'G'];
 
 export function useClimax(variants = []) {
   const [activeFX, setActiveFX] = useState(

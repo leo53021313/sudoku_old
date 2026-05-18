@@ -3,11 +3,10 @@ import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { RedStamp } from '../../motifs/RedStamp.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 export default function Ch4Step3() {
   const { beatIndex, advance, triggerShake } = usePresentationContext();
-  const climax = useClimax(['A', 'C', 'E']);
+  const climax = useClimax(['A', 'C']);
   const firedRef = useRef(false);
 
   // 在 beat 2 點擊後 200ms 自動推進到 beat 3（顯示副標）
@@ -18,7 +17,7 @@ export default function Ch4Step3() {
     }
   }, [beatIndex, advance]);
 
-  // beat 2 觸發 climax（A 震動 + C overshoot + E ink-splatter），只觸發一次
+  // beat 2 觸發 climax（A 震動 + C overshoot），只觸發一次
   useEffect(() => {
     if (beatIndex === 2 && !firedRef.current) {
       firedRef.current = true;
@@ -67,14 +66,9 @@ export default function Ch4Step3() {
         >_</motion.span>
       </motion.div>
 
-      {/* Beat 2+ : 受害者紅 stamp 填入 + ink-splatter (A+C+E climax)
+      {/* Beat 2+ : 受害者紅 stamp 填入 (A+C climax)
           C overshoot 在 stamp 落定後做 scale keyframe 彈跳 — 同 ch1 s8 pattern */}
       <div style={{ marginTop: 48, position: 'relative' }}>
-        {beatIndex >= 2 && (
-          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-            <InkSplatter active count={8} radius={100} centerX="50%" centerY="50%" />
-          </div>
-        )}
         <motion.div
           animate={beatIndex === 2
             ? { scale: [0.85, 1.4, 1.0, 0.95, 1.0] }

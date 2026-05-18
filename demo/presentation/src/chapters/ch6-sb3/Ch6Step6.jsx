@@ -4,11 +4,10 @@ import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 export default function Ch6Step6() {
   const { beatIndex, triggerShake } = usePresentationContext();
-  const climax = useClimax(['A', 'B', 'C', 'E', 'G']);
+  const climax = useClimax(['A', 'B', 'C', 'G']);
   const firedRef = useRef(false);
   const [blackFlash, setBlackFlash] = useState(false);
 
@@ -21,7 +20,7 @@ export default function Ch6Step6() {
     }
   }, [beatIndex]);
 
-  // Beat 2 climax — full A+B+C+E+G
+  // Beat 2 climax — full A+B+C+G
   useEffect(() => {
     if (beatIndex === 2 && !firedRef.current) {
       firedRef.current = true;
@@ -47,7 +46,6 @@ export default function Ch6Step6() {
       {/* Climax overlays — only render when beatIndex 2 + climax fires */}
       <SpotlightVignette active={climax.activeFX.G} />
       <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
-      <InkSplatter active={climax.activeFX.E} count={8} radius={160} centerX="50%" centerY="50%" />
 
       {/* Beat 1+ red placeholder + fill on beat 2 */}
       <motion.div

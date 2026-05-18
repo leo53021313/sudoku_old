@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { RedStamp } from '../../motifs/RedStamp.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 export default function Ch4Step2() {
   return (
@@ -9,14 +8,7 @@ export default function Ch4Step2() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       gap: 64, fontFamily: 'Space Grotesk', padding: 32,
     }}>
-      {/* Red stamp from above with bounce + ink splatter light variant on impact */}
-      <div style={{ position: 'relative' }}>
-        <RedStamp active rotation={-5} size="large">supervised 路線 · 拒絕</RedStamp>
-        {/* Light ink-splatter on stamp impact, 4 dots, radius 60 */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <InkSplatter active count={4} radius={60} centerX="50%" centerY="50%" />
-        </div>
-      </div>
+      <RedStamp active rotation={-5} size="large">supervised 路線 · 拒絕</RedStamp>
 
       {/* Right comparison */}
       <motion.div

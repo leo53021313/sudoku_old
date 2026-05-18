@@ -3,11 +3,10 @@ import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
-import { InkSplatter } from '../../motifs/InkSplatter.jsx';
 
 export default function Ch7Step6() {
   const { beatIndex, triggerShake } = usePresentationContext();
-  const climax = useClimax(['A', 'B', 'C', 'E']);
+  const climax = useClimax(['A', 'B', 'C']);
   const firedRef = useRef(false);
   const [count, setCount] = useState(0);
 
@@ -44,7 +43,6 @@ export default function Ch7Step6() {
       transition: 'background 0.3s',
     }}>
       <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
-      <InkSplatter active={climax.activeFX.E} count={8} radius={160} centerX="50%" centerY="50%" />
 
       <motion.div
         initial={false}
