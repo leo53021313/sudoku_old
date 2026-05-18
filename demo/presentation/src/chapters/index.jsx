@@ -3,12 +3,14 @@ import { Ch1 } from './ch1-coldopen/Ch1.jsx';
 import { Ch2 } from './ch2-ml-map/Ch2.jsx';
 import { Ch3 } from './ch3-llm-vs-rl/Ch3.jsx';
 import { Ch4 } from './ch4-data-hunt/Ch4.jsx';
+import { Ch5 } from './ch5-legacy/Ch5.jsx';
 
 const CHAPTERS = {
   1: Ch1,
   2: Ch2,
   3: Ch3,
   4: Ch4,
+  5: Ch5,
 };
 
 export function ChapterRouter() {
@@ -18,7 +20,7 @@ export function ChapterRouter() {
     return (
       <main style={{ position: 'relative', zIndex: 20, padding: 32, fontFamily: 'Space Grotesk' }}>
         <div style={{ fontSize: 24, fontWeight: 900 }}>ch {chapterId} (not implemented)</div>
-        <div style={{ marginTop: 16, color: '#666' }}>Implemented: ch 1, ch 2, ch 3, ch 4. Other chapters incoming.</div>
+        <div style={{ marginTop: 16, color: '#666' }}>Implemented: ch 1, ch 2, ch 3, ch 4, ch 5. Other chapters incoming.</div>
       </main>
     );
   }
