@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
+import { GirlNew } from '../../motifs/GirlNew.jsx';
 
 export default function Ch6Step3() {
   const [plusses, setPlusses] = useState([]);
@@ -21,19 +22,13 @@ export default function Ch6Step3() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32,
     }}>
-      {/* 剛認識的新女生 sticker — pink + rotation */}
+      {/* New-girl AI character (replaces pink text sticker) */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          background: '#FFB6C1', color: '#000',
-          padding: '32px 56px', border: '6px solid #000', boxShadow: '14px 14px 0 0 #000',
-          fontWeight: 900, fontSize: '2.5rem', rotate: -4, lineHeight: 1.3,
-          textAlign: 'center',
-        }}
       >
-        剛認識的<br/>新女生 ✨
+        <GirlNew width={340} rotation={-4} shadow={14} />
       </motion.div>
 
       {/* +/+/+ floating plus symbols */}
