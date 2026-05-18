@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch2Step2() {
   return (
@@ -50,31 +51,22 @@ export default function Ch2Step2() {
         }}>自己分類整理</span>
       </motion.div>
 
-      {/* Clothes piles: one messy → 3 sorted */}
+      {/* Right-side AI illustration */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 1.4 }}
+        initial={{ opacity: 0, x: 60 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 1.4, ease: 'easeOut' }}
         style={{
           position: 'absolute', right: 64, top: '50%', transform: 'translateY(-50%)',
-          display: 'flex', alignItems: 'center', gap: 24,
         }}
       >
-        <div style={{ fontWeight: 900, fontSize: 18, textAlign: 'center' }}>
-          <div style={{
-            width: 80, height: 80, background: '#999',
-            border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#FFF', marginBottom: 8,
-          }}>👕👖👔</div>
-          一堆
-        </div>
-        <div style={{ fontWeight: 900, fontSize: 24 }}>→</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ background: '#FF6B6B', border: '3px solid #000', padding: 4, fontWeight: 900, fontSize: 12, textAlign: 'center' }}>紅</div>
-          <div style={{ background: '#FFD93D', border: '3px solid #000', padding: 4, fontWeight: 900, fontSize: 12, textAlign: 'center' }}>黃</div>
-          <div style={{ background: '#C4B5FD', border: '3px solid #000', padding: 4, fontWeight: 900, fontSize: 12, textAlign: 'center' }}>紫</div>
-        </div>
+        <AiSticker
+          src="/images/ai/ch2/folding-clothes.png"
+          alt="折衣服按顏色分類"
+          width={420}
+          rotation={3}
+          shadow={8}
+        />
       </motion.div>
     </main>
   );
