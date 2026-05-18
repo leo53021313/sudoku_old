@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { AiSticker } from '../../components/AiSticker.jsx';
+import { GirlNew } from '../../motifs/GirlNew.jsx';
 
 export default function Ch9Step5() {
   const { beatIndex, triggerShake } = usePresentationContext();
@@ -58,12 +59,7 @@ export default function Ch9Step5() {
           pointerEvents: 'none',
         }}
       >
-        <div style={{
-          background: '#FFB6C1', color: '#000',
-          padding: '32px 56px', border: '6px solid #000', boxShadow: '14px 14px 0 0 #000',
-          fontWeight: 900, fontSize: '2.5rem', transform: 'rotate(-4deg)', lineHeight: 1.3,
-          textAlign: 'center',
-        }}>剛認識的<br/>新女生 ✨</div>
+        <GirlNew width={340} rotation={-4} shadow={14} />
       </motion.div>
 
       {/* Beat 0+ brain center — AI brain-reward sticker */}
