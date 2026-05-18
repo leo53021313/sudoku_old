@@ -3,12 +3,14 @@ import Ch9Step1 from './Ch9Step1.jsx';
 import Ch9Step2 from './Ch9Step2.jsx';
 import Ch9Step3 from './Ch9Step3.jsx';
 import Ch9Step4 from './Ch9Step4.jsx';
+import Ch9Step5 from './Ch9Step5.jsx';
 
 const STEPS = {
   1: Ch9Step1,
   2: Ch9Step2,
   3: Ch9Step3,
   4: Ch9Step4,
+  5: Ch9Step5,
 };
 
 export function Ch9() {
