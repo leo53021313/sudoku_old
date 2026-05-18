@@ -65,7 +65,49 @@ DevTools Network filter `mrt-window`：跨 ch1 s4→s5→s6→s7 全頁導航後
 
 ## 後續延伸（不在本次範圍）
 
-- ch6 s3 新女生 sticker（粉紅）→ AI 路線
-- ch7 s7 老油條陷阱題人物 sticker → AI 路線
 - 更新 [demo/asset-production.md](../../asset-production.md) 加 `[AI]` 路線、把通過的素材標 `[AI]`
-- ch9 s4 中央箭頭 polish（半透明背板強化辨識）
+
+## v2 延伸（2026-05-18 同日）
+
+> v2 把 AI 路線擴張到 2 個全片最重要的「戀愛 hook」character sticker（girl-new + girl-veteran）+ 4 處跨章節 callback。
+
+### v2 commit 序列
+
+| # | SHA | 描述 |
+| --- | --- | --- |
+| 0 | 79f2327 | fix: ch9 s4 wrap arrow in Neo-brutalism cream backplate (polish 自 v1 觀察) |
+| 0 | 36fb03d | docs: v2 prompts for ch6-girl-new + ch7-girl-veteran |
+| 1 | 8173dc1 | feat: add ch6 girl-new + ch7 girl-veteran AI illustrations |
+| 2 | 81f3fc3 | feat: GirlNew motif wraps AI girl-new illustration |
+| 3 | 9f92cf0 | feat: GirlVeteran motif wraps AI girl-veteran illustration |
+| 4 | de2d9eb | feat: ch6 s3 pink text sticker → GirlNew AI character |
+| 5 | a67b119 | feat: ch7 s7 add GirlVeteran in top-right as 'the asker' |
+| 6 | ce1f96d | feat: ch9 s5 grayscale ghost uses GirlNew motif |
+| 7 | a6597d0 | feat: ch9 s6 add GirlVeteran callback in top-right |
+
+### v2 視覺驗收（playwright 截圖、1920×1080）
+
+| step | 截圖 | 通過 | 觀察 |
+| --- | --- | --- | --- |
+| ch6 s3 | v2-ch6-s3-girl-new.png | ✓ | GirlNew 中央 (width 340 hero) + 副標「聊天都覺得對方也喜歡你」+ +/+/+ 浮動（捕捉到時機可能符號剛飄出畫面） |
+| ch7 s7 b0 | v2-ch7-s7-veteran.png | ✓ | 「老油條女生陷阱題」黃 hero + GirlVeteran 右上角 peek（width 200, rotate 4°）|
+| ch9 s5 b0 | v2-ch9-s5-girl-ghost.png | ✓⚠ | Brain sticker 主體 + GirlNew grayscale ghost（opacity 0.3 + grayscale、設計上的潛意識 callback、與 v1 原本粉紅文字 sticker 行為一致）|
+| ch9 s6 | v2-ch9-s6-veteran-callback.png | ✓ | 「以為穩了 · 結果魔王關卡」hero + GirlVeteran 右上 callback（**同 ch7 s7 位置 + 同 width 200** = 觀眾自動識別「同一個人」）+ 4 魔王考題 grid |
+
+### v2 紅線通過
+
+- [x] 4 個受影響 step 全部通過 spec compliance + code quality review（每 task 雙段審）
+- [x] `npm run test:run` 26 pass（既有 + 新增）
+- [x] 跨章節 character 識別連續性：ch6 s3 GirlNew → ch9 s5 同 width 340 + grayscale；ch7 s7 GirlVeteran → ch9 s6 同 width 200 + 同位置
+- [x] 視覺差異化：GirlNew 紅衣 +4° tilt vs GirlVeteran 紫衣 −3° tilt（避免混淆是同一角色）
+
+### v2 改動範圍
+
+- 新增 asset (2): `public/images/ai/ch6/girl-new.png`, `ch7/girl-veteran.png`
+- 修改 motif (2): `motifs/GirlNew.jsx`, `GirlVeteran.jsx`（從 AssetPlaceholder shell → AiSticker 包裝）
+- 修改 step (4): `Ch6Step3.jsx`, `Ch7Step7.jsx`, `Ch9Step5.jsx`, `Ch9Step6.jsx`
+
+### v2 後續延伸
+
+- ch9 s5 grayscale ghost 視覺可進一步增強：把 grayscale ghost 從 opacity 0.3 提升到 0.5 + 加 outline halo、讓觀眾更明顯辨識（trade-off：太顯眼會搶 brain sticker 焦點）
+- 其餘節點視覺 AI 化已盡（reasoner / apprentice 章節結構性內容 [E] SVG 更合適、不適合 AI 路線）
