@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch2Step1() {
   return (
@@ -53,30 +54,22 @@ export default function Ch2Step1() {
         }}>看著答案抄筆記</span>
       </motion.div>
 
-      {/* Right-side text illustration */}
+      {/* Right-side AI illustration */}
       <motion.div
         initial={{ opacity: 0, x: 60 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 1.4, ease: 'easeOut' }}
         style={{
           position: 'absolute', right: 64, top: '50%', transform: 'translateY(-50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
         }}
       >
-        <div style={{
-          background: '#FFFFFF', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-          padding: '12px 20px', fontWeight: 900, fontSize: 16,
-        }}>老師</div>
-        <div style={{ fontWeight: 900, fontSize: 20 }}>↓</div>
-        <div style={{
-          background: '#FFD93D', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-          padding: '12px 20px', fontWeight: 900, fontSize: 16,
-        }}>題目 + 答案</div>
-        <div style={{ fontWeight: 900, fontSize: 20 }}>↓</div>
-        <div style={{
-          background: '#C4B5FD', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-          padding: '12px 20px', fontWeight: 900, fontSize: 16,
-        }}>學生硬背</div>
+        <AiSticker
+          src="/images/ai/ch2/teacher-notes.png"
+          alt="老師教學、學生抄筆記"
+          width={420}
+          rotation={-2}
+          shadow={8}
+        />
       </motion.div>
     </main>
   );
