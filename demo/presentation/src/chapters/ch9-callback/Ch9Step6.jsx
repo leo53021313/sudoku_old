@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
 
 const QUESTIONS = [
   { text: '前女友跟我比 · 誰比較好？', bg: '#FFD93D', color: '#000', rotate: -2 },
@@ -22,6 +23,18 @@ export default function Ch9Step6() {
         style={{ fontWeight: 900, fontSize: '2.5rem' }}
       >
         以為穩了 · <span style={{ background: '#FF6B6B', color: '#FFF', padding: '4px 16px' }}>結果魔王關卡</span>
+      </motion.div>
+
+      {/* Callback: same 'asker' character from ch7 s7 — peeks in top-right */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0, rotate: 0 }}
+        animate={{ scale: 1, opacity: 1, rotate: 4 }}
+        transition={{ duration: 0.5, delay: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+        style={{
+          position: 'absolute', top: 48, right: 48, zIndex: 15,
+        }}
+      >
+        <GirlVeteran width={200} rotation={0} shadow={10} />
       </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 32 }}>
