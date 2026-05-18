@@ -67,14 +67,23 @@ export default function Ch4Step3() {
         >_</motion.span>
       </motion.div>
 
-      {/* Beat 2+ : 受害者紅 stamp 填入 + ink-splatter (A+C+E climax) */}
+      {/* Beat 2+ : 受害者紅 stamp 填入 + ink-splatter (A+C+E climax)
+          C overshoot 在 stamp 落定後做 scale keyframe 彈跳 — 同 ch1 s8 pattern */}
       <div style={{ marginTop: 48, position: 'relative' }}>
         {beatIndex >= 2 && (
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
             <InkSplatter active count={8} radius={100} centerX="50%" centerY="50%" />
           </div>
         )}
-        <RedStamp active={beatIndex >= 2} rotation={4} size="medium">這個受害者</RedStamp>
+        <motion.div
+          animate={beatIndex === 2
+            ? { scale: [0.85, 1.4, 1.0, 0.95, 1.0] }
+            : { scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+          style={{ position: 'relative', zIndex: 30 }}
+        >
+          <RedStamp active={beatIndex >= 2} rotation={4} size="medium">這個受害者</RedStamp>
+        </motion.div>
       </div>
 
       {/* Beat 3+ : 副標「簡簡單單被我攻破」fade-up */}
