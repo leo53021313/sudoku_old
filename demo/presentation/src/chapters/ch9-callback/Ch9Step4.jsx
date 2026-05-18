@@ -34,26 +34,35 @@ export default function Ch9Step4() {
           />
         </motion.div>
 
-        {/* Center bidirectional arrow overlay (preserved) */}
-        <motion.svg
-          width="120" height="40" viewBox="0 0 120 40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.9 }}
+        {/* Center bidirectional arrow overlay with cream backplate for legibility */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
           style={{
             position: 'absolute', left: '50%', top: '50%',
-            transform: 'translate(-50%, -50%)',
-            overflow: 'visible', zIndex: 5,
+            transform: 'translate(-50%, -50%) rotate(-3deg)',
+            background: '#FFFDF5',
+            border: '4px solid #000',
+            boxShadow: '6px 6px 0 0 #000',
+            padding: '12px 20px',
+            zIndex: 5,
+            lineHeight: 0,
           }}
         >
-          <motion.path
-            d="M 10 20 L 20 10 L 10 20 L 110 20 L 100 30 L 110 20 L 100 10"
-            fill="none" stroke="#000" strokeWidth="6" strokeLinecap="square"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-          />
-        </motion.svg>
+          <motion.svg
+            width="100" height="32" viewBox="0 0 120 40"
+            style={{ overflow: 'visible', display: 'block' }}
+          >
+            <motion.path
+              d="M 10 20 L 20 10 L 10 20 L 110 20 L 100 30 L 110 20 L 100 10"
+              fill="none" stroke="#000" strokeWidth="6" strokeLinecap="square"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.6, delay: 1.1 }}
+            />
+          </motion.svg>
+        </motion.div>
       </div>
 
       <motion.div
