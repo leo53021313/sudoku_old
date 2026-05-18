@@ -4,6 +4,7 @@ import { Ch2 } from './ch2-ml-map/Ch2.jsx';
 import { Ch3 } from './ch3-llm-vs-rl/Ch3.jsx';
 import { Ch4 } from './ch4-data-hunt/Ch4.jsx';
 import { Ch5 } from './ch5-legacy/Ch5.jsx';
+import { Ch6 } from './ch6-sb3/Ch6.jsx';
 
 const CHAPTERS = {
   1: Ch1,
@@ -11,6 +12,7 @@ const CHAPTERS = {
   3: Ch3,
   4: Ch4,
   5: Ch5,
+  6: Ch6,
 };
 
 export function ChapterRouter() {
