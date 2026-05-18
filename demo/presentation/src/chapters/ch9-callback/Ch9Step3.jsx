@@ -6,24 +6,33 @@ export default function Ch9Step3() {
       position: 'relative', zIndex: 20, height: '100vh',
       fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {/* Left: brain (RL 腦科學) */}
+      {/* Left: brain (RL 腦科學) — cream card now, AI brain illustration */}
       <motion.div
         initial={{ clipPath: 'inset(0 100% 0 0)' }}
         animate={{ clipPath: 'inset(0 0 0 0)' }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{
-          flex: '0 0 40%', background: '#000', color: '#FFFDF5',
+          flex: '0 0 40%', background: '#FFFDF5', color: '#000',
           height: '60vh',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: 32, gap: 16,
           border: '6px solid #000',
         }}
       >
-        <div style={{ fontSize: 96 }}>🧠</div>
-        <div style={{ fontWeight: 900, fontSize: '2rem' }}>腦科學 RL</div>
+        <img
+          src="/images/ai/ch9/brain-reward.png"
+          alt="大腦與獎懲 token"
+          style={{ width: '70%', height: 'auto', display: 'block' }}
+        />
+        <div style={{
+          background: '#FF6B6B', color: '#FFFDF5',
+          padding: '8px 20px',
+          border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+          fontWeight: 900, fontSize: '2rem',
+        }}>腦科學 RL</div>
       </motion.div>
 
-      {/* Center: "=" yellow circle stamp */}
+      {/* Center: "=" yellow circle stamp (preserved) */}
       <motion.div
         initial={{ scale: 0, rotate: 0 }}
         animate={{ scale: 1, rotate: -10 }}
@@ -39,7 +48,7 @@ export default function Ch9Step3() {
         =
       </motion.div>
 
-      {/* Right: neural net (AI 訓練) */}
+      {/* Right: neural net (AI 訓練) — AI neural network illustration */}
       <motion.div
         initial={{ clipPath: 'inset(0 0 0 100%)' }}
         animate={{ clipPath: 'inset(0 0 0 0)' }}
@@ -52,11 +61,20 @@ export default function Ch9Step3() {
           border: '6px solid #000',
         }}
       >
-        <div style={{ fontSize: 96 }}>🕸️</div>
-        <div style={{ fontWeight: 900, fontSize: '2rem' }}>AI 訓練 RL</div>
+        <img
+          src="/images/ai/ch9/neural-network.png"
+          alt="神經網路"
+          style={{ width: '70%', height: 'auto', display: 'block' }}
+        />
+        <div style={{
+          background: '#000', color: '#FFFDF5',
+          padding: '8px 20px',
+          border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+          fontWeight: 900, fontSize: '2rem',
+        }}>AI 訓練 RL</div>
       </motion.div>
 
-      {/* Hero below */}
+      {/* Hero below (preserved) */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
