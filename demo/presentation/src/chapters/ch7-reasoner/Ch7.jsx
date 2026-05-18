@@ -6,8 +6,9 @@ import Ch7Step4 from './Ch7Step4.jsx';
 import Ch7Step5 from './Ch7Step5.jsx';
 import Ch7Step6 from './Ch7Step6.jsx';
 import Ch7Step7 from './Ch7Step7.jsx';
+import Ch7Step8 from './Ch7Step8.jsx';
 
-const STEPS = { 1: Ch7Step1, 2: Ch7Step2, 3: Ch7Step3, 4: Ch7Step4, 5: Ch7Step5, 6: Ch7Step6, 7: Ch7Step7 };
+const STEPS = { 1: Ch7Step1, 2: Ch7Step2, 3: Ch7Step3, 4: Ch7Step4, 5: Ch7Step5, 6: Ch7Step6, 7: Ch7Step7, 8: Ch7Step8 };
 
 export function Ch7() {
   const { stepId } = usePresentationContext();
