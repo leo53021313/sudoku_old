@@ -10,6 +10,8 @@ import Ch9Step8 from './Ch9Step8.jsx';
 import Ch9Step9 from './Ch9Step9.jsx';
 import Ch9Step10 from './Ch9Step10.jsx';
 import Ch9Step11 from './Ch9Step11.jsx';
+import Ch9Step12 from './Ch9Step12.jsx';
+import Ch9Step13 from './Ch9Step13.jsx';
 
 const STEPS = {
   1: Ch9Step1,
@@ -23,6 +25,8 @@ const STEPS = {
   9: Ch9Step9,
   10: Ch9Step10,
   11: Ch9Step11,
+  12: Ch9Step12,
+  13: Ch9Step13,
 };
 
 export function Ch9() {
