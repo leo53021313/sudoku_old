@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { AssetPlaceholder } from '../../components/AssetPlaceholder.jsx';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch1Step5() {
   return (
@@ -9,47 +9,38 @@ export default function Ch1Step5() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32,
     }}>
-      {/* MRT window (persisted, no entrance animation) */}
-      <div style={{ opacity: 1 }}>
-        <AssetPlaceholder
-          type="[E]"
-          width={720}
-          height={400}
-          todo="ch1 s4-s7 捷運窗景 SVG"
+      {/* 正妹 sticker persisted (no entrance animation) */}
+      <div style={{
+        position: 'absolute', bottom: '14%', left: '8%',
+      }}>
+        <AiSticker
+          src="/images/ai/ch1/girl-daydream.png"
+          alt="正妹發呆中"
+          width={280}
+          rotation={-4}
+          shadow={8}
         />
       </div>
 
-      {/* 正妹 sticker persisted */}
-      <div style={{
-        position: 'absolute', bottom: '14%', left: '8%',
-        background: '#FFD93D', color: '#000',
-        border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-        padding: '16px 28px', transform: 'rotate(-4deg)',
-        fontWeight: 900, fontSize: 24,
-        borderRadius: 24,
-      }}>
-        正妹發呆中
-      </div>
-
-      {/* NEW: Code Bullet · flappy bird sticker top-right, scales in */}
+      {/* NEW: Code Bullet flappy bird AI sticker top-right, scales in */}
       <motion.div
         initial={{ x: 200, y: -100, scale: 0.7, opacity: 0 }}
         animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
           position: 'absolute', top: '14%', right: '8%',
-          background: '#C4B5FD', color: '#000',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', rotate: 3,
-          fontWeight: 900, fontSize: 22,
-          lineHeight: 1.2,
         }}
       >
-        Code Bullet
-        <div style={{ fontSize: 16, marginTop: 4 }}>· flappy bird</div>
+        <AiSticker
+          src="/images/ai/ch1/codebullet-flappy.png"
+          alt="Code Bullet flappy bird"
+          width={280}
+          rotation={3}
+          shadow={8}
+        />
       </motion.div>
 
-      {/* Thought-bubble dashed line — using viewBox so % becomes parameterized */}
+      {/* Thought-bubble dashed line between two stickers */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
