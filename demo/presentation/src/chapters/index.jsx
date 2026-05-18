@@ -5,6 +5,7 @@ import { Ch3 } from './ch3-llm-vs-rl/Ch3.jsx';
 import { Ch4 } from './ch4-data-hunt/Ch4.jsx';
 import { Ch5 } from './ch5-legacy/Ch5.jsx';
 import { Ch6 } from './ch6-sb3/Ch6.jsx';
+import { Ch7 } from './ch7-reasoner/Ch7.jsx';
 
 const CHAPTERS = {
   1: Ch1,
@@ -13,6 +14,7 @@ const CHAPTERS = {
   4: Ch4,
   5: Ch5,
   6: Ch6,
+  7: Ch7,
 };
 
 export function ChapterRouter() {
@@ -22,7 +24,7 @@ export function ChapterRouter() {
     return (
       <main style={{ position: 'relative', zIndex: 20, padding: 32, fontFamily: 'Space Grotesk' }}>
         <div style={{ fontSize: 24, fontWeight: 900 }}>ch {chapterId} (not implemented)</div>
-        <div style={{ marginTop: 16, color: '#666' }}>Implemented: ch 1, ch 2, ch 3, ch 4, ch 5. Other chapters incoming.</div>
+        <div style={{ marginTop: 16, color: '#666' }}>Implemented: ch 1, ch 2, ch 3, ch 4, ch 5, ch 6, ch 7. Other chapters incoming.</div>
       </main>
     );
   }
