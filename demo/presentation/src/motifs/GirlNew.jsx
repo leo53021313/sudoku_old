@@ -1,4 +1,14 @@
-import { AssetPlaceholder } from '../components/AssetPlaceholder.jsx';
-export function GirlNew(props) {
-  return <AssetPlaceholder type="motif/girl-new" width={280} height={200} todo="ch 6 s3 粉紅新女生 sticker + +/+/+ 浮動" {...props} />;
+import { AiSticker } from '../components/AiSticker.jsx';
+
+export function GirlNew({ width = 280, rotation = -4, shadow = 10, ...rest }) {
+  return (
+    <AiSticker
+      src="/images/ai/ch6/girl-new.png"
+      alt="剛認識的新女生"
+      width={width}
+      rotation={rotation}
+      shadow={shadow}
+      {...rest}
+    />
+  );
 }
