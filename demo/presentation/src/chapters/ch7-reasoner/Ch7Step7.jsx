@@ -5,6 +5,7 @@ import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
 import { InkSplatter } from '../../motifs/InkSplatter.jsx';
+import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
 
 export default function Ch7Step7() {
   const { beatIndex, advance, triggerShake } = usePresentationContext();
@@ -52,6 +53,20 @@ export default function Ch7Step7() {
       <InkSplatter active={climaxB.activeFX.E} count={8} radius={140} centerX="70%" centerY="60%" />
       <HalftoneBurst active={climaxBoth.activeFX.B} centerX="30%" centerY="65%" size={400} />
       <HalftoneBurst active={climaxBoth.activeFX.B} centerX="70%" centerY="65%" size={400} />
+
+      {/* The 'asker' character — appears on beat 0 alongside hero */}
+      <motion.div
+        initial={false}
+        animate={beatIndex >= 0
+          ? { scale: 1, opacity: 1, rotate: 4 }
+          : { scale: 0, opacity: 0, rotate: 0 }}
+        transition={{ duration: 0.5, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+        style={{
+          position: 'absolute', top: 48, right: 48, zIndex: 15,
+        }}
+      >
+        <GirlVeteran width={200} rotation={0} shadow={10} />
+      </motion.div>
 
       {/* Beat 0: hero */}
       <motion.div
