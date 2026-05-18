@@ -1,8 +1,9 @@
-# AI 圖片生成提示詞清單（測試用）
+# AI 圖片生成提示詞清單
 
-> **狀態**：實驗性 · 尚未取代 [asset-production.md](asset-production.md)
-> **用途**：挑選「適合 AI 圖片生成」的素材、給 GPT Image 2 / Nano Banana 2（Gemini 3 Pro Image）用的 prompt
-> **流程**：你拿這份 prompt 去生圖 → 看效果 → 決定是否取代原本 D/E/A 路線（再回頭改 asset-production.md）
+> **狀態**：v1 的 10 張已通過驗收並整合進 [demo/presentation/](presentation/)（commit `a00edb9` ~ `30a3d97`、`79f2327` polish）
+> **用途**：給 GPT Image 2 / Nano Banana 2（Gemini 3 Pro Image）用的 prompt
+> **流程**：你拿這份 prompt 去生圖 → 存進 `demo/asset-experiments/` → 通過驗收後搬到 `demo/presentation/public/images/ai/ch<N>/` 並整合進對應 step
+> **v2 延伸**：[§6 延伸：ch6/ch7 戀愛 hook 人物 sticker](#6-延伸ch6ch7-戀愛-hook-人物-sticker)
 
 ---
 
@@ -323,3 +324,120 @@ Aspect ratio: 1:1 square.
 | **[AI] 圖片生成** | **3-10 min/張 + 0-3 輪 retry** | **中（風格漂移、要 prompt 鎖死）** | **複雜場景、人物互動、有氛圍背景** |
 
 預期 AI 路線總工時：10 張 × ~15 分鐘（含 retry）= **~2.5 小時** 可拿到全套素材。
+
+---
+
+## §6 延伸：ch6/ch7 戀愛 hook 人物 sticker
+
+> **狀態**：v2 提案、待你生圖
+> **挑選依據**：v1 ★★★ 全套驗收通過後、把同個 AI 路線擴張到全片 2 個最重要的「戀愛 hook」笑點 character sticker（[outline.md](outline.md) 紀錄為 motif/girl-new、motif/girl-veteran、跨章節復用）
+
+### §6.1 候選素材總表（新增 2 個）
+
+| # | 代號 | 用途位置 | 原路線 | 改 AI 後預期 | 優先度 |
+| --- | --- | --- | --- | --- | --- |
+| 11 | `ch6-girl-new` | ch6 s3 戀愛 hook a「剛認識的新女生」+ ch9 s5 callback 灰階退背景 | [D] 粉紅 #FFB6C1 文字 sticker「剛認識的新女生 ✨」 | 鮮活角色插畫、初遇期亢奮、灰階退背景時仍可辨識為「同一個女生」 | ★★★ |
+| 12 | `ch7-girl-veteran` | ch7 s7 老油條陷阱題 hook + ch9 s6 callback 4 魔王考題 sticker grid | [D] 紅/紫文字陷阱題 sticker（2 個）+ ❌ 答案 sticker | 帶眉挑/微笑的「老油條」角色、暗示「她在設陷阱」、跟 girl-new 視覺呼應但氣質截然不同 | ★★★ |
+
+**敘事對比**（同一段「戀愛比喻 AI」故事的兩段）：
+
+| 比較 | girl-new（ch6 s3） | girl-veteran（ch7 s7） |
+| --- | --- | --- |
+| 階段 | 剛認識、初遇期 | 已交往一陣、進入挑戰期 |
+| 表情 | 開心、燦爛、有點小害羞 | 知道你被她耍、嘴角壞壞上揚 |
+| 氛圍 | 粉紅、亮、+ + + 加分浮動 | 紅+紫、暗、setting traps |
+| 視覺記號 | 閃光 ✨、紅暈 cheek | 眉挑、wink、手指比向你 |
+| 復用 | ch9 s5 戀愛 a callback（灰階退背景） | ch9 s6 戀愛 b callback（4 魔王考題 sticker grid） |
+
+### §6.2 個別 prompt
+
+---
+
+#### 11. `ch6-girl-new` 剛認識的新女生 sticker
+
+**用途**：
+- [ch6 s3](outline.md) 「**剛認識的新女生**」中央 sticker、配「+/+/+」浮動加分動畫 + 副標「聊天都覺得對方也喜歡你」
+- [ch9 s5](outline.md) 戀愛 a callback、退到背景、灰階 + opacity 0.3 ghost
+
+**原路線**：[D] 粉紅底文字 sticker「剛認識的新女生 ✨」
+**比例**：1:1 sticker（800×800）
+**重點**：
+- 必須跟 `ch1-girl-daydream`（v1 已生）**不同角色**——她是發呆的、這個是燦爛的初遇期
+- 表情要明顯「對著鏡頭笑」、暗示「對方也喜歡你的錯覺」
+- 灰階後仍要可辨識（避免太多依賴粉紅色定義角色）
+- 可帶 1-2 個 sparkle ✨ 圖示（但用線條 stroke 畫、不要寫實光暈）
+- 鏡頭視角：3/4 正面、可半身
+
+**Prompt (English)**:
+```
+[Paste shared style prefix from §3 above]
+
+Subject: A young woman with shoulder-length black hair styled with a slight outward curl at the ends, looking directly at the viewer with a bright, slightly bashful smile (lips closed but corners turned up clearly). 3/4 front-facing pose, head and upper torso visible, one hand raised near her cheek in a small wave or playful gesture. Casual outfit — a plain top in hot red #FF6B6B (NOT pink, to stay in palette), simple neckline.
+Around her head: 2-3 small bold-outlined sparkle marks (4-point sparkle shapes, like ✨ but drawn as flat geometric stars, NOT light-bursts) in vivid yellow #FFD93D. Add subtle blush marks on her cheeks (small flat circular pink-ish patches — use soft violet #C4B5FD to stay in palette, NOT pink — like a comic-book blush).
+Style: clearly DIFFERENT character from a calmer/sad sitting girl — this one is alive, expressive, "excited to meet you" energy. Bold black ink outlines, flat fills, no gradient, no realism.
+Background: cream #FFFDF5 plain. Character takes 75% of canvas height, centered.
+Test: if rendered in grayscale at 30% opacity, the body language and smile must still read as "happy young woman".
+Aspect ratio: 1:1 square.
+```
+
+**驗收**：
+- 燦爛笑容能秒看出「初遇期亢奮」
+- 跟 ch1-girl-daydream 的「發呆內向」氣質明顯不同（避免觀眾混淆是同一角色不同 step）
+- 灰階測試：縮圖灰階 opacity 30% 後輪廓 / 姿態仍清楚（callback 用）
+- 色票嚴格：紅 / 黃 / 紫 / 黑 / cream（NO pink — 用 violet 代替 cheek blush）
+
+---
+
+#### 12. `ch7-girl-veteran` 老油條陷阱題 sticker
+
+**用途**：
+- [ch7 s7](outline.md) 老油條陷阱題 hook、配 2 個陷阱題 sticker（「和你媽掉進水裡你會先救誰」「該不該運動」）+ ❌ 答案
+- [ch9 s6](outline.md) 戀愛 b callback 4 魔王考題 sticker grid 視覺繼承
+
+**原路線**：[D] 紅/紫文字陷阱題 sticker（純文字）
+**比例**：1:1 sticker（800×800）
+**重點**：
+- 必須跟 `ch6-girl-new`（同樣是「女生」概念）**氣質截然不同**——她是「老油條 / 知道你會掉坑」的 expression
+- 表情關鍵字：smirk、knowing look、eyebrow raised、可帶手指比向觀眾或環抱手肘
+- 不可畫成「壞女人 / 反派」（避免性別歧視觀感）——是「狡黠的、看穿你的、調皮的」、像玩 prank 一樣
+- 鏡頭視角：可微側身、半身、頭部稍歪
+- 不可挂任何文字（陷阱題本身用 HTML text sticker 疊上去）
+
+**Prompt (English)**:
+```
+[Paste shared style prefix from §3 above]
+
+Subject: A young woman with shoulder-length black hair, viewed in a 3/4 side angle, body slightly turned away but head looking back over her shoulder toward the viewer. Expression: a knowing smirk — lips closed and curled up on ONE side only (asymmetric smile, "I know something you don't"), ONE eyebrow visibly raised. Eyes half-lidded with a sharp, sly look. One hand under her chin in a thoughtful / scheming gesture (index finger touching her chin lightly), the other hand on her hip.
+Casual outfit — a plain top in soft violet #C4B5FD (signals her "veteran" status visually contrasting with girl-new's red top), simple cut.
+Style: bold black ink outlines, flat fills. NO menacing villain-coded features (no fangs, no shadow over eyes, no exaggerated devil look) — the vibe should be "you've been caught in my trap and you don't even realize it yet" charm, NOT cruelty.
+Background: cream #FFFDF5 plain. Character takes 75% of canvas height, centered.
+Distinguishing markers vs the "girl-new" sticker: this one has ONE-sided smirk vs symmetric smile, raised eyebrow, hand-on-chin scheming pose, violet outfit vs red — clearly the SAME drawing style but a DIFFERENT character archetype.
+Aspect ratio: 1:1 square.
+```
+
+**驗收**：
+- 「老油條」 / 「smirk」表情明顯、可秒看出「她設了陷阱」
+- 跟 ch6-girl-new 視覺風格一致（同筆觸、同色票邏輯）但角色感截然不同
+- 不踩「邪惡反派」陷阱（無 fangs / dark eye shadow / 誇張惡相）
+- 紫色衣服跟 girl-new 紅色衣服形成 callback 對比、讓觀眾潛意識感受「同樣是女生但不同階段」
+- 色票嚴格：紅 / 黃 / 紫 / 黑 / cream
+
+---
+
+### §6.3 v2 工時預估
+
+| 項目 | 工時 |
+| --- | --- |
+| 你生 2 張圖（含 retry） | ~30-60 min |
+| 我整合 ch6 s3 + ch7 s7 + ch9 s5 / s6 callback | ~30 min（subagent-driven、3-4 個小 commit） |
+| **總計** | **~1.5 小時** |
+
+### §6.4 整合策略（生圖通過後）
+
+1. 把 2 張圖搬到 `demo/presentation/public/images/ai/ch6/girl-new.png` + `demo/presentation/public/images/ai/ch7/girl-veteran.png`
+2. 取代 `src/motifs/GirlNew.jsx` 跟 `GirlVeteran.jsx`（目前都是 `<AssetPlaceholder>` shell）改成 `<AiSticker>` 包裝
+3. 既有的 `Ch6Step3.jsx`（內含粉紅文字 sticker）+ `Ch7Step7.jsx`（內含紅/紫陷阱題）保留架構、把人物文字 sticker 改用 `<GirlNew />` / `<GirlVeteran />` motif component（陷阱題文字本身 [D] 保留）
+4. `Ch9Step5.jsx` 既有的「剛認識的新女生」grayscale 背景文字 sticker → 改用 `<GirlNew />` motif + grayscale filter
+5. `Ch9Step6.jsx` 4 個魔王考題 sticker grid → 4 張各加一個 `<GirlVeteran />` mini sticker 在卡片角落（暗示「同一個老油條」）
+
+——但是這部分等你生圖通過再寫 plan。
