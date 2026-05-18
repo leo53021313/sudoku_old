@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch9Step5() {
   const { beatIndex, triggerShake } = usePresentationContext();
@@ -65,14 +66,20 @@ export default function Ch9Step5() {
         }}>剛認識的<br/>新女生 ✨</div>
       </motion.div>
 
-      {/* Beat 0+ brain center */}
+      {/* Beat 0+ brain center — AI brain-reward sticker */}
       <motion.div
         initial={false}
         animate={beatIndex >= 0 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{ fontSize: 160, zIndex: 10 }}
+        style={{ zIndex: 10 }}
       >
-        🧠
+        <AiSticker
+          src="/images/ai/ch9/brain-reward.png"
+          alt="大腦與獎懲 token"
+          width={320}
+          rotation={0}
+          shadow={12}
+        />
       </motion.div>
 
       {/* Beat 1+ left positives */}
