@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch2Step3() {
   return (
@@ -54,7 +55,7 @@ export default function Ch2Step3() {
         }}>試錯加獎懲</span>
       </motion.div>
 
-      {/* AlphaGo red stamp drops in last (climax) */}
+      {/* AlphaGo red stamp drops in last (climax, preserved) */}
       <motion.div
         initial={{ y: -200, scale: 0, opacity: 0, rotate: -8 }}
         animate={{ y: 0, scale: 1, opacity: 1, rotate: -2 }}
@@ -70,17 +71,22 @@ export default function Ch2Step3() {
         AlphaGo · 打敗世界圍棋王
       </motion.div>
 
-      {/* Dog handshake placeholder text */}
+      {/* Dog handshake AI illustration (replaces 🐕 ↔ 🤝 emoji) */}
       <motion.div
         initial={{ opacity: 0, x: 60 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 1.4 }}
         style={{
           position: 'absolute', left: 64, top: '60%',
-          fontSize: 64, fontWeight: 900,
         }}
       >
-        🐕 ↔ 🤝
+        <AiSticker
+          src="/images/ai/ch2/dog-handshake.png"
+          alt="訓練狗握手"
+          width={420}
+          rotation={-3}
+          shadow={8}
+        />
       </motion.div>
     </main>
   );
