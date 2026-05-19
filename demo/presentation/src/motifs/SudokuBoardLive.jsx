@@ -20,7 +20,7 @@ export function SudokuBoardLive({ cells, highlights = [], active = true }) {
 
   return (
     <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
-         style={{ background: '#FFFDF5', boxShadow: '12px 12px 0 0 #000', border: `${STROKE_OUTER}px solid #000` }}>
+         style={{ background: '#FFFDF5', boxShadow: '12px 12px 0 0 #000' }}>
       {lines.map((ln, i) => (
         <motion.line
           key={ln.key}
