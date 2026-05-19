@@ -56,3 +56,25 @@ html, body, #root {
 @keyframes caret-blink {
   50% { opacity: 0; }
 }
+
+@keyframes stagger-list-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-stagger-list > * {
+  opacity: 0;
+  animation: stagger-list-rise 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.anim-stagger-list > *:nth-child(1)  { animation-delay: 0.00s; }
+.anim-stagger-list > *:nth-child(2)  { animation-delay: 0.12s; }
+.anim-stagger-list > *:nth-child(3)  { animation-delay: 0.24s; }
+.anim-stagger-list > *:nth-child(4)  { animation-delay: 0.36s; }
+.anim-stagger-list > *:nth-child(5)  { animation-delay: 0.48s; }
+.anim-stagger-list > *:nth-child(6)  { animation-delay: 0.60s; }
+.anim-stagger-list > *:nth-child(7)  { animation-delay: 0.72s; }
+.anim-stagger-list > *:nth-child(8)  { animation-delay: 0.84s; }
+.anim-stagger-list > *:nth-child(9)  { animation-delay: 0.96s; }
+.anim-stagger-list > *:nth-child(10) { animation-delay: 1.08s; }
+.anim-stagger-list > *:nth-child(11) { animation-delay: 1.20s; }
+.anim-stagger-list > *:nth-child(n+12) { animation-delay: 1.32s; }

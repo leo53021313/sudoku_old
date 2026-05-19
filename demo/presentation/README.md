@@ -42,6 +42,7 @@ npm run test:run
 - Shared components (progress / chapter-nav / beat-indicator / presenter-panel / sticker / hero / asset-placeholder)
 - Motif Library: 8 full + 5 shells = 13 total
 - Climax FX (A/B/C/E/G) via useClimax hook
+  - `.anim-stagger-list` — CSS utility, children rise+fade with 120ms stagger (max 12 children before flooring)
 - /sandbox verification page
 
 ## Phase 1+ scope (next)

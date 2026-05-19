@@ -164,6 +164,18 @@ export function Sandbox() {
           <CounterUp from={20} to={50} prefix="+" duration={1200} />
         </section>
 
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>.anim-stagger-list (CSS utility)</h2>
+          <ul className="anim-stagger-list" style={{ listStyle: 'none', padding: 0, marginTop: 16 }}>
+            {['填', '消', '對', '錯', '快', '慢', '深', '淺'].map((t, i) => (
+              <li key={i} style={{
+                background: '#FFFDF5', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+                padding: '8px 16px', marginBottom: 8, fontWeight: 900, display: 'inline-block', marginRight: 8,
+              }}>{t}</li>
+            ))}
+          </ul>
+        </section>
+
         <section style={{ marginTop: 48 }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>Hero primitive</h2>
           <div style={{ position: 'relative', height: 240, marginTop: 16, border: '4px solid #000', background: '#FFFDF5' }}>
