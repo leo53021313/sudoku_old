@@ -1,13 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useClimax } from '../../climax/useClimax.js';
+import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
+import { CounterUp } from '../../motifs/CounterUp.jsx';
 
 export default function Ch8Step4() {
-  const [flipped, setFlipped] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setFlipped(true), 800);
-    return () => clearTimeout(t);
-  }, []);
+  const climax = useClimax(['B']);
+  const [showFinal, setShowFinal] = useState(false);
 
   return (
     <main style={{
@@ -16,6 +15,8 @@ export default function Ch8Step4() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32, gap: 32,
     }}>
+      <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
+
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -25,44 +26,17 @@ export default function Ch8Step4() {
         破關獎勵調更大
       </motion.div>
 
-      <div style={{ perspective: 1000, width: 400, height: 240 }}>
-        <motion.div
-          initial={{ rotateY: 0 }}
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 0.6, ease: 'easeInOut' }}
-          style={{
-            position: 'relative', width: '100%', height: '100%',
-            transformStyle: 'preserve-3d',
-          }}
-        >
-          <div style={{
-            position: 'absolute', inset: 0,
-            backfaceVisibility: 'hidden',
-            background: '#FF6B6B', color: '#FFF',
-            border: '8px solid #000', boxShadow: '12px 12px 0 0 #000',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 900, fontSize: '8rem',
-          }}>
-            +20
-          </div>
-          <div style={{
-            position: 'absolute', inset: 0,
-            backfaceVisibility: 'hidden',
-            transform: 'rotateY(180deg)',
-            background: '#FFD93D', color: '#000',
-            border: '8px solid #000', boxShadow: '16px 16px 0 0 #000',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 900, fontSize: '8rem',
-          }}>
-            +50
-          </div>
-        </motion.div>
-      </div>
+      <CounterUp
+        from={20}
+        to={50}
+        prefix="+"
+        duration={1200}
+        onComplete={() => { climax.play(); setShowFinal(true); }}
+      />
 
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 1.6 }}
+        animate={showFinal ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        transition={{ duration: 0.5 }}
         style={{ fontWeight: 700, fontSize: '1.5rem', textAlign: 'center', color: '#666' }}
       >
         誘惑超過刷部分分數的賤招

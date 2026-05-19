@@ -20,6 +20,7 @@ import { FlipTwentyToFifty } from '../motifs/FlipTwentyToFifty.jsx';
 import { SudokuBoard } from '../motifs/SudokuBoard.jsx';
 import { SudokuBoardLive } from '../motifs/SudokuBoardLive.jsx';
 import { NeuralNet } from '../motifs/NeuralNet.jsx';
+import { CounterUp } from '../motifs/CounterUp.jsx';
 import { useClimax } from '../climax/useClimax.js';
 
 export function Sandbox() {
@@ -156,6 +157,11 @@ export function Sandbox() {
             highlights={[[1,2]]}
             active
           />
+        </section>
+
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>CounterUp</h2>
+          <CounterUp from={20} to={50} prefix="+" duration={1200} />
         </section>
 
         <section style={{ marginTop: 48 }}>
