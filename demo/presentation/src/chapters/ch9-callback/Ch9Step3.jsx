@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { NeuralNet } from '../../motifs/NeuralNet.jsx';
 
 export default function Ch9Step3() {
   return (
@@ -61,11 +62,9 @@ export default function Ch9Step3() {
           border: '6px solid #000',
         }}
       >
-        <img
-          src="/images/ai/ch9/neural-network.png"
-          alt="神經網路"
-          style={{ width: '70%', height: 'auto', display: 'block' }}
-        />
+        <div style={{ width: '70%', height: 260, display: 'block' }}>
+          <NeuralNet active />
+        </div>
         <div style={{
           background: '#000', color: '#FFFDF5',
           padding: '8px 20px',

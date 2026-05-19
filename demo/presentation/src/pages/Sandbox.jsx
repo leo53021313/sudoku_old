@@ -18,6 +18,7 @@ import { GirlVeteran } from '../motifs/GirlVeteran.jsx';
 import { ThirteenStairs } from '../motifs/ThirteenStairs.jsx';
 import { FlipTwentyToFifty } from '../motifs/FlipTwentyToFifty.jsx';
 import { SudokuBoard } from '../motifs/SudokuBoard.jsx';
+import { NeuralNet } from '../motifs/NeuralNet.jsx';
 import { useClimax } from '../climax/useClimax.js';
 
 export function Sandbox() {
@@ -26,6 +27,7 @@ export function Sandbox() {
   const [crashFilled, setCrashFilled] = useState(false);
   const [stampActive, setStampActive] = useState(false);
   const [highlightActive, setHighlightActive] = useState(false);
+  const [neuralActive, setNeuralActive] = useState(true);
   const shakeRef = useRef(null);
 
   const climaxAC = useClimax(['A', 'C']);
@@ -126,6 +128,14 @@ export function Sandbox() {
             <ThirteenStairs />
             <SudokuBoard />
           </div>
+        </section>
+
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>NeuralNet (live)</h2>
+          <div style={{ width: 480, height: 240, border: '4px solid #000', background: '#FFFDF5' }}>
+            <NeuralNet active={neuralActive} />
+          </div>
+          <button onClick={() => setNeuralActive(v => !v)} style={btn}>NeuralNet toggle</button>
         </section>
 
         <section style={{ marginTop: 48 }}>
