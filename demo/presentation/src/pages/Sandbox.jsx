@@ -18,6 +18,7 @@ import { GirlVeteran } from '../motifs/GirlVeteran.jsx';
 import { ThirteenStairs } from '../motifs/ThirteenStairs.jsx';
 import { FlipTwentyToFifty } from '../motifs/FlipTwentyToFifty.jsx';
 import { SudokuBoard } from '../motifs/SudokuBoard.jsx';
+import { SudokuBoardLive } from '../motifs/SudokuBoardLive.jsx';
 import { NeuralNet } from '../motifs/NeuralNet.jsx';
 import { useClimax } from '../climax/useClimax.js';
 
@@ -136,6 +137,25 @@ export function Sandbox() {
             <NeuralNet active={neuralActive} />
           </div>
           <button onClick={() => setNeuralActive(v => !v)} style={btn}>NeuralNet toggle</button>
+        </section>
+
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>SudokuBoardLive</h2>
+          <SudokuBoardLive
+            cells={[
+              [5,3,4, 6,7,8, 9,1,2],
+              [6,7,0, 1,9,5, 3,4,8],
+              [1,9,8, 3,4,2, 5,6,7],
+              [8,5,9, 7,6,1, 4,2,3],
+              [4,2,6, 8,5,3, 7,9,1],
+              [7,1,3, 9,2,4, 8,5,6],
+              [9,6,1, 5,3,7, 2,8,4],
+              [2,8,7, 4,1,9, 6,3,5],
+              [3,4,5, 2,8,6, 1,7,9],
+            ]}
+            highlights={[[1,2]]}
+            active
+          />
         </section>
 
         <section style={{ marginTop: 48 }}>
