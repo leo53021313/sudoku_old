@@ -23,4 +23,15 @@ describe('CounterUp', () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it('does not re-fire onComplete on parent re-render with a new onComplete reference', async () => {
+    vi.useFakeTimers();
+    const cb = vi.fn();
+    const { rerender } = render(<CounterUp from={0} to={5} duration={100} onComplete={() => cb()} />);
+    await act(async () => { vi.advanceTimersByTime(200); });
+    rerender(<CounterUp from={0} to={5} duration={100} onComplete={() => cb()} />);
+    await act(async () => { vi.advanceTimersByTime(200); });
+    expect(cb).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
 });

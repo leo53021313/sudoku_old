@@ -10,6 +10,13 @@ export function CounterUp({
 }) {
   const [value, setValue] = useState(from);
   const completedRef = useRef(false);
+  // 使用 latest-ref 模式：保存最新的 onComplete，避免父層每次 re-render 傳入新的
+  // inline arrow 導致 useEffect 依賴改變、動畫重啟、onComplete 重複觸發（無窮迴圈）。
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     completedRef.current = false;
@@ -24,12 +31,12 @@ export function CounterUp({
         raf = requestAnimationFrame(tick);
       } else if (!completedRef.current) {
         completedRef.current = true;
-        onComplete();
+        onCompleteRef.current();
       }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [from, to, duration, onComplete]);
+  }, [from, to, duration]);
 
   return (
     <div style={{
