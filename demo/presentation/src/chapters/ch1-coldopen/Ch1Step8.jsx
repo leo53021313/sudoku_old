@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 import { motion, useAnimate } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
-import { BoomDoubleRing } from '../../motifs/BoomDoubleRing.jsx';
+import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { YellowHighlight } from '../../motifs/YellowHighlight.jsx';
-import { AssetPlaceholder } from '../../components/AssetPlaceholder.jsx';
+import { AiSticker } from '../../components/AiSticker.jsx';
 
 export default function Ch1Step8() {
   const { beatIndex, advance, triggerShake } = usePresentationContext();
@@ -52,34 +52,46 @@ export default function Ch1Step8() {
         position: 'absolute', inset: 0, opacity: 0.35,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <AssetPlaceholder type="[E]" width={720} height={400} todo="ch1 s8 捷運背景" />
-        <div style={{
-          position: 'absolute', bottom: '14%', left: '8%',
-          background: '#FFD93D', color: '#000',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(-4deg)',
-          fontWeight: 900, fontSize: 24, borderRadius: 24,
-        }}>正妹發呆中</div>
-        <div style={{
-          position: 'absolute', top: '14%', right: '8%',
-          background: '#C4B5FD', color: '#000',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(3deg)',
-          fontWeight: 900, fontSize: 22, lineHeight: 1.2,
-        }}>Code Bullet<div style={{ fontSize: 16, marginTop: 4 }}>· flappy bird</div></div>
-        <div style={{
-          position: 'absolute', bottom: '14%', right: '8%',
-          background: '#FF6B6B', color: '#FFFDF5',
-          border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
-          padding: '16px 28px', transform: 'rotate(2deg)',
-          fontWeight: 900, fontSize: 24,
-        }}>沒手機·解數獨</div>
+        <img
+          src="/images/ai/ch1/mrt-window.png"
+          alt="台北捷運車廂內視"
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover', objectPosition: 'center',
+          }}
+        />
+        <div style={{ position: 'absolute', bottom: '14%', left: '8%' }}>
+          <AiSticker
+            src="/images/ai/ch1/girl-daydream.png"
+            alt="正妹發呆中"
+            width={280}
+            rotation={-4}
+            shadow={8}
+          />
+        </div>
+        <div style={{ position: 'absolute', top: '14%', right: '8%' }}>
+          <AiSticker
+            src="/images/ai/ch1/codebullet-flappy.png"
+            alt="Code Bullet flappy bird"
+            width={280}
+            rotation={3}
+            shadow={8}
+          />
+        </div>
+        <div style={{ position: 'absolute', bottom: '14%', right: '8%' }}>
+          <AiSticker
+            src="/images/ai/ch1/soldier-sudoku.png"
+            alt="軍人解數獨"
+            width={280}
+            rotation={2}
+            shadow={8}
+          />
+        </div>
       </div>
 
-      {/* Beat 0+ : BoomDoubleRing covers center */}
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-        <BoomDoubleRing active={beatIndex >= 0} size={320} />
-      </div>
+      {/* Beat 0+ : 聚光暈影 —— 壓暗四周忙碌的照片/貼紙，中央留亮，把焦點打在 punchline 卡片上 */}
+      <SpotlightVignette active={beatIndex >= 0} />
 
       {/* Beat 1+ : Cream BOOM card with "訓 練 AI 解 數 獨" */}
       <motion.div
@@ -105,7 +117,7 @@ export default function Ch1Step8() {
         解 數 獨
       </motion.div>
 
-      {/* Beat 2 : Punchline yellow highlight box (placeholder before; mask-reveal text on beat 2)
+      {/* Beat 2 : Punchline yellow highlight box (mask-reveal text on beat 2)
           Wrapper also performs C overshoot (scale keyframes) when beatIndex hits 2. */}
       <motion.div
         animate={beatIndex === 2
@@ -119,17 +131,8 @@ export default function Ch1Step8() {
           padding="16px 32px"
           style={{ fontSize: '2.5rem' }}
         >
-          靈感就是這麼 <em style={{ fontStyle: 'normal', color: '#FF6B6B' }}>莫名其妙</em> 地蹦出來
+          靈感就這麼 <em style={{ fontStyle: 'normal', color: '#FF6B6B' }}>莫名其妙</em> 地蹦出來
         </YellowHighlight>
-
-        {/* Placeholder underlying frame visible before beat 2 — shows users where the text will land. */}
-        {beatIndex < 2 && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            border: '4px dashed #FFD93D',
-            pointerEvents: 'none',
-          }} />
-        )}
       </motion.div>
     </main>
   );

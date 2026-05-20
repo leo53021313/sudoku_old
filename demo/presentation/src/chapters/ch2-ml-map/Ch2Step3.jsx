@@ -20,7 +20,7 @@ export default function Ch2Step3() {
           marginBottom: 48,
         }}
       >
-        機器學習 · ③/3
+        機器學習 · ②/3
       </motion.div>
 
       <motion.div
@@ -29,14 +29,10 @@ export default function Ch2Step3() {
         transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
         style={{
           fontWeight: 900, fontSize: '7rem', lineHeight: 1.05,
-          letterSpacing: '-0.04em', display: 'flex', alignItems: 'baseline', gap: 16,
+          letterSpacing: '-0.04em',
         }}
       >
-        <span style={{
-          background: '#FF6B6B', color: '#FFFDF5', padding: '0 20px',
-          border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
-        }}>RL</span>
-        <span style={{ fontSize: '3rem', color: '#666' }}>· reinforcement learning</span>
+        unsupervised
       </motion.div>
 
       <motion.div
@@ -49,42 +45,26 @@ export default function Ch2Step3() {
         }}
       >
         白話：<span style={{
-          background: '#FFD93D', padding: '4px 16px',
+          background: '#C4B5FD', padding: '4px 16px',
           border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
           marginLeft: 8,
-        }}>試錯加獎懲</span>
+        }}>自己分類整理</span>
       </motion.div>
 
-      {/* AlphaGo red stamp drops in last (climax, preserved) */}
-      <motion.div
-        initial={{ y: -200, scale: 0, opacity: 0, rotate: -8 }}
-        animate={{ y: 0, scale: 1, opacity: 1, rotate: -2 }}
-        transition={{ duration: 0.5, delay: 1.8, ease: [0.34, 1.56, 0.64, 1] }}
-        style={{
-          position: 'absolute', bottom: '20%', right: 96,
-          background: '#FF6B6B', color: '#FFFDF5',
-          border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-          padding: '20px 36px',
-          fontWeight: 900, fontSize: 32,
-        }}
-      >
-        AlphaGo · 打敗世界圍棋王
-      </motion.div>
-
-      {/* Dog handshake AI illustration (replaces 🐕 ↔ 🤝 emoji) */}
+      {/* Right-side AI illustration */}
       <motion.div
         initial={{ opacity: 0, x: 60 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 1.4 }}
+        transition={{ duration: 0.5, delay: 1.4, ease: 'easeOut' }}
         style={{
-          position: 'absolute', left: 64, top: '60%',
+          position: 'absolute', right: 64, top: '50%', transform: 'translateY(-50%)',
         }}
       >
         <AiSticker
-          src="/images/ai/ch2/dog-handshake.png"
-          alt="訓練狗握手"
+          src="/images/ai/ch2/folding-clothes.png"
+          alt="折衣服按顏色分類"
           width={420}
-          rotation={-3}
+          rotation={3}
           shadow={8}
         />
       </motion.div>

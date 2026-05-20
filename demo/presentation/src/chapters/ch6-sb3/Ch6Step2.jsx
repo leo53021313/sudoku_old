@@ -33,7 +33,7 @@ export default function Ch6Step2() {
         }}
       >
         只要他<br/>
-        <span style={{ background: '#FFD93D', padding: '4px 16px', border: '4px solid #000', boxShadow: '4px 4px 0 0 #000' }}>填對一格</span>
+        <span style={{ display: 'inline-block', margin: '12px 0', background: '#FFD93D', padding: '4px 16px', border: '4px solid #000', boxShadow: '4px 4px 0 0 #000' }}>填對一格</span>
         <br/>就給分數
         <motion.div
           initial={{ opacity: 0 }}

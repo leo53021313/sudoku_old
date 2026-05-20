@@ -41,16 +41,23 @@ export default function Ch9Step6() {
         {QUESTIONS.map((q, i) => (
           <motion.div
             key={i}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.4 + i * 0.15, ease: [0.34, 1.56, 0.64, 1] }}
-            whileHover={{ scale: 1.1, boxShadow: '16px 16px 0 0 #000' }}
+            initial={{ scale: 0, opacity: 0, rotate: q.rotate }}
+            animate={{
+              scale: 1, opacity: 1, rotate: q.rotate,
+              transition: { duration: 0.4, delay: 0.4 + i * 0.15, ease: [0.34, 1.56, 0.64, 1] },
+            }}
+            transition={{ type: 'spring', stiffness: 900, damping: 26 }}
+            whileHover={{
+              scale: 1.1,
+              rotate: q.rotate,
+              boxShadow: '16px 16px 0 0 #000',
+              transition: { duration: 0.2, ease: 'easeOut' },
+            }}
             style={{
               background: q.bg, color: q.color,
               padding: '28px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
               fontWeight: 900, fontSize: 24, textAlign: 'center', maxWidth: 360,
-              transform: `rotate(${q.rotate}deg)`, cursor: 'pointer',
-              transition: 'box-shadow 0.2s, transform 0.2s',
+              cursor: 'pointer',
             }}
           >
             {q.text}

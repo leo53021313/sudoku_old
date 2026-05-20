@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
-import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
 
 export default function Ch7Step6() {
   const { beatIndex, triggerShake } = usePresentationContext();
@@ -42,8 +41,6 @@ export default function Ch7Step6() {
       background: beatIndex >= 0 ? 'rgba(255,107,107,0.15)' : 'transparent',
       transition: 'background 0.3s',
     }}>
-      <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
-
       <motion.div
         initial={false}
         animate={beatIndex >= 0 ? { opacity: 1 } : { opacity: 0 }}
@@ -70,7 +67,7 @@ export default function Ch7Step6() {
           fontWeight: 700, fontSize: '2rem', textAlign: 'center',
         }}
       >
-        完整解出一道題的機率還是
+        完整解出一道題的機率是
         {beatIndex < 2 && (
           <motion.span
             animate={{ opacity: [1, 0] }}

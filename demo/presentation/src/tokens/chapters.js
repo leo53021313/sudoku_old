@@ -47,7 +47,7 @@ export const chapters = [
       { position: 'tr', shape: 'circle',   color: 'secondary', rotation: 10 },
       { position: 'bl', shape: 'triangle', color: 'muted',     rotation: 3 },
       { position: 'br', shape: 'square',   color: 'secondary', rotation: 38 },
-      { position: 'mc', shape: 'outline-question', color: 'accent', rotation: 8 },
+      { position: 'mr', shape: 'outline-question', color: 'accent', rotation: 8 },
     ],
   },
   {

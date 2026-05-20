@@ -5,7 +5,9 @@ export function YellowHighlight({ active = false, children, padding = '4px 12px'
   return (
     <motion.span
       initial={false}
-      animate={active ? { clipPath: 'inset(0 0 0 0)' } : { clipPath: 'inset(0 100% 0 0)' }}
+      // 展開後用四邊各擴 12px 的負值 inset：否則 inset(0 0 0 0) 貼著 border-box，
+      // 會把溢出框外的 box-shadow（右下 4px）裁掉。
+      animate={active ? { clipPath: 'inset(-12px)' } : { clipPath: 'inset(0px 100% 0px 0px)' }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className={className}
       style={{

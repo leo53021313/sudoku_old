@@ -11,7 +11,6 @@ import { CrashLine } from '../motifs/CrashLine.jsx';
 import { RedStamp } from '../motifs/RedStamp.jsx';
 import { YellowHighlight } from '../motifs/YellowHighlight.jsx';
 import { SpotlightVignette } from '../motifs/SpotlightVignette.jsx';
-import { HalftoneBurst } from '../motifs/HalftoneBurst.jsx';
 import { ScreenShake } from '../motifs/ScreenShake.jsx';
 import { GirlNew } from '../motifs/GirlNew.jsx';
 import { GirlVeteran } from '../motifs/GirlVeteran.jsx';
@@ -45,7 +44,6 @@ export function Sandbox() {
       <ChapterTint chapterId={chapterId} />
 
       <SpotlightVignette active={climaxFull.activeFX.G || climaxAC.activeFX.G} />
-      <HalftoneBurst active={climaxFull.activeFX.B || climaxAC.activeFX.B} />
 
       <main style={{ position: 'relative', zIndex: 20, padding: 32, fontFamily: 'Space Grotesk', overflowY: 'auto', height: '100vh' }}>
         <h1 style={{ fontSize: '3rem', fontWeight: 900, margin: 0 }}>Sandbox · 風格驗證</h1>
@@ -98,7 +96,7 @@ export function Sandbox() {
         <section style={{ marginTop: 32 }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900 }}>Climax FX (overlays + screen shake)</h2>
           <p style={{ marginTop: 8, fontSize: 14, fontWeight: 500, color: '#555' }}>
-            A = screen shake · B = halftone burst (center flash) · C = overshoot scale on target sticker · G = spotlight vignette (edges darken)
+            A = screen shake · C = overshoot scale on target sticker · G = spotlight vignette (edges darken)
           </p>
           <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => { climaxAC.play(); triggerShake(); }} style={btn}>輕量 A+C (shake + overshoot)</button>

@@ -33,6 +33,8 @@ export default function Ch8Step3() {
   }, []);
 
   const blanks = new Set(REMOVAL_SEQ.slice(0, count).map(([r, c]) => `${r}-${c}`));
+  // 最新一次被挖空的格子（count 從 3 起跳，初始 3 格不閃，之後每 +1 高亮新格）
+  const newestKey = count > 3 ? `${REMOVAL_SEQ[count - 1][0]}-${REMOVAL_SEQ[count - 1][1]}` : null;
 
   return (
     <main style={{
@@ -59,12 +61,29 @@ export default function Ch8Step3() {
         {BOARD.flatMap((row, r) =>
           row.map((val, c) => {
             const isEmpty = blanks.has(`${r}-${c}`);
+            const isNew = `${r}-${c}` === newestKey;
             const borderRight = (c + 1) % 3 === 0 && c < 8 ? '4px solid #000' : '1px solid #000';
             const borderBottom = (r + 1) % 3 === 0 && r < 8 ? '4px solid #000' : '1px solid #000';
             return (
               <motion.div
                 key={`${r}-${c}`}
-                animate={isEmpty ? { scale: [0.95, 1], background: ['#FFFDF5', '#FFFDF5'] } : {}}
+                animate={
+                  isNew
+                    // 最新挖空的格子：先塌縮、再過衝放大歸位，伴隨黃色閃光 + 紅色內框環，視覺上明確「又多一格」
+                    ? {
+                        scale: [0.35, 1.28, 1],
+                        backgroundColor: ['#FFD93D', '#FFD93D', '#FFFDF5'],
+                        boxShadow: [
+                          'inset 0 0 0 5px #FF5252',
+                          'inset 0 0 0 5px #FF5252',
+                          'inset 0 0 0 0px #FF5252',
+                        ],
+                      }
+                    : { scale: 1, backgroundColor: '#FFFDF5', boxShadow: 'inset 0 0 0 0px #FF5252' }
+                }
+                transition={isNew
+                  ? { duration: 0.45, times: [0, 0.4, 1], ease: 'easeOut' }
+                  : { duration: 0.2 }}
                 style={{
                   background: '#FFFDF5', color: '#000',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -81,13 +100,20 @@ export default function Ch8Step3() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontWeight: 900, fontSize: 24 }}>
         空格:
-        <span style={{
-          background: '#FFD93D', color: '#000',
-          padding: '4px 16px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
-          fontFamily: 'monospace', fontSize: 32, rotate: -2,
-        }}>
+        <motion.span
+          key={count}
+          initial={{ scale: 1.5 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+          style={{
+            display: 'inline-block',
+            background: '#FFD93D', color: '#000',
+            padding: '4px 16px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+            fontFamily: 'monospace', fontSize: 32, rotate: -2,
+          }}
+        >
           {count}
-        </span>
+        </motion.span>
         / 10
       </div>
     </main>

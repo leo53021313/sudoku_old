@@ -52,7 +52,7 @@ export default function Ch9Step1() {
         transition={{ duration: 0.9, delay: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
           marginTop: 16, fontWeight: 900, fontSize: '3rem',
-          background: '#000', color: '#FFFDF5',
+          background: '#FFFDF5', color: '#000',
           padding: '12px 32px', border: '4px solid #000', boxShadow: '8px 8px 0 0 #000',
         }}
       >

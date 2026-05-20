@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { useClimax } from '../../climax/useClimax.js';
-import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
 import { CounterUp } from '../../motifs/CounterUp.jsx';
 
 export default function Ch8Step4() {
@@ -15,8 +14,6 @@ export default function Ch8Step4() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32, gap: 32,
     }}>
-      <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
-
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

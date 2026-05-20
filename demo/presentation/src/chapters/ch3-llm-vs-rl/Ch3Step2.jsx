@@ -6,10 +6,11 @@ export default function Ch3Step2() {
       position: 'relative', zIndex: 20, height: '100vh',
       fontFamily: 'Space Grotesk', overflow: 'hidden', display: 'flex',
     }}>
-      {/* Left 60% — LLM */}
+      {/* Left 50% — LLM */}
       <div style={{
-        flex: '0 0 60%', padding: 64, position: 'relative',
-        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        flex: '0 0 50%', padding: 64, position: 'relative',
+        display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', alignItems: 'center', textAlign: 'center',
       }}>
         <div style={{ fontWeight: 900, fontSize: '6rem', color: '#000' }}>LLM</div>
         <motion.div
@@ -19,25 +20,28 @@ export default function Ch3Step2() {
           style={{
             marginTop: 24, background: '#FF6B6B', color: '#FFFDF5',
             padding: '20px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-            fontWeight: 900, fontSize: 32, rotate: -3, alignSelf: 'flex-start',
+            fontWeight: 900, fontSize: 32, rotate: -3, alignSelf: 'center',
           }}
         >
           LLM = 模仿
         </motion.div>
       </div>
 
-      {/* Center 6px divider + VS sticker */}
+      {/* Center 6px divider — sits BELOW the VS sticker (lower z-index) */}
       <div style={{
-        position: 'absolute', left: '60%', top: 0, bottom: 0, width: 6,
-        background: '#000',
+        position: 'absolute', left: '50%', top: 0, bottom: 0, width: 6,
+        background: '#000', transform: 'translateX(-50%)', zIndex: 1,
       }} />
+      {/* VS sticker — centered on the divider. Use motion x/y (not a raw
+          transform string) so the -50% centering composes with scale/rotate
+          instead of being clobbered by motion's transform handling. */}
       <motion.div
         initial={{ scale: 0, rotate: 0 }}
         animate={{ scale: 1, rotate: -10 }}
         transition={{ duration: 0.5, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
-          position: 'absolute', left: '60%', top: '50%',
-          transform: 'translate(-50%, -50%)',
+          position: 'absolute', left: '50%', top: '50%',
+          x: '-50%', y: '-50%',
           background: '#FFD93D', color: '#000',
           border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
           width: 120, height: 120, borderRadius: '50%',
@@ -48,21 +52,22 @@ export default function Ch3Step2() {
         VS
       </motion.div>
 
-      {/* Right 40% — 我的 AI */}
+      {/* Right 50% — 我的 AI */}
       <motion.div
         initial={{ clipPath: 'inset(0 0 0 100%)' }}
         animate={{ clipPath: 'inset(0 0 0 0)' }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{
-          flex: '0 0 40%', padding: 64, position: 'relative',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          flex: '0 0 50%', padding: 64, position: 'relative',
+          display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', alignItems: 'center', textAlign: 'center',
         }}
       >
         <div style={{ fontWeight: 900, fontSize: '4rem', color: '#000' }}>我的 AI</div>
 
         {/* Door icon (drawn as black-bordered rect for now) */}
         <div style={{
-          marginTop: 24, alignSelf: 'flex-start',
+          marginTop: 24, alignSelf: 'center',
           width: 100, height: 140, background: '#FFFFFF',
           border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
           position: 'relative',
@@ -80,7 +85,7 @@ export default function Ch3Step2() {
           style={{
             marginTop: 24, background: '#FFD93D', color: '#000',
             padding: '20px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-            fontWeight: 900, fontSize: 24, rotate: 3, alignSelf: 'flex-start',
+            fontWeight: 900, fontSize: 24, rotate: 3, alignSelf: 'center',
           }}
         >
           自己摸出規則

@@ -34,7 +34,7 @@ export default function Ch1Step3() {
           textAlign: 'center',
         }}
       >
-        <span style={{ WebkitTextStroke: '2px black', color: 'transparent' }}>訓 練</span>
+        <span style={{ color: '#000' }}>訓 練</span>
         <span style={{
           background: '#FF6B6B', color: '#FFFDF5',
           border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',

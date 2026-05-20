@@ -1,8 +1,8 @@
 // Render N squares (= flat.length) + chapter boundary yellow gaps — per outline-visual.md §9.5
-// Actual count: 85 beats (was 88 in plan but manifest has 85)
+// Actual count: 86 beats (manifest is source of truth — see beat-manifest.js)
 import { useState, useEffect, useMemo } from 'react';
 import { usePresentationContext } from '../state/PresentationContext.jsx';
-import { flattenBeats } from '../data/beat-manifest.js';
+import { flattenBeats, manifest } from '../data/beat-manifest.js';
 
 export function BeatIndicator() {
   const { globalBeatIdx, chapterId, stepId, beatIndex } = usePresentationContext();
@@ -44,7 +44,7 @@ export function BeatIndicator() {
       <div style={{
         marginLeft: 'auto', fontSize: 11, fontFamily: 'Space Grotesk', fontWeight: 700, color: '#666',
       }}>
-        step {flat.findIndex(f => f.chapterId === chapterId && f.stepId === stepId) + 1} / 57 · beat {beatIndex + 1} · ch {chapterId}
+        step {flat.findIndex(f => f.chapterId === chapterId && f.stepId === stepId) + 1} / {manifest.totalSteps} · beat {beatIndex + 1} · ch {chapterId}
       </div>
     </div>
   );

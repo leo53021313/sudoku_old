@@ -1,6 +1,8 @@
 import { motion } from 'motion/react';
+import { usePresentationContext } from '../../state/PresentationContext.jsx';
 
 export default function Ch4Step1() {
+  const { beatIndex } = usePresentationContext();
   return (
     <main style={{
       position: 'relative', zIndex: 20, height: '100vh',
@@ -54,11 +56,14 @@ export default function Ch4Step1() {
         ))}
       </div>
 
-      {/* 但問題來了 — 紅叉叉 burst climax */}
+      {/* Beat 1+ : 但問題來了 — 紅叉叉 burst climax。
+          由 beat 推進（左鍵）觸發，講解完再點，不再用 timer 自動爆出 */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 1.2, 1], opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1.5, ease: [0.34, 1.56, 0.64, 1] }}
+        initial={false}
+        animate={beatIndex >= 1
+          ? { scale: [0, 1.2, 1], opacity: 1 }
+          : { scale: 0, opacity: 0 }}
+        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -67,7 +72,8 @@ export default function Ch4Step1() {
       >
         <div style={{
           fontWeight: 900, fontSize: '8rem', color: '#FF6B6B',
-          WebkitTextStroke: '4px black', textShadow: '12px 12px 0 #000',
+          // 連續堆疊的硬陰影 = 立體擠出效果，讓紅字從背景大幅跳脫
+          textShadow: '3px 3px 0 #000, 6px 6px 0 #000, 9px 9px 0 #000, 12px 12px 0 #000, 16px 16px 0 #000, 20px 20px 24px rgba(0,0,0,0.4)',
           rotate: -5,
         }}>
           ✗ 但問題來了

@@ -1,5 +1,9 @@
 import { motion } from 'motion/react';
 
+// 擦入動畫的結束狀態用四邊各擴 24px 的負值 inset：否則 inset(0 0 0 0) 會貼著 border-box，
+// 把溢出的 box-shadow（右下）與 inline span 溢出 line box 的上下邊框一起裁掉。
+const REVEAL_END = 'inset(-24px)';
+
 export default function Ch8Step1() {
   return (
     <main style={{
@@ -18,8 +22,8 @@ export default function Ch8Step1() {
       />
 
       <motion.div
-        initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
-        animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
+        initial={{ clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
+        animate={{ clipPath: REVEAL_END, opacity: 1 }}
         transition={{ duration: 0.9, delay: 0.6, ease: 'easeOut' }}
         style={{
           fontWeight: 900, fontSize: '4rem', textAlign: 'center', lineHeight: 1.4,
@@ -39,7 +43,7 @@ export default function Ch8Step1() {
         transition={{ duration: 0.5, delay: 1.4 }}
         style={{ fontWeight: 700, fontSize: '1.5rem', color: '#666' }}
       >
-        之後從容面對老油條
+        之後從容面對各式各樣的老油條陷阱題
       </motion.div>
 
       <motion.div

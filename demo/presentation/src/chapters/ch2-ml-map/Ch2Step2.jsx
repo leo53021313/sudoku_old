@@ -9,6 +9,7 @@ export default function Ch2Step2() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32,
     }}>
+      {/* Kicker top */}
       <motion.div
         initial={{ y: -40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -20,9 +21,10 @@ export default function Ch2Step2() {
           marginBottom: 48,
         }}
       >
-        機器學習 · ②/3
+        機器學習 · ①/3
       </motion.div>
 
+      {/* Big "supervised" mask-reveal */}
       <motion.div
         initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
         animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
@@ -32,9 +34,10 @@ export default function Ch2Step2() {
           letterSpacing: '-0.04em',
         }}
       >
-        unsupervised
+        supervised
       </motion.div>
 
+      {/* Subtitle: 白話 */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -45,10 +48,10 @@ export default function Ch2Step2() {
         }}
       >
         白話：<span style={{
-          background: '#C4B5FD', padding: '4px 16px',
+          background: '#FFD93D', padding: '4px 16px',
           border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
           marginLeft: 8,
-        }}>自己分類整理</span>
+        }}>看著答案抄筆記</span>
       </motion.div>
 
       {/* Right-side AI illustration */}
@@ -61,10 +64,10 @@ export default function Ch2Step2() {
         }}
       >
         <AiSticker
-          src="/images/ai/ch2/folding-clothes.png"
-          alt="折衣服按顏色分類"
+          src="/images/ai/ch2/teacher-notes.png"
+          alt="老師教學、學生抄筆記"
           width={420}
-          rotation={3}
+          rotation={-2}
           shadow={8}
         />
       </motion.div>

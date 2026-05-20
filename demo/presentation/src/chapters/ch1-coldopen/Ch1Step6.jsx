@@ -29,16 +29,19 @@ export default function Ch1Step6() {
         />
       </div>
 
-      {/* ⋯⋯ ellipsis bubble above girl — stamp-in + pulse (preserved) */}
+      {/* ⋯⋯ ellipsis bubble above girl — stamp-in + pulse (preserved).
+          水平：錨在女生示意圖中心（left 8% + 半寬 144px），用 motion x:'-50%' 置中。
+          垂直：bottom = 女生 bottom 14% + 約 307px 高（含 -4° 旋轉外擴）+ 13px 間隙，
+          讓泡泡底緣超過女生最上方框限、完全不覆蓋到圖。 */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 1, 1], opacity: 1 }}
+        initial={{ scale: 0, opacity: 0, x: '-50%' }}
+        animate={{ scale: [0, 1, 1], opacity: 1, x: '-50%' }}
         transition={{
           scale: { duration: 0.3, ease: [0.34, 1.56, 0.64, 1] },
           opacity: { duration: 0.3 },
         }}
         style={{
-          position: 'absolute', bottom: '34%', left: '12%',
+          position: 'absolute', bottom: 'calc(14% + 320px)', left: 'calc(8% + 144px)',
         }}
       >
         <motion.div

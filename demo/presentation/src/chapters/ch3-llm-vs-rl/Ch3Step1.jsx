@@ -14,7 +14,8 @@ export default function Ch3Step1() {
         style={{
           position: 'absolute', top: 0, bottom: 0, left: 0, width: '60%',
           background: 'transparent', padding: 64,
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', alignItems: 'center', textAlign: 'center',
         }}
       >
         {/* Background scrolling text grid (subtle low-density) */}
@@ -51,7 +52,7 @@ export default function Ch3Step1() {
           transition={{ duration: 0.4, delay: 1.0 }}
           style={{
             background: '#C4B5FD', color: '#000',
-            padding: '8px 20px', alignSelf: 'flex-start',
+            padding: '8px 20px', alignSelf: 'center',
             border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
             fontWeight: 900, fontSize: 22, marginTop: 16, rotate: -2,
             position: 'relative', zIndex: 1,

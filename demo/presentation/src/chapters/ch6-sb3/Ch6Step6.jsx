@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
-import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
 
 export default function Ch6Step6() {
   const { beatIndex, triggerShake } = usePresentationContext();
@@ -45,7 +44,6 @@ export default function Ch6Step6() {
 
       {/* Climax overlays — only render when beatIndex 2 + climax fires */}
       <SpotlightVignette active={climax.activeFX.G} />
-      <HalftoneBurst active={climax.activeFX.B} centerX="50%" centerY="50%" />
 
       {/* Beat 1+ red placeholder + fill on beat 2 */}
       <motion.div

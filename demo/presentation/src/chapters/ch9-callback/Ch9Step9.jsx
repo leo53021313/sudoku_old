@@ -36,8 +36,8 @@ export default function Ch9Step9() {
       </div>
 
       <motion.div
-        initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
-        animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
+        initial={{ clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
+        animate={{ clipPath: 'inset(-24px)', opacity: 1 }}
         transition={{ duration: 1.0, delay: 1.4, ease: 'easeOut' }}
         style={{
           fontWeight: 900, fontSize: '3rem', textAlign: 'center', lineHeight: 1.4,

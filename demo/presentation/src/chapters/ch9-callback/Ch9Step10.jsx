@@ -1,13 +1,19 @@
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePresentationContext } from '../../state/PresentationContext.jsx';
 
+// 三個 beat（左鍵點擊推進，取代原本的 9s setTimeout）：
+//   beat 0 → 極度的 I 人（100% I 圓餅）
+//   beat 1 → 明明我很 E（黃色貼紙吐槽）
+//   beat 2 → 業務工作（I→E 進度條跑完 4s 後，右邊才浮出 30% I 圓餅）
 export default function Ch9Step10() {
-  const [phase, setPhase] = useState(1);
-
+  const { beatIndex } = usePresentationContext();
+  const isPhase2 = beatIndex >= 2;
+  // 進度條 4s 動畫跑完才顯示右邊的 30% 圓餅；退回 beat 時重置
+  const [barDone, setBarDone] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setPhase(2), 9000);
-    return () => clearTimeout(t);
-  }, []);
+    if (!isPhase2) setBarDone(false);
+  }, [isPhase2]);
 
   return (
     <main style={{
@@ -26,46 +32,43 @@ export default function Ch9Step10() {
       </motion.div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 48, marginTop: 24 }}>
-        {/* MBTI Pie chart — phase 1 full 100% I, phase 2 shrinks to side */}
-        <motion.svg
-          animate={{ width: phase === 1 ? 240 : 120, height: phase === 1 ? 240 : 120 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          viewBox="0 0 100 100"
-          style={{ flex: '0 0 auto' }}
-        >
-          <circle cx="50" cy="50" r="45" fill="#FFFDF5" stroke="#000" strokeWidth="6" />
-          {phase === 1 ? (
-            <motion.circle
-              cx="50" cy="50" r="45" fill="#C4B5FD" stroke="#000" strokeWidth="6"
-              initial={{ strokeDasharray: '0 283', strokeDashoffset: 0 }}
-              animate={{ strokeDasharray: '283 0', strokeDashoffset: 0 }}
-              transition={{ duration: 1.5 }}
-              style={{ transformOrigin: 'center', transform: 'rotate(-90deg)' }}
-            />
-          ) : (
-            // Phase 2: 30% I (purple), 70% E? — represent as partial pie
-            <path d="M 50 5 A 45 45 0 0 1 90 65 L 50 50 Z" fill="#C4B5FD" stroke="#000" strokeWidth="6" />
-          )}
-          <text x="50" y="55" textAnchor="middle" fontWeight="900" fontSize="24" fontFamily="Space Grotesk">
-            I {phase === 1 ? '100%' : '30%'}
-          </text>
-        </motion.svg>
+        {/* beat 0/1：100% I 圓餅 + 極度 I 人貼紙（beat 2 整組收起） */}
+        {!isPhase2 && (
+          <>
+            <svg width={240} height={240} viewBox="0 0 100 100" style={{ flex: '0 0 auto' }}>
+              <circle cx="50" cy="50" r="45" fill="#FFFDF5" stroke="#000" strokeWidth="6" />
+              <motion.circle
+                cx="50" cy="50" r="45" fill="#C4B5FD" stroke="#000" strokeWidth="6"
+                initial={{ strokeDasharray: '0 283', strokeDashoffset: 0 }}
+                animate={{ strokeDasharray: '283 0', strokeDashoffset: 0 }}
+                transition={{ duration: 1.5 }}
+                style={{ transformOrigin: 'center', transform: 'rotate(-90deg)' }}
+              />
+              {/* donut hole：白底蓋掉切片黑線，細內框；加大半徑讓數字不被遮 */}
+              <circle cx="50" cy="50" r="32" fill="#FFFDF5" stroke="#000" strokeWidth="2" />
+              <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
+                fontWeight="900" fontSize="16" fontFamily="Space Grotesk" fill="#000">
+                I 100%
+              </text>
+            </svg>
 
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.6, ease: [0.34, 1.56, 0.64, 1] }}
-          style={{
-            background: '#C4B5FD', color: '#000',
-            padding: '24px 40px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
-            fontWeight: 900, fontSize: 28, rotate: -3,
-          }}
-        >
-          極度 I 人
-        </motion.div>
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.6, ease: [0.34, 1.56, 0.64, 1] }}
+              style={{
+                background: '#C4B5FD', color: '#000',
+                padding: '24px 40px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
+                fontWeight: 900, fontSize: 28, rotate: -3,
+              }}
+            >
+              極度 I 人
+            </motion.div>
+          </>
+        )}
 
-        {/* Phase 2 only: 業務工作 sticker + I→E bar */}
-        {phase === 2 && (
+        {/* beat 2：業務工作貼紙 + I→E 進度條 +（4s 後）右邊 30% 圓餅 */}
+        {isPhase2 && (
           <>
             <motion.div
               initial={{ scale: 0 }}
@@ -87,6 +90,7 @@ export default function Ch9Step10() {
                   initial={{ left: '0%' }}
                   animate={{ left: '60%' }}
                   transition={{ duration: 4, ease: 'easeInOut' }}
+                  onAnimationComplete={() => setBarDone(true)}
                   style={{
                     position: 'absolute', top: -4, width: 12, height: 48,
                     background: '#000', border: '2px solid #FFFDF5',
@@ -97,22 +101,43 @@ export default function Ch9Step10() {
                 <span>I 0%</span><span>E 100%</span>
               </div>
             </div>
+
+            {/* 進度條跑完才浮出的 30% I 圓餅 */}
+            {barDone && (
+              <motion.svg
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+                width={150} height={150} viewBox="0 0 100 100" style={{ flex: '0 0 auto' }}
+              >
+                <circle cx="50" cy="50" r="45" fill="#FFFDF5" stroke="#000" strokeWidth="6" />
+                <path d="M 50 5 A 45 45 0 0 1 90 65 L 50 50 Z" fill="#C4B5FD" stroke="#000" strokeWidth="6" />
+                {/* donut hole：白底蓋掉切片黑線，細內框；加大半徑讓數字不被遮 */}
+                <circle cx="50" cy="50" r="32" fill="#FFFDF5" stroke="#000" strokeWidth="2" />
+                <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
+                  fontWeight="900" fontSize="16" fontFamily="Space Grotesk" fill="#000">
+                  I 30%
+                </text>
+              </motion.svg>
+            )}
           </>
         )}
       </div>
 
-      {phase === 1 && (
+      {/* beat 1：明明我很 E（beat 2 換成解釋字幕） */}
+      {beatIndex === 1 && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 2.0 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
           style={{ fontWeight: 700, fontSize: '1.5rem' }}
         >
           <span style={{ background: '#FFD93D', padding: '2px 12px', border: '4px solid #000' }}>明明我很 E</span>
         </motion.div>
       )}
 
-      {phase === 2 && (
+      {/* beat 2：解釋字幕 */}
+      {isPhase2 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -34,6 +34,43 @@ describe('SudokuBoardLive', () => {
     cells.forEach(c => expect(c.textContent).toBe(''));
   });
 
+  it('frame is flush with the SVG edge; internal lines stay inside the frame', () => {
+    // Two bugs guarded here:
+    //  - internal lines spanning the full 0→SIZE extent → ends poked past the
+    //    frame as stubs ("每條線都會跑出邊框");
+    //  - frame inset from the SVG edge → a gap between the frame and the offset
+    //    box-shadow ("陰影對齊").
+    const SIZE = 540;
+    const STROKE_OUTER = 6;
+    const half = STROKE_OUTER / 2;
+    const { container } = render(<SudokuBoardLive cells={SOLVED} active={false} />);
+    const lines = Array.from(container.querySelectorAll('[data-role="grid-line"]'));
+
+    let frameCount = 0;
+    lines.forEach((ln) => {
+      const x1 = Number(ln.getAttribute('x1'));
+      const y1 = Number(ln.getAttribute('y1'));
+      const x2 = Number(ln.getAttribute('x2'));
+      const y2 = Number(ln.getAttribute('y2'));
+      const isVertical = x1 === x2;
+      const pos = isVertical ? x1 : y1;
+      const spanLo = isVertical ? Math.min(y1, y2) : Math.min(x1, x2);
+      const spanHi = isVertical ? Math.max(y1, y2) : Math.max(x1, x2);
+      const isFrame = pos === half || pos === SIZE - half;
+      if (isFrame) {
+        frameCount++;
+        // outer edge flush with SVG (shadow aligns) + full span for square corners
+        expect(spanLo).toBe(0);
+        expect(spanHi).toBe(SIZE);
+      } else {
+        // internal lines stop at the frame inner edge — no protruding stubs
+        expect(spanLo).toBeGreaterThanOrEqual(STROKE_OUTER);
+        expect(spanHi).toBeLessThanOrEqual(SIZE - STROKE_OUTER);
+      }
+    });
+    expect(frameCount).toBe(4);
+  });
+
   it('marks highlighted cells with data-highlight="true"', () => {
     const { container } = render(
       <SudokuBoardLive cells={SOLVED} highlights={[[0,0],[4,4]]} active={false} />

@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
-import { HalftoneBurst } from '../../motifs/HalftoneBurst.jsx';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
 
 export default function Ch7Step7() {
@@ -48,8 +47,6 @@ export default function Ch7Step7() {
       fontFamily: 'Space Grotesk', padding: 32, gap: 24,
     }}>
       <SpotlightVignette active={climaxA.activeFX.G || climaxB.activeFX.G} />
-      <HalftoneBurst active={climaxBoth.activeFX.B} centerX="30%" centerY="65%" size={400} />
-      <HalftoneBurst active={climaxBoth.activeFX.B} centerX="70%" centerY="65%" size={400} />
 
       {/* The 'asker' character — appears on beat 0 alongside hero */}
       <motion.div
@@ -68,14 +65,14 @@ export default function Ch7Step7() {
       {/* Beat 0: hero */}
       <motion.div
         initial={false}
-        animate={beatIndex >= 0 ? { clipPath: 'inset(0 0 0 0)', opacity: 1 } : { clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
+        animate={beatIndex >= 0 ? { clipPath: 'inset(-24px)', opacity: 1 } : { clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
         transition={{ duration: 0.8 }}
         style={{
           fontWeight: 900, fontSize: '3rem',
         }}
       >
         <span style={{ background: '#FFD93D', padding: '4px 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000' }}>
-          老油條女生陷阱題
+          女生陷阱題
         </span>
       </motion.div>
 
@@ -109,9 +106,14 @@ export default function Ch7Step7() {
         </motion.div>
       </div>
 
-      {/* Answer arrows + placeholders */}
+      {/* Answer arrows + placeholders — 整列等到 beat 2「你覺得我該不該去運動」出現後才顯示 */}
       <div style={{ display: 'flex', gap: 48, marginTop: 32 }}>
-        <div style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}>
+        <motion.div
+          initial={false}
+          animate={{ opacity: beatIndex >= 2 ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}
+        >
           說要 →
           <motion.span
             initial={false}
@@ -128,8 +130,13 @@ export default function Ch7Step7() {
           >
             {beatIndex >= 3 ? '❌ 嫌那個女生胖' : '❌ ???'}
           </motion.span>
-        </div>
-        <div style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}>
+        </motion.div>
+        <motion.div
+          initial={false}
+          animate={{ opacity: beatIndex >= 2 ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}
+        >
           說不用 →
           <motion.span
             initial={false}
@@ -146,7 +153,7 @@ export default function Ch7Step7() {
           >
             {beatIndex >= 4 ? '❌ 你不關心健康' : '❌ ???'}
           </motion.span>
-        </div>
+        </motion.div>
       </div>
 
       {beatIndex >= 5 && (

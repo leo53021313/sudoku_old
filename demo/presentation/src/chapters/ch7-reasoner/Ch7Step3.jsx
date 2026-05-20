@@ -1,28 +1,25 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 
+// 難度進程靠「顏色三階（黃→紫→紅）」+「左低右高攀升」表達，所有 sticker 高度一致、寬度隨字數變。
 const TECHS = [
-  { name: 'Naked Single', size: 'sm', color: '#FFD93D', tip: '一格只能填一個數' },
-  { name: 'Hidden Single', size: 'sm', color: '#FFD93D', tip: '一個數字在一行/列/區只有一處能填' },
-  { name: 'Box-Line', size: 'sm', color: '#FFD93D', tip: '區內某數限制於某行/列' },
-  { name: 'Pointing Pair', size: 'sm', color: '#FFD93D', tip: '兩格限定一行/列' },
-  { name: 'Naked Pair', size: 'md', color: '#C4B5FD', tip: '兩格共用兩個候選數' },
-  { name: 'Naked Triple', size: 'md', color: '#C4B5FD', tip: '三格共用三個候選數' },
-  { name: 'Hidden Pair', size: 'md', color: '#C4B5FD', tip: '兩個數只能在兩格中之一' },
-  { name: 'Hidden Triple', size: 'md', color: '#C4B5FD', tip: '三個數只能在三格中' },
-  { name: 'XY-Wing', size: 'lg', color: '#FF6B6B', tip: 'Y-shaped 三格鏈消除' },
-  { name: 'XYZ-Wing', size: 'lg', color: '#FF6B6B', tip: 'XYZ 變體三格鏈' },
-  { name: 'Swordfish', size: 'lg', color: '#FF6B6B', tip: '三行三列交叉消除' },
-  { name: 'X-Wing', size: 'xl', color: '#FF6B6B', tip: '兩行兩列交叉、最強招之一' },
-  { name: 'T&E (試錯)', size: 'xl', color: '#FF6B6B', tip: 'Trial and Error 暴力試' },
+  { name: 'Naked Single', color: '#FFD93D', tip: '一格只能填一個數' },
+  { name: 'Hidden Single', color: '#FFD93D', tip: '一個數字在一行/列/區只有一處能填' },
+  { name: 'Box-Line', color: '#FFD93D', tip: '區內某數限制於某行/列' },
+  { name: 'Pointing Pair', color: '#FFD93D', tip: '兩格限定一行/列' },
+  { name: 'Naked Pair', color: '#C4B5FD', tip: '兩格共用兩個候選數' },
+  { name: 'Naked Triple', color: '#C4B5FD', tip: '三格共用三個候選數' },
+  { name: 'Hidden Pair', color: '#C4B5FD', tip: '兩個數只能在兩格中之一' },
+  { name: 'Hidden Triple', color: '#C4B5FD', tip: '三個數只能在三格中' },
+  { name: 'XY-Wing', color: '#FF6B6B', tip: 'Y-shaped 三格鏈消除' },
+  { name: 'XYZ-Wing', color: '#FF6B6B', tip: 'XYZ 變體三格鏈' },
+  { name: 'Swordfish', color: '#FF6B6B', tip: '三行三列交叉消除' },
+  { name: 'X-Wing', color: '#FF6B6B', tip: '兩行兩列交叉、最強招之一' },
+  { name: 'T&E (試錯)', color: '#FF6B6B', tip: 'Trial and Error 暴力試' },
 ];
 
-const SIZE_MAP = {
-  sm: { padding: '8px 16px', fontSize: 14, shadow: '4px 4px 0 0 #000' },
-  md: { padding: '12px 20px', fontSize: 16, shadow: '6px 6px 0 0 #000' },
-  lg: { padding: '16px 28px', fontSize: 20, shadow: '8px 8px 0 0 #000' },
-  xl: { padding: '20px 36px', fontSize: 26, shadow: '12px 12px 0 0 #000' },
-};
+// 統一尺寸（高度固定，寬度由內容決定）；shadow 一致
+const STICKER = { padding: '11px 18px', fontSize: 16, shadow: '5px 5px 0 0 #000' };
 
 export default function Ch7Step3() {
   const [hoverIdx, setHoverIdx] = useState(-1);
@@ -51,9 +48,11 @@ export default function Ch7Step3() {
         position: 'relative', width: 1000, height: 540,
       }}>
         {TECHS.map((t, i) => {
-          const sz = SIZE_MAP[t.size];
-          const x = (i / TECHS.length) * 90;
-          const y = 95 - (i / TECHS.length) * 85;
+          // 從左到右逐步攀升：x 往右、y 往上（bottom% 遞增），代表一招比一招難。
+          // 均勻間距 + 統一高度：垂直步距 ≥ 一張的高度，每張都完全在前一張上方，文字不會被覆蓋。
+          const p = i / (TECHS.length - 1);
+          const x = p * 72;
+          const y = 3 + p * 87;
           const isHovered = i === hoverIdx;
           return (
             <motion.div
@@ -70,13 +69,14 @@ export default function Ch7Step3() {
               style={{
                 position: 'absolute', left: `${x}%`, bottom: `${y}%`,
                 background: t.color, color: '#000',
-                ...sz,
-                border: '4px solid #000', boxShadow: sz.shadow, fontWeight: 900,
+                ...STICKER,
+                border: '4px solid #000', boxShadow: STICKER.shadow, fontWeight: 900,
                 transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (3 + i % 4)}deg)`,
                 opacity: hoverIdx === -1 ? 1 : isHovered ? 1 : 0.4,
                 cursor: 'pointer', whiteSpace: 'nowrap',
                 transition: 'opacity 0.2s',
-                zIndex: isHovered ? 20 : 1,
+                // 較早（左下、簡單）的 sticker 疊在上層，後面 sticker 的外框就不會蓋到前一個的文字
+                zIndex: isHovered ? 50 : TECHS.length - i,
               }}
             >
               {t.name}

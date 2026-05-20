@@ -34,34 +34,29 @@ export default function Ch9Step4() {
           />
         </motion.div>
 
-        {/* Center bidirectional arrow overlay with cream backplate for legibility */}
+        {/* Center "≈" analogy badge — sits in the empty gap between bird and airplane (鳥 ≈ 飛機) */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.7 }}
+          initial={{ opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
           style={{
-            position: 'absolute', left: '50%', top: '50%',
+            position: 'absolute', left: '42%', top: '10%',
             transform: 'translate(-50%, -50%) rotate(-3deg)',
+            minWidth: 92, height: 56,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '0 22px',
             background: '#FFFDF5',
             border: '4px solid #000',
-            boxShadow: '6px 6px 0 0 #000',
-            padding: '12px 20px',
+            borderRadius: 999,
+            boxShadow: '4px 4px 0 0 #000',
             zIndex: 5,
-            lineHeight: 0,
+            fontWeight: 900,
+            fontSize: '2.4rem',
+            lineHeight: 1,
+            color: '#000',
           }}
         >
-          <motion.svg
-            width="100" height="32" viewBox="0 0 120 40"
-            style={{ overflow: 'visible', display: 'block' }}
-          >
-            <motion.path
-              d="M 10 20 L 20 10 L 10 20 L 110 20 L 100 30 L 110 20 L 100 10"
-              fill="none" stroke="#000" strokeWidth="6" strokeLinecap="square"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.6, delay: 1.1 }}
-            />
-          </motion.svg>
+          ↔
         </motion.div>
       </div>
 

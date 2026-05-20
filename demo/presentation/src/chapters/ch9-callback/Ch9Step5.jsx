@@ -83,8 +83,8 @@ export default function Ch9Step5() {
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '5%', width: '40%' }}>
           <div style={{
             position: 'absolute', top: 80,
-            fontWeight: 900, fontSize: 20, background: '#10B981', color: '#FFF',
-            padding: '8px 20px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+            fontWeight: 900, fontSize: 32, background: '#10B981', color: '#FFF',
+            padding: '14px 32px', border: '6px solid #000', boxShadow: '9px 9px 0 0 #000',
           }}>回訊息</div>
           {pluses.map(p => (
             <motion.div
@@ -107,15 +107,15 @@ export default function Ch9Step5() {
         <div style={{ position: 'absolute', top: 0, bottom: 0, right: '5%', width: '40%' }}>
           <div style={{
             position: 'absolute', top: 80, right: 0,
-            fontWeight: 900, fontSize: 20, background: '#FF6B6B', color: '#FFF',
-            padding: '8px 20px', border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
+            fontWeight: 900, fontSize: 32, background: '#FF6B6B', color: '#FFF',
+            padding: '14px 32px', border: '6px solid #000', boxShadow: '9px 9px 0 0 #000',
           }}>已讀不回</div>
           {minuses.map(m => (
             <motion.div
               key={m.id}
-              initial={{ y: -300, opacity: 1 }}
+              initial={{ y: 0, opacity: 1 }}
               animate={{ y: 400, opacity: 0 }}
-              transition={{ duration: 2.5, ease: 'easeIn' }}
+              transition={{ duration: 2.5, ease: 'easeOut' }}
               style={{
                 position: 'absolute', top: 0, right: `${m.x}%`,
                 fontSize: 40, fontWeight: 900, color: '#FF6B6B',

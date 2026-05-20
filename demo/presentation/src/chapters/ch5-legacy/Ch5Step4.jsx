@@ -27,7 +27,7 @@ export default function Ch5Step4() {
         animate={{ clipPath: 'inset(0 0 0 0)', opacity: 1 }}
         transition={{ duration: 1.2, ease: 'easeOut' }}
         style={{
-          fontWeight: 900, fontSize: '3rem', textAlign: 'center', lineHeight: 1.5,
+          fontWeight: 900, fontSize: '3rem', textAlign: 'center', lineHeight: 1.9,
           maxWidth: 1200,
         }}
       >
@@ -58,7 +58,7 @@ export default function Ch5Step4() {
 function KeywordSpan({ idx, active, text }) {
   return (
     <span style={{ position: 'relative', display: 'inline-block' }}>
-      <YellowHighlight active={active} padding="2px 12px">{text}</YellowHighlight>
+      <YellowHighlight active={active} padding="2px 12px" style={{ lineHeight: 1.1 }}>{text}</YellowHighlight>
     </span>
   );
 }

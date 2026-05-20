@@ -5,22 +5,42 @@ const STROKE_OUTER = 6;
 const STROKE_BOX = 4;
 const STROKE_THIN = 1;
 
+// Number pop-in timing (last cell = index 80). The drop shadow appears only
+// after the last number lands, so the board "lands" once it's fully drawn.
+const NUMBER_BASE_DELAY = 1.8;
+const NUMBER_STAGGER = 0.015;
+const NUMBER_DURATION = 0.4;
+const SHADOW_DELAY = NUMBER_BASE_DELAY + 80 * NUMBER_STAGGER + NUMBER_DURATION;
+const SHADOW_ON = '12px 12px 0 0 #000';
+const SHADOW_OFF = '0px 0px 0 0 #000';
+
 export function SudokuBoardLive({ cells, highlights = [], active = true }) {
   const cellSize = (SIZE - STROKE_OUTER * 2) / 9;
   const highlightSet = new Set(highlights.map(([r, c]) => `${r}-${c}`));
 
+  const half = STROKE_OUTER / 2;
   const lines = [];
   for (let i = 0; i <= 9; i++) {
-    const x = STROKE_OUTER + i * cellSize;
     const isEdge = i === 0 || i === 9;
     const sw = isEdge ? STROKE_OUTER : (i % 3 === 0) ? STROKE_BOX : STROKE_THIN;
-    lines.push({ key: `v${i}`, x1: x, y1: 0, x2: x, y2: SIZE, sw });
-    lines.push({ key: `h${i}`, x1: 0, y1: STROKE_OUTER + i * cellSize, x2: SIZE, y2: STROKE_OUTER + i * cellSize, sw });
+    // Frame lines (i=0/9) sit flush with the SVG edge: centered at STROKE_OUTER/2
+    // so their outer edge lands on 0 / SIZE and the offset box-shadow butts
+    // directly against them with no gap. They span the full extent for square
+    // corners. Internal lines align to the cell grid and stop at the frame's
+    // inner edge so their ends hide under the border (no protruding stubs).
+    const pos = i === 0 ? half : i === 9 ? SIZE - half : STROKE_OUTER + i * cellSize;
+    const lo = isEdge ? 0 : STROKE_OUTER;
+    const hi = isEdge ? SIZE : SIZE - STROKE_OUTER;
+    lines.push({ key: `v${i}`, x1: pos, y1: lo, x2: pos, y2: hi, sw });
+    lines.push({ key: `h${i}`, x1: lo, y1: pos, x2: hi, y2: pos, sw });
   }
 
   return (
-    <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
-         style={{ background: '#FFFDF5', boxShadow: '12px 12px 0 0 #000' }}>
+    <motion.svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
+         style={{ background: '#FFFDF5' }}
+         initial={{ boxShadow: active ? SHADOW_OFF : SHADOW_ON }}
+         animate={{ boxShadow: SHADOW_ON }}
+         transition={{ duration: 0.25, delay: active ? SHADOW_DELAY : 0, ease: [0.34, 1.56, 0.64, 1] }}>
       {lines.map((ln, i) => (
         <motion.line
           key={ln.key}
@@ -56,8 +76,8 @@ export function SudokuBoardLive({ cells, highlights = [], active = true }) {
                 initial={active ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{
-                  duration: 0.4,
-                  delay: active ? 1.8 + (r * 9 + c) * 0.015 : 0,
+                  duration: NUMBER_DURATION,
+                  delay: active ? NUMBER_BASE_DELAY + (r * 9 + c) * NUMBER_STAGGER : 0,
                   ease: [0.34, 1.56, 0.64, 1],
                 }}
               >{val}</motion.text>
@@ -65,6 +85,6 @@ export function SudokuBoardLive({ cells, highlights = [], active = true }) {
           </g>
         );
       }))}
-    </svg>
+    </motion.svg>
   );
 }

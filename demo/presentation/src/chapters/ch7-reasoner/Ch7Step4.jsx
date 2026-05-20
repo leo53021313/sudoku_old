@@ -6,7 +6,11 @@ export default function Ch7Step4() {
       position: 'relative', zIndex: 20, height: '100vh',
       fontFamily: 'Space Grotesk', display: 'flex',
     }}>
-      <div style={{ flex: '0 0 60%', padding: 64, borderRight: '6px solid #000' }}>
+      <div style={{
+        flex: '0 0 50%', padding: 64, borderRight: '6px solid #000',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+      }}>
         <motion.div
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -15,7 +19,7 @@ export default function Ch7Step4() {
         >
           舊：<span style={{ background: '#999', color: '#FFF', padding: '4px 16px' }}>填對給分</span>
         </motion.div>
-        {/* one tech glow + single +1 */}
+        {/* one tech glow + repeating +1 */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -31,19 +35,26 @@ export default function Ch7Step4() {
         <motion.div
           initial={{ y: 0, opacity: 0 }}
           animate={{ y: -60, opacity: [0, 1, 0] }}
-          transition={{ duration: 1.2, delay: 1.0 }}
-          style={{ fontWeight: 900, fontSize: 36, color: '#10B981', marginLeft: 200 }}
+          transition={{
+            duration: 1.2, delay: 1.0,
+            repeat: Infinity, repeatDelay: 0.3,
+          }}
+          style={{ fontWeight: 900, fontSize: 36, color: '#10B981', marginTop: 12 }}
         >
           +1
         </motion.div>
       </div>
 
-      <div style={{ flex: '0 0 40%', padding: 64, position: 'relative' }}>
+      <div style={{
+        flex: '0 0 50%', padding: 64,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+      }}>
         <motion.div
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          style={{ fontWeight: 900, fontSize: '2rem', marginBottom: 24 }}
+          style={{ fontWeight: 900, fontSize: '2rem', marginBottom: 32, textAlign: 'center' }}
         >
           新：<span style={{ background: '#FFD93D', padding: '4px 12px', border: '4px solid #000', fontSize: '1.5rem' }}>哪一招解釋？</span>
         </motion.div>
@@ -59,8 +70,8 @@ export default function Ch7Step4() {
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.4, delay: t.delay }}
             style={{
-              position: 'absolute', top: 160 + t.y, left: 64,
               display: 'flex', alignItems: 'center', gap: 16,
+              marginBottom: 20, width: 280, justifyContent: 'space-between',
             }}
           >
             <span style={{

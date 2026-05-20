@@ -1,10 +1,10 @@
-// Beat manifest — encodes all 85 beats across 9 chapters / 57 steps.
+// Beat manifest — encodes all 90 beats across 9 chapters / 58 steps.
 // Source of truth: demo/outline.md per-step descriptions.
 
 export const manifest = {
   totalChapters: 9,
-  totalSteps: 57,
-  totalBeats: 85,
+  totalSteps: 58,
+  totalBeats: 90,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -26,12 +26,13 @@ export const manifest = {
       ],
     },
     {
-      id: 2, name: 'ml-map', narrative: 'supervised→unsupervised→RL+AlphaGo→cliffhanger',
+      id: 2, name: 'ml-map', narrative: '三大分支總覽→supervised→unsupervised→RL+AlphaGo→cliffhanger',
       steps: [
-        { id: 1, title: 'supervised',   duration: 14, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L49-55' }] },
-        { id: 2, title: 'unsupervised', duration: 13, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L57-61' }] },
-        { id: 3, title: 'RL+AlphaGo',   duration: 15, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L63-67' }] },
-        { id: 4, title: 'cliffhanger',  duration: 8,  polish: true, motifs: ['yellow-highlight'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L71' }] },
+        { id: 1, title: '三大分支總覽', duration: 10, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L43-49' }] },
+        { id: 2, title: 'supervised',   duration: 14, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L51-55' }] },
+        { id: 3, title: 'unsupervised', duration: 13, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L57-61' }] },
+        { id: 4, title: 'RL+AlphaGo',   duration: 15, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L63-67' }] },
+        { id: 5, title: 'cliffhanger',  duration: 8,  polish: true, motifs: ['yellow-highlight'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L71' }] },
       ],
     },
     {
@@ -39,23 +40,33 @@ export const manifest = {
       steps: [
         { id: 1, title: 'LLM 路線',     duration: 14, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L75-77' }] },
         { id: 2, title: 'VS 對比',      duration: 14, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L81-89' }] },
-        { id: 3, title: 'OK 純 RL',     duration: 7,  polish: true, motifs: ['halftone-burst'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L93-95' }] },
+        { id: 3, title: 'OK 純 RL',     duration: 7,  polish: true, motifs: ['impact-speed-lines'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L93-95' }] },
       ],
     },
     {
       id: 4, name: 'data-hunt', narrative: 'Kaggle→拒絕→受害者→封IP+proxy',
       steps: [
-        { id: 1, title: 'Kaggle',                duration: 12, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L99-103' }] },
+        { id: 1, title: 'Kaggle',                duration: 12,
+          beats: [
+            { id: 'enter',         type: 'click', cue: null,       wait: null,         scriptLines: 'L99-101' },
+            { id: 'problem-burst', type: 'click', cue: '但問題來了', wait: '1s 觀眾消化', scriptLines: 'L103' },
+          ],
+        },
         { id: 2, title: 'supervised 拒絕',       duration: 11, polish: true, motifs: ['red-stamp'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L105-107' }] },
         { id: 3, title: '受害者', duration: 14, punchline: true, motifs: ['red-stamp'], climax: ['A', 'C'],
           beats: [
             { id: 'kicker',       type: 'click', cue: '我的終極目標是把我訓練好的 AI 拿去每個數獨網站...', wait: null, scriptLines: 'L111-115' },
             { id: 'url-sticker',  type: 'click', cue: '於是我找到了 websudoku.com...', wait: null, scriptLines: 'L117' },
-            { id: 'victim-stamp', type: 'click', cue: '...（直接念出「這個受害者」當下點）', wait: '1-2s 笑點', climax: ['A', 'C'], scriptLines: 'L119-121' },
-            { id: 'subtitle',     type: 'auto', autoDelayMs: 200, cue: null, wait: null, scriptLines: 'L121' },
+            { id: 'victim-stamp', type: 'click', cue: '...（直接念出「這個受害者」當下點，紅 stamp 蓋在真實截圖上）', wait: '1-2s 笑點', climax: ['A', 'C'], scriptLines: 'L119-121' },
+            { id: 'subtitle',     type: 'click', cue: '簡簡單單被我攻破（點擊：截圖 fade away、副標取代）', wait: null, scriptLines: 'L121' },
           ],
         },
-        { id: 4, title: '封 IP + proxy', duration: 13, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L125-133' }] },
+        { id: 4, title: '封 IP + proxy', duration: 13,
+          beats: [
+            { id: 'ban-burst',    type: 'click', cue: '才爬到 20 題就被擋了',         wait: '1s 觀眾消化', scriptLines: 'L125-127' },
+            { id: 'proxy-reveal', type: 'click', cue: '我請出了反反爬蟲的工具 - proxy', wait: null,         scriptLines: 'L131-133' },
+          ],
+        },
       ],
     },
     {
@@ -88,11 +99,11 @@ export const manifest = {
         { id: 3, title: '新女生加分',   duration: 12, motifs: ['girl-new'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L181-185' }] },
         { id: 4, title: '曲線爬升',     duration: 10, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L181' }] },
         { id: 5, title: '卡平段',       duration: 12, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L187' }] },
-        { id: 6, title: '備胎 ★★★',     duration: 12, punchline: true, starLevel: 3, motifs: ['red-stamp'], climax: ['A', 'B', 'C', 'G'],
+        { id: 6, title: '備胎 ★★★',     duration: 12, punchline: true, starLevel: 3, motifs: ['red-stamp'], climax: ['A', 'C', 'G'],
           beats: [
             { id: 'flash',                   type: 'click', cue: '結果後面開始遇到瓶頸——AI 只拿那些必拿的固定分數就不思進取了...', wait: '0.5s', scriptLines: 'L189' },
             { id: 'subtitle-and-placeholder', type: 'click', cue: '換句話說、這個女生只把你當——', wait: '1-2s 留懸念', scriptLines: 'L189' },
-            { id: 'bei-tai-fill',            type: 'click', cue: '備胎', wait: '3-4s 笑聲', climax: ['A', 'B', 'C', 'G'], scriptLines: 'L189' },
+            { id: 'bei-tai-fill',            type: 'click', cue: '備胎', wait: '3-4s 笑聲', climax: ['A', 'C', 'G'], scriptLines: 'L189' },
           ],
         },
         { id: 7, title: '偷吃步',       duration: 7, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L195-199' }] },
@@ -156,7 +167,13 @@ export const manifest = {
         { id: 7, title: 'plasticity 引出',      duration: 8,  beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L347-349' }] },
         { id: 8, title: 'plasticity 三欄',      duration: 12, motifs: ['13-stairs'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L351' }] },
         { id: 9, title: 'plasticity 機制',      duration: 12, motifs: ['flip-20-to-50', 'yellow-highlight'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L353-355' }] },
-        { id: 10, title: 'MBTI + 業務工作',     duration: 22, composite: true, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L359-365' }] },
+        { id: 10, title: 'MBTI + 業務工作',     duration: 22, composite: true,
+          beats: [
+            { id: 'i-person',   type: 'click', cue: '其實我真的是一個極度的 I 人，100% 偏向 I', wait: null,         scriptLines: 'L359' },
+            { id: 'actually-e', type: 'click', cue: '大家可能覺得我在講幹話、明明我很 E',       wait: '1s 觀眾消化', scriptLines: 'L361' },
+            { id: 'sales-job',  type: 'click', cue: '逼自己去做業務工作、天天跟陌生人講話、才慢慢變得比較 E', wait: null, scriptLines: 'L363' },
+          ],
+        },
         { id: 11, title: '警語 ★★', duration: 18, punchline: true, starLevel: 2, motifs: ['crash-line'], climax: ['A', 'C', 'G'],
           beats: [
             { id: 'kicker-and-frame', type: 'click', cue: '所以遇到不會回答的魔王陷阱題沒有關係...', wait: '1s', scriptLines: 'L367' },
