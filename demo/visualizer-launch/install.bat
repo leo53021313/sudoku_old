@@ -14,9 +14,10 @@ REM ============================================================
 
 setlocal
 
-REM Resolve project root (3 levels up: visualizer-launch -> demo -> sudoku_old)
+REM Resolve project root. %~dp0 already ends in a backslash (i.e. points
+REM "inside" visualizer-launch), so two ..\ hops reach sudoku_old/.
 set "SCRIPT_DIR=%~dp0"
-set "ROOT=%SCRIPT_DIR%..\..\.."
+set "ROOT=%SCRIPT_DIR%..\.."
 for %%i in ("%ROOT%") do set "ROOT=%%~fi"
 set "LAUNCHER=%SCRIPT_DIR%launcher.bat"
 for %%i in ("%LAUNCHER%") do set "LAUNCHER=%%~fi"
