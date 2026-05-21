@@ -28,6 +28,17 @@ const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 const STICKER_TR = { duration: 0.6, ease: OVERSHOOT };
 const TABLE_TR   = { duration: 0.4, ease: 'easeOut' };
 
+// showcase 階段 (sticker 是 showcase state) 才把 rotate transition 改成無限 mirror loop。
+// dock / hidden state 用標準 STICKER_TR。
+const wobbleRotateTR = { duration: 3, ease: 'easeInOut', repeat: Infinity, repeatType: 'mirror' };
+
+function stickerTransition(isShowcase) {
+  if (isShowcase) {
+    return { ...STICKER_TR, rotate: wobbleRotateTR };
+  }
+  return STICKER_TR;
+}
+
 const CAPTION_TR = { duration: 0.45, ease: OVERSHOOT };          // 整塊 caption 進出
 const CAPTION_TEXT_TR = { duration: 0.35, ease: 'easeOut' };     // 下方文字 fade-up
 
@@ -51,7 +62,7 @@ const STICKER_BASE = {
 // row i 的 slot 垂直中軸 (相對 table 左上角)
 const rowCenterY = (rowIdx) => rowIdx * (ROW_H + DIVIDER) + ROW_H / 2;
 
-// 「showcase 大」 — 置中 table 容器、scale 1.8。
+// 「showcase 大」 — 置中 table 容器、scale 1.8、rotate 在 baseline ±1.5° 做 infinite mirror wobble。
 // 用 transformOrigin: 'center center' 配 x:'-50%', y:'-50%' 達成水平垂直居中。
 function showcaseAnim(rotate) {
   return {
@@ -61,7 +72,7 @@ function showcaseAnim(rotate) {
     left: TABLE_W / 2,
     x: '-50%',
     y: '-50%',
-    rotate,
+    rotate: [rotate - 1.5, rotate + 1.5, rotate - 1.5],
     filter: 'blur(0px)',
     transformOrigin: 'center center',
   };
@@ -223,7 +234,7 @@ export default function Ch4Step2() {
         <motion.div
           initial={hiddenAnim()}
           animate={supervisedState(beatIndex)}
-          transition={STICKER_TR}
+          transition={stickerTransition(beatIndex < 2)}
           style={{ ...STICKER_BASE, zIndex: 10 }}
         >
           supervised
@@ -233,7 +244,7 @@ export default function Ch4Step2() {
         <motion.div
           initial={hiddenAnim()}
           animate={rlState(beatIndex)}
-          transition={STICKER_TR}
+          transition={stickerTransition(beatIndex >= 3 && beatIndex < 5)}
           style={{ ...STICKER_BASE, zIndex: 11 }}
         >
           RL 增強式訓練
