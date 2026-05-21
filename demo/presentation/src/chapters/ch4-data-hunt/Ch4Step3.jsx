@@ -24,7 +24,7 @@ export default function Ch4Step3() {
       position: 'relative', zIndex: 20, height: '100vh',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Space Grotesk', padding: 32,
+      fontFamily: 'Space Grotesk', padding: 32, paddingTop: 180,
     }}>
       {/* Beat 0+ : kicker hero「終極目標：去每個數獨網站霸榜」 */}
       <motion.div
@@ -68,7 +68,8 @@ export default function Ch4Step3() {
           beat 3 截圖 fade away，由副標「簡簡單單被我攻破」取代。 */}
       <div style={{
         position: 'relative', marginTop: 16,
-        width: 1080, height: 600,
+        width: '100%', maxWidth: 1080,
+        flex: '1 1 0', minHeight: 0, maxHeight: 600,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {/* Beat 2 : 截圖 + stamp 合體；beat 3 整塊 fade away */}
@@ -87,7 +88,10 @@ export default function Ch4Step3() {
               src="/images/ch4/websudoku.png"
               alt="websudoku.com 網站截圖"
               style={{
-                display: 'block', width: 1000,
+                display: 'block',
+                width: 1000, maxWidth: '100%',
+                height: 'auto', maxHeight: '100%',
+                aspectRatio: '2558 / 1269',
                 border: '6px solid #000', boxShadow: '16px 16px 0 0 #000',
               }}
             />
