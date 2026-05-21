@@ -25,6 +25,11 @@ const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 const STICKER_TR = { duration: 0.6, ease: OVERSHOOT };
 const TABLE_TR   = { duration: 0.4, ease: 'easeOut' };
 
+const CAPTION_TR = { duration: 0.45, ease: OVERSHOOT };          // 整塊 caption 進出
+const CAPTION_TEXT_TR = { duration: 0.35, ease: 'easeOut' };     // 下方文字 fade-up
+
+const CAPTION_TOP_OFFSET = 170;  // sticker 下方 ~170 px (避開 hard shadow + scale 1.8 邊緣)
+
 const SHOWCASE_SCALE = 1.8;
 const DOCK_INSET = 16;   // sticker 視覺左緣 相對 slot 左緣 的 px
 
@@ -161,7 +166,7 @@ export default function Ch4Step2() {
           ))}
         </motion.div>
 
-        {/* supervised — beat 0 showcase、beat 1+ dock 在 拉完了 (beat 2 dim) */}
+        {/* supervised — beat 0-1 showcase、beat ≥ 2 dock 在 拉完了 (beat 3-4 dim) */}
         <motion.div
           initial={hiddenAnim()}
           animate={supervisedState(beatIndex)}
@@ -171,7 +176,7 @@ export default function Ch4Step2() {
           supervised
         </motion.div>
 
-        {/* RL 增強式訓練 — beat<2 hidden、beat 2 showcase、beat 3+ dock 在 夯 */}
+        {/* RL 增強式訓練 — beat<3 hidden、beat 3-4 showcase、beat ≥ 5 dock 在 夯 */}
         <motion.div
           initial={hiddenAnim()}
           animate={rlState(beatIndex)}
@@ -179,6 +184,116 @@ export default function Ch4Step2() {
           style={{ ...STICKER_BASE, zIndex: 11 }}
         >
           RL 增強式訓練
+        </motion.div>
+
+        {/* supervised ❌ caption — beat 1 stamp-in、beat 其它 hidden */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: beatIndex === 1 ? 1 : 0,
+            top: TABLE_H / 2 + CAPTION_TOP_OFFSET,
+            left: TABLE_W / 2,
+            x: '-50%',
+          }}
+          transition={CAPTION_TR}
+          style={{
+            position: 'absolute',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 14,
+            pointerEvents: 'none',
+            zIndex: 12,
+          }}
+        >
+          <motion.div
+            initial={false}
+            animate={beatIndex === 1
+              ? { scale: [0, 1.4, 1], rotate: [-8, 2, 0], opacity: 1 }
+              : { scale: 0, rotate: 0, opacity: 0 }}
+            transition={CAPTION_TR}
+            style={{
+              fontSize: 96,
+              fontWeight: 900,
+              color: '#FF3B30',
+              textShadow: '4px 4px 0 #000',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </motion.div>
+          <motion.div
+            initial={false}
+            animate={beatIndex === 1 ? { y: 0, opacity: 1 } : { y: 12, opacity: 0 }}
+            transition={{ ...CAPTION_TEXT_TR, delay: beatIndex === 1 ? 0.2 : 0 }}
+            style={{
+              background: '#000',
+              color: '#FFFDF5',
+              padding: '12px 28px',
+              border: '4px solid #000',
+              boxShadow: '6px 6px 0 0 #000',
+              fontWeight: 900,
+              fontSize: 30,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            我不想要 AI 背答案
+          </motion.div>
+        </motion.div>
+
+        {/* RL ✓ caption — beat 4 stamp-in、beat 其它 hidden */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: beatIndex === 4 ? 1 : 0,
+            top: TABLE_H / 2 + CAPTION_TOP_OFFSET,
+            left: TABLE_W / 2,
+            x: '-50%',
+          }}
+          transition={CAPTION_TR}
+          style={{
+            position: 'absolute',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 14,
+            pointerEvents: 'none',
+            zIndex: 12,
+          }}
+        >
+          <motion.div
+            initial={false}
+            animate={beatIndex === 4
+              ? { scale: [0, 1.4, 1], rotate: [-8, 2, 0], opacity: 1 }
+              : { scale: 0, rotate: 0, opacity: 0 }}
+            transition={CAPTION_TR}
+            style={{
+              fontSize: 96,
+              fontWeight: 900,
+              color: '#06B26F',
+              textShadow: '4px 4px 0 #000',
+              lineHeight: 1,
+            }}
+          >
+            ✓
+          </motion.div>
+          <motion.div
+            initial={false}
+            animate={beatIndex === 4 ? { y: 0, opacity: 1 } : { y: 12, opacity: 0 }}
+            transition={{ ...CAPTION_TEXT_TR, delay: beatIndex === 4 ? 0.2 : 0 }}
+            style={{
+              background: '#000',
+              color: '#FFFDF5',
+              padding: '12px 28px',
+              border: '4px solid #000',
+              boxShadow: '6px 6px 0 0 #000',
+              fontWeight: 900,
+              fontSize: 30,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            讓 AI 從零自己學習規則
+          </motion.div>
         </motion.div>
       </div>
     </main>
