@@ -37,9 +37,9 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 3: return <Ch3SplitScreen duration={duration} />;
     case 4: return <Ch4TierSnap duration={duration} />;
     case 5: return <Ch5FaultLineShear duration={duration} />;
-    case 6: return <Ch6PinkRedSweep duration={duration} />;
-    case 7: return <Ch7LatticeLock duration={duration} />;
-    case 8: return <Ch8GoldWedge duration={duration} />;
+    case 6: return <Ch6DiagonalSweep duration={duration} />;
+    case 7: return <Ch7GlitchSlice duration={duration} />;
+    case 8: return <Ch8Blinds duration={duration} />;
     case 9: return <Ch9ConvergeLines duration={duration} />;
     default: return <DefaultCreamFade duration={duration} />;
   }
@@ -244,23 +244,24 @@ function Ch4TierSnap({ duration }) {
   );
 }
 
-// ch5 · 斷層撕裂 —— cream 沿反對角剪兩半、鋸齒黑裂縫 pathLength 描入 + 紅光、兩半 shear 滑出
+// ch5 · 斷層撕裂 —— cream 沿「鋸齒裂縫」剪兩半、黑裂縫 pathLength 描入 + 紅光、兩半沿裂縫 shear 滑出
 function Ch5FaultLineShear({ duration }) {
   const d = duration / 1000;
+  // 鋸齒裂縫：SVG path 與兩塊 cream 的 clipPath 共用同一組座標（% ↔ viewBox 2000×1200），確保沿裂縫裂開
   const crack = 'M2000,0 L1500,360 L1180,200 L760,560 L420,360 L0,1200';
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
-      {/* 左上三角 cream，hold 後往左上 shear 出 */}
+      {/* 左上半 cream（含左上角、鋸齒裂縫為其右下緣）→ 往左上 shear 出 */}
       <motion.div
         animate={{ x: ['0%', '0%', '0%', '-60%'], y: ['0%', '0%', '0%', '-60%'], opacity: [0, 1, 1, 0] }}
         transition={{ duration: d, times: [0, 0.12, 0.62, 1], ease: ['easeOut', 'linear', [0.7, 0, 0.84, 0]] }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(100% 0, 0 0, 0 100%, 21% 30%, 38% 46.6667%, 59% 16.6667%, 75% 30%)' }}
       />
-      {/* 右下三角 cream，往右下 shear 出 */}
+      {/* 右下半 cream（含右下角、鋸齒裂縫為其左上緣）→ 往右下 shear 出 */}
       <motion.div
         animate={{ x: ['0%', '0%', '0%', '60%'], y: ['0%', '0%', '0%', '60%'], opacity: [0, 1, 1, 0] }}
         transition={{ duration: d, times: [0, 0.12, 0.62, 1], ease: ['easeOut', 'linear', [0.7, 0, 0.84, 0]] }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(100% 0, 75% 30%, 59% 16.6667%, 38% 46.6667%, 21% 30%, 0 100%, 100% 100%)' }}
       />
       <svg viewBox="0 0 2000 1200" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
         {/* 鋸齒黑裂縫 —— pathLength 0→1 描入 */}
@@ -281,104 +282,116 @@ function Ch5FaultLineShear({ duration }) {
   );
 }
 
-// ch6 · 粉轉紅 —— 粉紅面溫柔掃入 hold、紅 streak 橫掃（崩盤）、粉面滑出
-function Ch6PinkRedSweep({ duration }) {
+// ch6 · 斜線掃描 —— 一排平行斜線由左到右 stagger 描入、cream 底遮蓋、accent 線點綴、結尾反向收回
+function Ch6DiagonalSweep({ duration }) {
   const d = duration / 1000;
+  const N = 12;
+  const stagger = 0.025;
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
-      {/* 粉紅面：左→右掃入、hold、再往右掃出 */}
-      <motion.div
-        initial={{ x: '-100%' }}
-        animate={{ x: ['-100%', '0%', '0%', '0%', '100%'] }}
-        transition={{ duration: d, times: [0, 0.38, 0.5, 0.7, 1], ease: ['easeOut', 'linear', 'linear', [0.7, 0, 0.84, 0]] }}
-        style={{ position: 'absolute', inset: 0, background: '#FFB6C1', borderRight: '6px solid #000' }}
-      />
-      {/* 紅 streak：橫向快速掃過粉面 */}
-      <motion.div
-        initial={{ x: '-120%' }}
-        animate={{ x: ['-120%', '-120%', '120%'] }}
-        transition={{ duration: d, times: [0, 0.5, 0.72], ease: ['linear', 'easeIn'] }}
-        style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '45%', background: '#FF6B6B', boxShadow: '12px 0 0 0 #000' }}
-      />
-    </div>
-  );
-}
-
-// ch7 · 約束格鎖死 —— 3×3 sudoku 粗框 pathLength 描入 + scale snap 咬合、中央格閃紅轉黃
-function Ch7LatticeLock({ duration }) {
-  const d = duration / 1000;
-  return (
-    <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {/* cream 底層負責遮蓋上一章 */}
       <motion.div
         animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.82, 1], ease: 'linear' }}
+        transition={{ duration: d, times: [0, 0.15, 0.8, 1], ease: 'linear' }}
         style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
       />
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-        <motion.svg
-          viewBox="0 0 90 90"
-          style={{ width: '62vh', height: '62vh', overflow: 'visible' }}
-          animate={{ scale: [0.92, 0.92, 1.04, 1, 1], opacity: [0, 1, 1, 1, 0] }}
-          transition={{ duration: d, times: [0, 0.2, 0.6, 0.82, 1], ease: ['linear', 'easeOut', 'easeOut', 'easeOut'] }}
-        >
-          {/* 外框 */}
-          <motion.rect
-            x="0" y="0" width="90" height="90" fill="none" stroke="#000" strokeWidth={3}
-            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-            transition={{ duration: d * 0.4, delay: d * 0.18, ease: 'easeOut' }}
-          />
-          {/* 直粗線 */}
-          {[30, 60].map((x) => (
+      <svg viewBox="0 0 2000 1200" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        {Array.from({ length: N }).map((_, i) => {
+          const xb = -300 + i * (2600 / (N - 1));  // 底端 x（含超出邊界以蓋滿）
+          const xt = xb + 600;                      // 頂端 x（決定斜率）
+          const accent = i === Math.floor(N / 2);
+          const startA = 0.05 + i * stagger;        // 開始描入
+          const startB = startA + 0.28;             // 描入完成
+          return (
             <motion.line
-              key={`v-${x}`} x1={x} y1={0} x2={x} y2={90} stroke="#000" strokeWidth={3}
-              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-              transition={{ duration: d * 0.35, delay: d * 0.25, ease: 'easeOut' }}
+              key={i}
+              x1={xb} y1={1200} x2={xt} y2={0}
+              stroke={accent ? '#FFB6C1' : '#000'}
+              strokeWidth={accent ? 20 : 9}
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: [0, 0, 1, 1, 0] }}
+              transition={{ duration: d, times: [0, startA, startB, 0.82, 1], ease: 'easeOut' }}
             />
-          ))}
-          {/* 橫粗線 */}
-          {[30, 60].map((y) => (
-            <motion.line
-              key={`h-${y}`} x1={0} y1={y} x2={90} y2={y} stroke="#000" strokeWidth={3}
-              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
-              transition={{ duration: d * 0.35, delay: d * 0.25, ease: 'easeOut' }}
-            />
-          ))}
-          {/* 中央格閃紅轉黃 */}
-          <motion.rect
-            x="40" y="40" width="10" height="10" stroke="#000" strokeWidth={1.5}
-            animate={{ fill: ['#FF6B6B', '#FF6B6B', '#FFD93D', '#FFD93D'], opacity: [0, 0, 1, 1] }}
-            transition={{ duration: d, times: [0, 0.6, 0.66, 1], ease: 'linear' }}
-          />
-        </motion.svg>
-      </div>
+          );
+        })}
+      </svg>
     </div>
   );
 }
 
-// ch8 · 金光楔形破曉 —— 金黃斜帶硬邊掃過全螢幕 + 紫窄帶 depth
-function Ch8GoldWedge({ duration }) {
+// ch7 · 故障切片 —— cream 裂成水平切片、glitch 硬位移抖動、卡頓後左右撕開揭開（卡住/error/死結）
+function Ch7GlitchSlice({ duration }) {
   const d = duration / 1000;
+  const N = 14;
+  const h = 100 / N;
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
-      {/* 主金黃斜帶 */}
-      <motion.div
-        initial={{ x: '-160%', rotate: -18 }}
-        animate={{ x: ['-160%', '0%', '0%', '160%'], rotate: [-18, -18, -18, -18] }}
-        transition={{ duration: d, times: [0, 0.42, 0.6, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
-        style={{ position: 'absolute', top: '-80%', left: '-50%', width: '200%', height: '260%', background: '#FFD93D' }}
-      />
-      {/* 紫窄帶 trailing depth */}
-      <motion.div
-        initial={{ x: '-60vw', rotate: -18 }}
-        animate={{ x: ['-60vw', '38vw', '38vw', '150vw'], rotate: [-18, -18, -18, -18] }}
-        transition={{ duration: d, times: [0, 0.5, 0.66, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
-        style={{ position: 'absolute', top: '-80%', left: '0%', width: '22%', height: '260%', background: '#C4B5FD', borderRight: '6px solid #000' }}
-      />
+      {Array.from({ length: N }).map((_, i) => {
+        const dir = i % 2 === 0 ? 1 : -1;
+        const j1 = ((i % 3) - 1) * 4;        // -4 / 0 / 4
+        const j2 = i % 2 === 0 ? 6 : -5;
+        return (
+          <motion.div
+            key={i}
+            animate={{ x: ['0%', '0%', `${j1}%`, `${j2}%`, `${-j1}%`, '0%', '0%', `${dir * 130}%`] }}
+            transition={{
+              duration: d,
+              times: [0, 0.16, 0.26, 0.34, 0.44, 0.56, 0.66, 1],
+              ease: ['linear', 'linear', 'linear', 'linear', 'linear', 'linear', [0.7, 0, 0.84, 0]],
+            }}
+            style={{ position: 'absolute', left: 0, right: 0, top: `${i * h}%`, height: `${h + 0.3}%`, background: '#FFFDF5' }}
+          />
+        );
+      })}
+      {/* 紅色故障掃描條：glitch 高峰閃現（error / reward 0 暗示，唯一 accent 色） */}
+      {[3, 8, 11].map((row, k) => (
+        <motion.div
+          key={`err-${k}`}
+          animate={{ x: ['0%', '0%', `${k % 2 === 0 ? 8 : -8}%`, '0%'], opacity: [0, 0, 0.85, 0] }}
+          transition={{ duration: d, times: [0, 0.24 + k * 0.04, 0.3 + k * 0.04, 0.42 + k * 0.04], ease: 'linear' }}
+          style={{ position: 'absolute', left: 0, right: 0, top: `${row * h}%`, height: `${h * 0.6}%`, background: '#FF6B6B' }}
+        />
+      ))}
     </div>
   );
 }
 
-// ch9 · 線條收斂 —— 黑/紫線從四邊向中心收斂成十字、cream 由中心 iris 展開
+// ch8 · 百葉窗開啟 —— cream 橫向百葉片依序翻開（交錯 origin）、金色光條隨縫閃現（光透百葉/突破）
+function Ch8Blinds({ duration }) {
+  const d = duration / 1000;
+  const N = 12;
+  const h = 100 / N;
+  return (
+    <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {Array.from({ length: N }).map((_, i) => {
+        const t0 = 0.2 + i * (0.5 / N);
+        const t1 = Math.min(t0 + 0.22, 0.98);
+        return (
+          <motion.div
+            key={i}
+            animate={{ scaleY: [1, 1, 0] }}
+            transition={{ duration: d, times: [0, t0, t1], ease: ['linear', [0.7, 0, 0.84, 0]] }}
+            style={{ position: 'absolute', left: 0, right: 0, top: `${i * h}%`, height: `${h + 0.2}%`, background: '#FFFDF5', transformOrigin: i % 2 === 0 ? 'top' : 'bottom' }}
+          />
+        );
+      })}
+      {/* 金色光條：每片百葉開啟瞬間沿縫閃現 */}
+      {Array.from({ length: N }).map((_, i) => {
+        const t0 = 0.2 + i * (0.5 / N);
+        return (
+          <motion.div
+            key={`g-${i}`}
+            animate={{ opacity: [0, 0, 0.9, 0] }}
+            transition={{ duration: d, times: [0, t0, Math.min(t0 + 0.08, 0.95), Math.min(t0 + 0.22, 0.99)], ease: 'easeOut' }}
+            style={{ position: 'absolute', left: 0, right: 0, top: `${i * h}%`, height: 3, background: '#FFD93D' }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ch9 · 線條收斂 —— cream 全程遮蓋（不外露內容）、黑/紫線向中心收斂、結尾 cream 塌縮回中心點才揭開
 function Ch9ConvergeLines({ duration }) {
   const d = duration / 1000;
   const hLines = [
@@ -395,12 +408,18 @@ function Ch9ConvergeLines({ duration }) {
   ];
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {/* cream 墊底：全程蓋滿，結尾塌縮回中心點才揭開下一章（呼應收斂） */}
+      <motion.div
+        animate={{ clipPath: ['circle(150% at 50% 50%)', 'circle(150% at 50% 50%)', 'circle(0% at 50% 50%)'] }}
+        transition={{ duration: d, times: [0, 0.72, 1], ease: ['linear', 'easeIn'] }}
+        style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
+      />
       {hLines.map((l, i) => (
         <motion.div
           key={`h-${i}`}
           initial={{ y: l.start, opacity: 0 }}
-          animate={{ y: [l.start, '0vh', '0vh', '0vh'], opacity: [0, 1, 1, 0] }}
-          transition={{ duration: d, times: [0, 0.5, 0.7, 1], ease: ['easeIn', 'linear', 'linear'] }}
+          animate={{ y: [l.start, '0vh', '0vh'], opacity: [0, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.5, 0.7], ease: ['easeIn', 'linear'] }}
           style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 4, marginTop: -2, background: l.color }}
         />
       ))}
@@ -408,17 +427,11 @@ function Ch9ConvergeLines({ duration }) {
         <motion.div
           key={`v-${i}`}
           initial={{ x: l.start, opacity: 0 }}
-          animate={{ x: [l.start, '0vw', '0vw', '0vw'], opacity: [0, 1, 1, 0] }}
-          transition={{ duration: d, times: [0, 0.5, 0.7, 1], ease: ['easeIn', 'linear', 'linear'] }}
+          animate={{ x: [l.start, '0vw', '0vw'], opacity: [0, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.5, 0.7], ease: ['easeIn', 'linear'] }}
           style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 4, marginLeft: -2, background: l.color }}
         />
       ))}
-      {/* cream 由中心 iris 展開覆蓋 */}
-      <motion.div
-        animate={{ clipPath: ['circle(0% at 50% 50%)', 'circle(0% at 50% 50%)', 'circle(150% at 50% 50%)'] }}
-        transition={{ duration: d, times: [0, 0.6, 1], ease: ['linear', 'easeIn'] }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
-      />
     </div>
   );
 }
