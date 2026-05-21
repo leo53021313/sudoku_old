@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 
 // Central forbidden zone half-width / half-height — keeps inhale particles
 // from spawning on top of the LLM hero (which sits at viewport center).
@@ -57,4 +58,35 @@ export function useInhaleSpawn(terms) {
   }, []);
 
   return { particles, removeParticle };
+}
+
+export default function InhaleLayer({ terms }) {
+  const { particles, removeParticle } = useInhaleSpawn(terms);
+
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute', inset: 0,
+        pointerEvents: 'none', zIndex: 0,
+      }}
+    >
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          initial={{ x: p.startX, y: p.startY, scale: 1, opacity: 0.7 }}
+          animate={{ x: p.endX, y: p.endY, scale: 0.2, opacity: 0 }}
+          transition={{ duration: 1.2, ease: [0.4, 0, 1, 1] }}
+          onAnimationComplete={() => removeParticle(p.id)}
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            fontFamily: 'monospace', fontWeight: 700, fontSize: 14,
+            color: '#C4B5FD', whiteSpace: 'nowrap',
+          }}
+        >
+          {p.text}
+        </motion.div>
+      ))}
+    </div>
+  );
 }

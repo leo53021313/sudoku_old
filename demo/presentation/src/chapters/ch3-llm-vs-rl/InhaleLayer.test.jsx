@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { render, renderHook, act } from '@testing-library/react';
 import { pickStart, useInhaleSpawn } from './InhaleLayer.jsx';
+import InhaleLayer from './InhaleLayer.jsx';
 
 describe('pickStart', () => {
   it('returns a coordinate within the viewport bounds', () => {
@@ -83,5 +84,41 @@ describe('useInhaleSpawn', () => {
     expect(() => {
       act(() => { vi.advanceTimersByTime(10000); });
     }).not.toThrow();
+  });
+});
+
+describe('InhaleLayer (component)', () => {
+  let origInnerWidth, origInnerHeight;
+  beforeEach(() => {
+    origInnerWidth = window.innerWidth;
+    origInnerHeight = window.innerHeight;
+    vi.useFakeTimers();
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: origInnerWidth });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: origInnerHeight });
+  });
+
+  it('renders a non-interactive container with zero z-index and no particles initially', () => {
+    const { container } = render(<InhaleLayer terms={['AI']} />);
+    const outer = container.firstChild;
+    expect(outer.getAttribute('aria-hidden')).toBe('true');
+    expect(outer).toHaveStyle({
+      position: 'absolute',
+      pointerEvents: 'none',
+      zIndex: '0',
+    });
+    expect(outer.children.length).toBe(0);
+  });
+
+  it('renders one particle div after the first spawn delay', () => {
+    const { container } = render(<InhaleLayer terms={['AI']} />);
+    act(() => { vi.advanceTimersByTime(3000); });
+    const outer = container.firstChild;
+    expect(outer.children.length).toBe(1);
+    expect(outer.firstChild.textContent).toBe('AI');
   });
 });
