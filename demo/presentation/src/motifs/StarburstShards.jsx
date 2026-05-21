@@ -17,7 +17,8 @@ const SHARDS = [
   { a: -60, dist: 200, size: 40, color: '#000', d: 0.1 },
 ];
 
-// fade=true：碎片在 burst 後繼續可見 ~0.6s、最後 ~0.8s 自身 opacity 飛散到 0（呼應 ImpactDust 風格）。
+// fade=true：呼應 ImpactDust — 碎片從原點直接飛散到更遠的目標 (1.4x dist)、不停留，
+//             opacity 在飛行最後段才落到 0、整個 motion 與 fade 共用同一段 duration/easeOut。
 export function StarburstShards({ active = false, fade = false }) {
   return (
     <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0 }}>
@@ -25,6 +26,8 @@ export function StarburstShards({ active = false, fade = false }) {
         const rad = (s.a * Math.PI) / 180;
         const dx = Math.cos(rad) * s.dist;
         const dy = Math.sin(rad) * s.dist;
+        const farX = dx * 1.4;  // fade 模式時飛得更遠、確保「飛散」感覺持續到消失
+        const farY = dy * 1.4;
         const delay = active ? 0.08 + s.d : 0;
         return (
           <motion.svg
@@ -35,18 +38,15 @@ export function StarburstShards({ active = false, fade = false }) {
             initial={false}
             animate={active
               ? {
-                  x: dx - s.size / 2,
-                  y: dy - s.size / 2,
+                  x: (fade ? farX : dx) - s.size / 2,
+                  y: (fade ? farY : dy) - s.size / 2,
                   scale: [0, 1.3, 1],
                   opacity: fade ? [1, 1, 0] : 1,
                   rotate: s.a,
                 }
               : { x: -s.size / 2, y: -s.size / 2, scale: 0, opacity: 0, rotate: 0 }}
             transition={fade
-              ? {
-                  default: { duration: 0.45, ease: [0.34, 1.56, 0.64, 1], delay },
-                  opacity: { duration: 1.4, times: [0, 0.45, 1], ease: 'easeOut', delay },
-                }
+              ? { duration: 0.85, ease: 'easeOut', delay }
               : { duration: 0.45, ease: [0.34, 1.56, 0.64, 1], delay }}
             style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible' }}
           >
