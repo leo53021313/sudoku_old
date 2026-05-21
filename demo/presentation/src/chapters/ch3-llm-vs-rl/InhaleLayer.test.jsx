@@ -21,7 +21,7 @@ describe('pickStart', () => {
       const inY = startY >= fy0 && startY <= fy1;
       if (inX && inY) insideCount++;
     }
-    // After 5 retries the probability of all attempts landing in the 320x240
+    // After 6 attempts the probability of every one landing in the 320x240
     // forbidden box of a 1920x1080 viewport is roughly (0.037)^6 ≈ 2.6e-9.
     // Allow up to 1 outlier across 200 samples for safety.
     expect(insideCount).toBeLessThanOrEqual(1);
