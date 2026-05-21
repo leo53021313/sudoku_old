@@ -74,7 +74,7 @@ export default function Ch8Step1() {
         transition={{ duration: 0.5, delay: 1.4 }}
         style={{ fontWeight: 700, fontSize: '1.5rem', color: '#666' }}
       >
-        之後從容面對各式各樣的老油條陷阱題
+        之後奶茶就可以從容面對各式各樣的陷阱題
       </motion.div>
 
       <motion.div

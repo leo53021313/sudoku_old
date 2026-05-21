@@ -15,7 +15,7 @@ export default function Ch9Step4() {
         transition={{ duration: 0.5 }}
         style={{ fontWeight: 900, fontSize: '3rem', textAlign: 'center' }}
       >
-        AI 在<span style={{ background: '#FFD93D', padding: '0 16px', border: '4px solid #000' }}>模仿</span>人類
+        讓 AI 去<span style={{ background: '#FFD93D', padding: '0 16px', border: '4px solid #000' }}>模仿</span>人類
       </motion.div>
 
       {/* Airplane + bird AI sticker (single 16:9 illustration) + center SVG arrow overlay */}

@@ -22,7 +22,7 @@ export default function Ch6Step7() {
         }}
       >
         <span style={{ background: '#FF6B6B', color: '#FFF', padding: '4px 16px', border: '4px solid #000' }}>
-          計分標準寫錯了
+          計分標準太簡單了
         </span>
         <br/>
         <span style={{ background: '#FFD93D', color: '#000', padding: '4px 16px', border: '4px solid #000', marginTop: 16, display: 'inline-block' }}>

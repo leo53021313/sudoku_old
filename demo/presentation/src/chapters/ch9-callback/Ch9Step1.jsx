@@ -14,7 +14,7 @@ export default function Ch9Step1() {
         transition={{ duration: 0.5 }}
         style={{ fontWeight: 700, fontSize: '1.5rem', color: '#666' }}
       >
-        AI 還在訓練中⋯⋯<span style={{ color: '#000', fontWeight: 900 }}>我跟對方還在磨合期</span>
+        AI 還在訓練中⋯⋯<span style={{ color: '#000', fontWeight: 900 }}>奶茶跟對方還在磨合期</span>
       </motion.div>
 
       <div style={{ display: 'flex', gap: 32 }}>

@@ -22,7 +22,7 @@ export default function Ch9Step6() {
         transition={{ duration: 0.5 }}
         style={{ fontWeight: 900, fontSize: '2.5rem' }}
       >
-        以為穩了 · <span style={{ background: '#FF6B6B', color: '#FFF', padding: '4px 16px' }}>結果魔王關卡</span>
+        以為穩了 · <span style={{ background: '#FF6B6B', color: '#FFF', padding: '4px 16px' }}>結果更多關卡等著奶茶</span>
       </motion.div>
 
       {/* Callback: same 'asker' character from ch7 s7 — peeks in top-right */}

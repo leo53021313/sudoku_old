@@ -41,7 +41,7 @@ export default function Ch7Step8() {
           fontWeight: 700, fontSize: '1.5rem', color: '#FFFDF5', zIndex: 10, position: 'relative',
         }}
       >
-        就跟我不知道陷阱題的正確解答一樣
+        就跟奶茶不知道陷阱題的正確解答一樣
       </motion.div>
 
       <motion.div

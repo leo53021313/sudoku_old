@@ -32,7 +32,7 @@ export default function Ch6Step2() {
           fontWeight: 900, fontSize: '2rem', textAlign: 'center', lineHeight: 1.3,
         }}
       >
-        只要他<br/>
+        只要AI<br/>
         <span style={{ display: 'inline-block', margin: '12px 0', background: '#FFD93D', padding: '4px 16px', border: '4px solid #000', boxShadow: '4px 4px 0 0 #000' }}>填對一格</span>
         <br/>就給分數
         <motion.div
