@@ -40,7 +40,7 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 6: return <Ch6PinkRedSweep duration={duration} />;
     case 7: return <Ch7LatticeLock duration={duration} />;
     case 8: return <Ch8GoldWedge duration={duration} />;
-    case 9: return <Ch9GhostCollage duration={duration} />;
+    case 9: return <Ch9ConvergeLines duration={duration} />;
     default: return <DefaultCreamFade duration={duration} />;
   }
 }
@@ -378,61 +378,47 @@ function Ch8GoldWedge({ duration }) {
   );
 }
 
-// ch9 · ghost-collage —— 前 8 章 iconic sticker 灰階 ghost、stagger flicker 回原色、退回灰階、淡出
-function Ch9GhostCollage({ duration }) {
+// ch9 · 線條收斂 —— 黑/紫線從四邊向中心收斂成十字、cream 由中心 iris 展開
+function Ch9ConvergeLines({ duration }) {
   const d = duration / 1000;
-  const memories = [
-    { ch: 1, x: '15%', y: '22%', rot: -2, bg: '#FFD93D', text: 'AI',    fontSize: '2rem',    padding: '12px 26px', flashAt: 0.30 },
-    { ch: 2, x: '40%', y: '15%', rot: 3,  bg: '#FF6B6B', text: 'RL',    fontSize: '2rem',    padding: '12px 26px', flashAt: 0.34, lightText: true },
-    { ch: 3, x: '68%', y: '24%', rot: -3, bg: '#FFFDF5', text: 'VS',    fontSize: '2.25rem', padding: '10px 24px', flashAt: 0.38 },
-    { ch: 4, x: '85%', y: '48%', rot: 2,  bg: '#FF6B6B', text: '受害者', fontSize: '1.5rem',  padding: '10px 18px', flashAt: 0.42, lightText: true },
-    { ch: 5, x: '76%', y: '72%', rot: -2, bg: '#FFFDF5', text: '錯',    fontSize: '2.5rem',  padding: '8px 22px',  flashAt: 0.46, redBorder: true },
-    { ch: 6, x: '50%', y: '80%', rot: 3,  bg: '#FFB6C1', text: '+1',    fontSize: '2rem',    padding: '12px 26px', flashAt: 0.50 },
-    { ch: 7, x: '22%', y: '72%', rot: -3, bg: '#FFD93D', text: '0',     fontSize: '2.5rem',  padding: '8px 28px',  flashAt: 0.54 },
-    { ch: 8, x: '12%', y: '50%', rot: 2,  bg: '#FFD93D', text: '+50',   fontSize: '1.75rem', padding: '12px 22px', flashAt: 0.58 },
+  const hLines = [
+    { start: '-46vh', color: '#000' },
+    { start: '-24vh', color: '#C4B5FD' },
+    { start: '24vh',  color: '#C4B5FD' },
+    { start: '46vh',  color: '#000' },
+  ];
+  const vLines = [
+    { start: '-46vw', color: '#C4B5FD' },
+    { start: '-24vw', color: '#000' },
+    { start: '24vw',  color: '#000' },
+    { start: '46vw',  color: '#C4B5FD' },
   ];
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {hLines.map((l, i) => (
+        <motion.div
+          key={`h-${i}`}
+          initial={{ y: l.start, opacity: 0 }}
+          animate={{ y: [l.start, '0vh', '0vh', '0vh'], opacity: [0, 1, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.5, 0.7, 1], ease: ['easeIn', 'linear', 'linear'] }}
+          style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 4, marginTop: -2, background: l.color }}
+        />
+      ))}
+      {vLines.map((l, i) => (
+        <motion.div
+          key={`v-${i}`}
+          initial={{ x: l.start, opacity: 0 }}
+          animate={{ x: [l.start, '0vw', '0vw', '0vw'], opacity: [0, 1, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.5, 0.7, 1], ease: ['easeIn', 'linear', 'linear'] }}
+          style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 4, marginLeft: -2, background: l.color }}
+        />
+      ))}
+      {/* cream 由中心 iris 展開覆蓋 */}
       <motion.div
-        animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.85, 1], ease: 'linear' }}
+        animate={{ clipPath: ['circle(0% at 50% 50%)', 'circle(0% at 50% 50%)', 'circle(150% at 50% 50%)'] }}
+        transition={{ duration: d, times: [0, 0.6, 1], ease: ['linear', 'easeIn'] }}
         style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
       />
-      {memories.map((m) => (
-        <div
-          key={m.ch}
-          style={{
-            position: 'absolute',
-            left: m.x, top: m.y,
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <motion.div
-            animate={{
-              opacity: [0, 0.35, 1, 1, 0.35, 0.35, 0],
-              filter: ['grayscale(1)', 'grayscale(1)', 'grayscale(0)', 'grayscale(0)', 'grayscale(1)', 'grayscale(1)', 'grayscale(1)'],
-              scale:  [0.9, 1, 1.08, 1, 1, 1, 0.9],
-              rotate: [m.rot, m.rot, m.rot, m.rot, m.rot, m.rot, m.rot],
-            }}
-            transition={{
-              duration: d,
-              times: [0, Math.max(0.01, m.flashAt - 0.10), m.flashAt - 0.02, m.flashAt + 0.04, m.flashAt + 0.12, 0.80, 1],
-              ease: 'linear',
-            }}
-            style={{
-              background: m.bg,
-              color: m.lightText ? '#FFFDF5' : '#000',
-              border: m.redBorder ? '4px solid #FF6B6B' : '4px solid #000',
-              boxShadow: '6px 6px 0 0 #000',
-              padding: m.padding,
-              fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: m.fontSize,
-              lineHeight: 1, textAlign: 'center', minWidth: 70,
-            }}
-          >
-            {m.text}
-          </motion.div>
-        </div>
-      ))}
     </div>
   );
 }
