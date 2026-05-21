@@ -37,7 +37,7 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 3: return <Ch3SplitScreen duration={duration} />;
     case 4: return <Ch4TierSnap duration={duration} />;
     case 5: return <Ch5FaultLineShear duration={duration} />;
-    case 6: return <Ch6PinkStampCascade duration={duration} />;
+    case 6: return <Ch6PinkRedSweep duration={duration} />;
     case 7: return <Ch7StairsAscend duration={duration} />;
     case 8: return <Ch8BoardMaterialize duration={duration} />;
     case 9: return <Ch9GhostCollage duration={duration} />;
@@ -281,58 +281,25 @@ function Ch5FaultLineShear({ duration }) {
   );
 }
 
-// ch6 · 4 張粉紅 sticker cascade stamp —— GirlNew motif 本人視覺語言
-// 粉紅底 / 6px 黑邊 / 12px 硬黑陰影 / 微旋轉 ±3°/4° / Space Grotesk + 加分標籤
-function Ch6PinkStampCascade({ duration }) {
+// ch6 · 粉轉紅 —— 粉紅面溫柔掃入 hold、紅 streak 橫掃（崩盤）、粉面滑出
+function Ch6PinkRedSweep({ duration }) {
   const d = duration / 1000;
-  const stickers = [
-    { x: '24%', y: '38%', rot: -3, label: '+1', size: '3.5rem', delay: 0.18 },
-    { x: '64%', y: '30%', rot: 4,  label: '+2', size: '4rem',   delay: 0.24 },
-    { x: '38%', y: '62%', rot: -2, label: '+1', size: '3rem',   delay: 0.30 },
-    { x: '72%', y: '66%', rot: 3,  label: '+3', size: '4.5rem', delay: 0.36 },
-  ];
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {/* 粉紅面：左→右掃入、hold、再往右掃出 */}
       <motion.div
-        animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.85, 1], ease: 'linear' }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
+        initial={{ x: '-100%' }}
+        animate={{ x: ['-100%', '0%', '0%', '0%', '100%'] }}
+        transition={{ duration: d, times: [0, 0.38, 0.5, 0.7, 1], ease: ['easeOut', 'linear', 'linear', [0.7, 0, 0.84, 0]] }}
+        style={{ position: 'absolute', inset: 0, background: '#FFB6C1', borderRight: '6px solid #000' }}
       />
-      {stickers.map((s, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: s.x, top: s.y,
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <motion.div
-            animate={{
-              scale: [0, 0, 1.15, 1, 1, 0.9, 0],
-              y: [30, 30, -6, 0, 0, 0, 0],
-              opacity: [0, 0, 1, 1, 1, 1, 0],
-              rotate: [s.rot, s.rot, s.rot, s.rot, s.rot, s.rot, s.rot],
-            }}
-            transition={{
-              duration: d,
-              times: [0, s.delay, s.delay + 0.08, s.delay + 0.14, 0.75, 0.92, 1],
-              ease: ['linear', [0.34, 1.56, 0.64, 1], 'easeOut', 'linear', 'easeIn', 'easeOut'],
-            }}
-            style={{
-              background: '#FFB6C1',
-              border: '6px solid #000',
-              boxShadow: '12px 12px 0 0 #000',
-              padding: '20px 36px',
-              fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: s.size,
-              color: '#000', lineHeight: 1,
-              minWidth: 100, textAlign: 'center',
-            }}
-          >
-            {s.label}
-          </motion.div>
-        </div>
-      ))}
+      {/* 紅 streak：橫向快速掃過粉面 */}
+      <motion.div
+        initial={{ x: '-120%' }}
+        animate={{ x: ['-120%', '-120%', '120%'] }}
+        transition={{ duration: d, times: [0, 0.5, 0.72], ease: ['linear', 'easeIn'] }}
+        style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '45%', background: '#FF6B6B', boxShadow: '12px 0 0 0 #000' }}
+      />
     </div>
   );
 }
