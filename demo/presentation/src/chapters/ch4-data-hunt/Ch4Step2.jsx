@@ -93,21 +93,21 @@ function hiddenAnim() {
 // tier-table 容器自己的 dim 狀態 — 跟 parked sticker 的 dim 狀態同步、但這裡單獨算
 // 因為 sticker 是 motion 平級兄弟、不靠 CSS 繼承 (避免 filter inheritance 不可預期)。
 function tableState(beatIndex) {
-  if (beatIndex <= 0) return { opacity: 0,    filter: 'blur(0px)' };
-  if (beatIndex === 2) return { opacity: 0.35, filter: 'blur(3px)' };
+  if (beatIndex <= 1) return { opacity: 0,    filter: 'blur(0px)' };
+  if (beatIndex === 3 || beatIndex === 4) return { opacity: 0.35, filter: 'blur(3px)' };
   return { opacity: 1, filter: 'blur(0px)' };
 }
 
 function supervisedState(beatIndex) {
-  if (beatIndex === 0) return showcaseAnim(0);
-  // beat ≥ 1: dock 在 拉完了；只在 beat 2 dim。
-  return dockAnim(ROW_TRASH, -3, beatIndex === 2);
+  if (beatIndex < 2) return showcaseAnim(0);
+  // beat ≥ 2: dock 拉完了；dim 在 RL showcase 區段 (beat 3-4)
+  return dockAnim(ROW_TRASH, -3, beatIndex === 3 || beatIndex === 4);
 }
 
 function rlState(beatIndex) {
-  if (beatIndex < 2)  return hiddenAnim();
-  if (beatIndex === 2) return showcaseAnim(0);
-  // beat ≥ 3: dock 在 夯；不會 dim (table 此時 crisp)。
+  if (beatIndex < 3) return hiddenAnim();
+  if (beatIndex < 5) return showcaseAnim(0);
+  // beat ≥ 5: dock 夯
   return dockAnim(ROW_HANG, 3, false);
 }
 

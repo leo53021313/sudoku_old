@@ -69,8 +69,8 @@ describe('usePresentation', () => {
     expect(result.current.beatIndex).toBe(0);
   });
 
-  it('reports totalBeats = 90', () => {
+  it('reports totalBeats = 95', () => {
     const { result } = renderHook(() => usePresentation());
-    expect(result.current.totalBeats).toBe(90);
+    expect(result.current.totalBeats).toBe(95);
   });
 });

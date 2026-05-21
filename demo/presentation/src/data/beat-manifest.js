@@ -4,7 +4,7 @@
 export const manifest = {
   totalChapters: 9,
   totalSteps: 58,
-  totalBeats: 90,
+  totalBeats: 95,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -52,7 +52,16 @@ export const manifest = {
             { id: 'problem-burst', type: 'click', cue: '但問題來了', wait: '1s 觀眾消化', scriptLines: 'L103' },
           ],
         },
-        { id: 2, title: 'supervised 拒絕',       duration: 11, polish: true, motifs: ['red-stamp'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L105-107' }] },
+        { id: 2, title: 'supervised vs RL tier list', duration: 24, motifs: ['tier-list'],
+          beats: [
+            { id: 'supervised-enter', type: 'click', cue: 'supervised 路線 ——',                       wait: null,           scriptLines: 'L105-107' },
+            { id: 'supervised-cross', type: 'click', cue: '❌ 我不想要 AI 背答案',                      wait: '1-2s',         scriptLines: 'L105-107' },
+            { id: 'supervised-trash', type: 'click', cue: '拉完了',                                     wait: '1-1.5s 笑點',  scriptLines: 'L105-107' },
+            { id: 'rl-enter',         type: 'click', cue: '再看看我這套 RL 增強式訓練 ——',                 wait: null,           scriptLines: 'L105-107' },
+            { id: 'rl-check',         type: 'click', cue: '✓ 讓 AI 從零自己學習規則',                     wait: '1-2s',         scriptLines: 'L105-107' },
+            { id: 'rl-hang',          type: 'click', cue: '夯',                                         wait: '1-2s 笑點',    scriptLines: 'L105-107' },
+          ],
+        },
         { id: 3, title: '受害者', duration: 14, punchline: true, motifs: ['red-stamp'], climax: ['A', 'C'],
           beats: [
             { id: 'kicker',       type: 'click', cue: '我的終極目標是把我訓練好的 AI 拿去每個數獨網站...', wait: null, scriptLines: 'L111-115' },
