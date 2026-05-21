@@ -90,9 +90,9 @@ export default function Ch7Step7() {
         {frozen && [0, 1, 2].map(i => (
           <motion.div
             key={i}
-            initial={{ y: 0, opacity: 0, scale: 0.5 }}
-            animate={{ y: -70, opacity: [0, 1, 1, 0], scale: 1 }}
-            transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.3, ease: 'easeOut' }}
+            initial={false}
+            animate={{ y: [0, -70], opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, repeatType: 'loop', delay: i * 0.3, ease: 'easeOut' }}
             style={{
               position: 'absolute', top: -20, left: 40 + i * 34,
               fontSize: 40, fontWeight: 900, color: '#FF3B30',
