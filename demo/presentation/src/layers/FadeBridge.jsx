@@ -38,7 +38,7 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 4: return <Ch4TierSnap duration={duration} />;
     case 5: return <Ch5FaultLineShear duration={duration} />;
     case 6: return <Ch6PinkRedSweep duration={duration} />;
-    case 7: return <Ch7StairsAscend duration={duration} />;
+    case 7: return <Ch7LatticeLock duration={duration} />;
     case 8: return <Ch8BoardMaterialize duration={duration} />;
     case 9: return <Ch9GhostCollage duration={duration} />;
     default: return <DefaultCreamFade duration={duration} />;
@@ -304,55 +304,53 @@ function Ch6PinkRedSweep({ duration }) {
   );
 }
 
-// ch7 · 13-stairs ascend —— 7 階左下→右上對角線、size + color tier 隨難度爬升
-function Ch7StairsAscend({ duration }) {
+// ch7 · 約束格鎖死 —— 3×3 sudoku 粗框 pathLength 描入 + scale snap 咬合、中央格閃紅轉黃
+function Ch7LatticeLock({ duration }) {
   const d = duration / 1000;
-  const stairs = [
-    { x: '15%', y: '78%', size: 40,  rot: -2, color: '#000',    delay: 0.18 },
-    { x: '25%', y: '67%', size: 50,  rot: 2,  color: '#000',    delay: 0.23 },
-    { x: '35%', y: '56%', size: 60,  rot: -1, color: '#000',    delay: 0.28 },
-    { x: '46%', y: '44%', size: 72,  rot: 3,  color: '#FFD93D', delay: 0.33 },
-    { x: '57%', y: '32%', size: 86,  rot: -2, color: '#FFD93D', delay: 0.38 },
-    { x: '68%', y: '22%', size: 104, rot: 2,  color: '#C4B5FD', delay: 0.43 },
-    { x: '80%', y: '14%', size: 126, rot: -3, color: '#FF6B6B', delay: 0.48 },
-  ];
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
       <motion.div
         animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.85, 1], ease: 'linear' }}
+        transition={{ duration: d, times: [0, 0.15, 0.82, 1], ease: 'linear' }}
         style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
       />
-      {stairs.map((s, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: s.x, top: s.y,
-            transform: 'translate(-50%, -50%)',
-          }}
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+        <motion.svg
+          viewBox="0 0 90 90"
+          style={{ width: '62vh', height: '62vh', overflow: 'visible' }}
+          animate={{ scale: [0.92, 0.92, 1.04, 1, 1], opacity: [0, 1, 1, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.2, 0.6, 0.82, 1], ease: ['linear', 'easeOut', 'easeOut', 'easeOut'] }}
         >
-          <motion.div
-            animate={{
-              scale: [0, 0, 1.15, 1, 1, 0.9, 0],
-              opacity: [0, 0, 1, 1, 1, 1, 0],
-              rotate: [s.rot, s.rot, s.rot, s.rot, s.rot, s.rot, s.rot],
-            }}
-            transition={{
-              duration: d,
-              times: [0, s.delay, s.delay + 0.07, s.delay + 0.13, 0.78, 0.93, 1],
-              ease: ['linear', [0.34, 1.56, 0.64, 1], 'easeOut', 'linear', 'easeIn', 'easeOut'],
-            }}
-            style={{
-              width: s.size, height: s.size,
-              background: s.color,
-              border: '4px solid #000',
-              boxShadow: '8px 8px 0 0 #000',
-              boxSizing: 'border-box',
-            }}
+          {/* 外框 */}
+          <motion.rect
+            x="0" y="0" width="90" height="90" fill="none" stroke="#000" strokeWidth={3}
+            initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+            transition={{ duration: d * 0.4, delay: d * 0.18, ease: 'easeOut' }}
           />
-        </div>
-      ))}
+          {/* 直粗線 */}
+          {[30, 60].map((x) => (
+            <motion.line
+              key={`v-${x}`} x1={x} y1={0} x2={x} y2={90} stroke="#000" strokeWidth={3}
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+              transition={{ duration: d * 0.35, delay: d * 0.25, ease: 'easeOut' }}
+            />
+          ))}
+          {/* 橫粗線 */}
+          {[30, 60].map((y) => (
+            <motion.line
+              key={`h-${y}`} x1={0} y1={y} x2={90} y2={y} stroke="#000" strokeWidth={3}
+              initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
+              transition={{ duration: d * 0.35, delay: d * 0.25, ease: 'easeOut' }}
+            />
+          ))}
+          {/* 中央格閃紅轉黃 */}
+          <motion.rect
+            x="40" y="40" width="10" height="10" stroke="#000" strokeWidth={1.5}
+            animate={{ fill: ['#FF6B6B', '#FF6B6B', '#FFD93D', '#FFD93D'], opacity: [0, 0, 1, 1] }}
+            transition={{ duration: d, times: [0, 0.6, 0.66, 1], ease: 'linear' }}
+          />
+        </motion.svg>
+      </div>
     </div>
   );
 }
