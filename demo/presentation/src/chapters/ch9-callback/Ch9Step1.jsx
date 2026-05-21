@@ -1,5 +1,4 @@
 import { motion } from 'motion/react';
-import { AssetPlaceholder } from '../../components/AssetPlaceholder.jsx';
 
 export default function Ch9Step1() {
   return (
@@ -25,7 +24,13 @@ export default function Ch9Step1() {
           transition={{ duration: 0.5, delay: 0.3 }}
           style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
         >
-          <AssetPlaceholder type="[✓]" width={420} height={260} todo="success_rate 曲線截圖 (export from tensorboard, save to public/images/tensorboard/success-rate.png)" />
+          <img
+            src="/images/tensorboard/success-rate.png"
+            alt="TensorBoard: rollout/success_rate 曲線，目前約 0.53"
+            width={420}
+            height={260}
+            style={{ display: 'block', objectFit: 'contain', background: '#FFF' }}
+          />
         </motion.div>
         <motion.div
           initial={{ x: 100, opacity: 0 }}
@@ -33,7 +38,13 @@ export default function Ch9Step1() {
           transition={{ duration: 0.5, delay: 0.5 }}
           style={{ border: '6px solid #000', boxShadow: '12px 12px 0 0 #000', padding: 4, background: '#FFF' }}
         >
-          <AssetPlaceholder type="[✓]" width={420} height={260} todo="curriculum target_empty 截圖 (save to public/images/tensorboard/curriculum-target-empty.png)" />
+          <img
+            src="/images/tensorboard/curriculum-target-empty.png"
+            alt="TensorBoard: curriculum/target_empty 上升至 ~26"
+            width={420}
+            height={260}
+            style={{ display: 'block', objectFit: 'contain', background: '#FFF' }}
+          />
         </motion.div>
       </div>
 
