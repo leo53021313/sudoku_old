@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Central forbidden zone half-width / half-height — keeps inhale particles
 // from spawning on top of the LLM hero (which sits at viewport center).
@@ -43,6 +43,7 @@ export function useInhaleSpawn(terms) {
       const endY = window.innerHeight / 2;
       const text = terms[(Math.random() * terms.length) | 0];
       setParticles(p => [...p, { id, text, startX, startY, endX, endY }]);
+      // jitter is uniform in [-INTERVAL_JITTER_MS, +INTERVAL_JITTER_MS]
       const nextDelay = INTERVAL_BASE_MS + (Math.random() * 2 - 1) * INTERVAL_JITTER_MS;
       timeoutId = setTimeout(spawn, nextDelay);
     };
@@ -51,9 +52,9 @@ export function useInhaleSpawn(terms) {
     return () => { alive = false; clearTimeout(timeoutId); };
   }, [terms]);
 
-  const removeParticle = (id) => {
+  const removeParticle = useCallback((id) => {
     setParticles(p => p.filter(q => q.id !== id));
-  };
+  }, []);
 
   return { particles, removeParticle };
 }

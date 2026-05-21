@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { vi, beforeEach, afterEach } from 'vitest';
 import { pickStart, useInhaleSpawn } from './InhaleLayer.jsx';
 
 describe('pickStart', () => {
@@ -31,13 +30,18 @@ describe('pickStart', () => {
 });
 
 describe('useInhaleSpawn', () => {
+  let origInnerWidth, origInnerHeight;
   beforeEach(() => {
+    origInnerWidth = window.innerWidth;
+    origInnerHeight = window.innerHeight;
     vi.useFakeTimers();
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
     Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
   });
   afterEach(() => {
     vi.useRealTimers();
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: origInnerWidth });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: origInnerHeight });
   });
 
   it('starts with empty particles', () => {
