@@ -39,7 +39,7 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 5: return <Ch5FaultLineShear duration={duration} />;
     case 6: return <Ch6PinkRedSweep duration={duration} />;
     case 7: return <Ch7LatticeLock duration={duration} />;
-    case 8: return <Ch8BoardMaterialize duration={duration} />;
+    case 8: return <Ch8GoldWedge duration={duration} />;
     case 9: return <Ch9GhostCollage duration={duration} />;
     default: return <DefaultCreamFade duration={duration} />;
   }
@@ -355,71 +355,25 @@ function Ch7LatticeLock({ duration }) {
   );
 }
 
-// ch8 · 9×9 sudoku 盤面從左上角 stagger 翻入 —— sudoku-board motif + 3 格黃色 (反向課程起點)
-const CH8_YELLOW_CELLS = new Set([20, 44, 66]);  // 3 黃格代表「3 格空」反向課程起點
-function Ch8BoardMaterialize({ duration }) {
+// ch8 · 金光楔形破曉 —— 金黃斜帶硬邊掃過全螢幕 + 紫窄帶 depth
+function Ch8GoldWedge({ duration }) {
   const d = duration / 1000;
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {/* 主金黃斜帶 */}
       <motion.div
-        animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.85, 1], ease: 'linear' }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
+        initial={{ x: '-160%', rotate: -18 }}
+        animate={{ x: ['-160%', '0%', '0%', '160%'], rotate: [-18, -18, -18, -18] }}
+        transition={{ duration: d, times: [0, 0.42, 0.6, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
+        style={{ position: 'absolute', top: '-80%', left: '-50%', width: '200%', height: '260%', background: '#FFD93D' }}
       />
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-      }}>
+      {/* 紫窄帶 trailing depth */}
       <motion.div
-        animate={{
-          scale: [0, 0, 1, 1, 1, 0.95, 0],
-          opacity: [0, 0, 1, 1, 1, 1, 0],
-          rotate: [-2, -2, -2, -2, -2, -2, -2],
-        }}
-        transition={{
-          duration: d,
-          times: [0, 0.15, 0.5, 0.55, 0.80, 0.93, 1],
-          ease: ['linear', 'easeOut', 'linear', 'linear', 'easeIn', 'easeOut'],
-        }}
-        style={{
-          width: '60vh', height: '60vh',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(9, 1fr)',
-          gridTemplateRows: 'repeat(9, 1fr)',
-          background: '#FFFDF5',
-          border: '6px solid #000',
-          boxShadow: '12px 12px 0 0 #000',
-          boxSizing: 'border-box',
-        }}
-      >
-        {Array.from({ length: 81 }).map((_, i) => {
-          const row = Math.floor(i / 9);
-          const col = i % 9;
-          const cellDelay = (row + col) * 0.008;
-          const isYellow = CH8_YELLOW_CELLS.has(i);
-          return (
-            <motion.div
-              key={i}
-              animate={{
-                scale: [0, 0, 1.15, 1, 1, 1, 1],
-                opacity: [0, 0, 1, 1, 1, 1, 1],
-              }}
-              transition={{
-                duration: d,
-                times: [0, 0.15 + cellDelay, 0.20 + cellDelay, 0.24 + cellDelay, 0.5, 0.8, 1],
-                ease: ['linear', [0.34, 1.56, 0.64, 1], 'easeOut', 'linear', 'linear', 'linear'],
-              }}
-              style={{
-                background: isYellow ? '#FFD93D' : '#FFFDF5',
-                borderRight: col % 3 === 2 && col !== 8 ? '2px solid #000' : '1px solid rgba(0,0,0,0.4)',
-                borderBottom: row % 3 === 2 && row !== 8 ? '2px solid #000' : '1px solid rgba(0,0,0,0.4)',
-                boxSizing: 'border-box',
-              }}
-            />
-          );
-        })}
-      </motion.div>
-      </div>
+        initial={{ x: '-160%', rotate: -18 }}
+        animate={{ x: ['-160%', '-32%', '-32%', '170%'], rotate: [-18, -18, -18, -18] }}
+        transition={{ duration: d, times: [0, 0.5, 0.66, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
+        style={{ position: 'absolute', top: '-80%', left: '-50%', width: '22%', height: '260%', background: '#C4B5FD', borderRight: '6px solid #000' }}
+      />
     </div>
   );
 }
