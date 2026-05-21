@@ -1,4 +1,4 @@
-// Beat manifest — encodes all 90 beats across 9 chapters / 58 steps.
+// Beat manifest — encodes all 95 beats across 9 chapters / 58 steps.
 // Source of truth: demo/outline.md per-step descriptions.
 
 export const manifest = {

@@ -94,7 +94,7 @@ function dockAnim(rowIdx, rotate, dim) {
   };
 }
 
-// 「隱藏」 — 縮在 showcase 位置外、opacity 0。給 RL beat<2 用，beat 2 可平順 morph 成 showcase。
+// 「隱藏」 — 縮在 showcase 位置外、opacity 0。給 RL beat<3 用，beat 3 可平順 morph 成 showcase。
 function hiddenAnim() {
   return {
     opacity: 0,
