@@ -21,6 +21,6 @@ describe('ScanlineOverlay', () => {
     const style = bar.getAttribute('style') || '';
     expect(style).toContain('animation');
     expect(style).toContain('ch3s1-scanline');
-    expect(style).toContain('196'); // R of #C4B5FD = 196
+    expect(style).toContain('rgba(196, 181, 253'); // C4B5FD encoded as rgba channels
   });
 });
