@@ -24,9 +24,9 @@ export function pickStart(viewportW, viewportH) {
 }
 
 // Inhale spawn schedule.
-const FIRST_DELAY_MS = 3000;
-const INTERVAL_BASE_MS = 6000;
-const INTERVAL_JITTER_MS = 1500;
+const FIRST_DELAY_MS = 2200;
+const INTERVAL_BASE_MS = 4000;
+const INTERVAL_JITTER_MS = 1000;
 
 export function useInhaleSpawn(terms) {
   const [particles, setParticles] = useState([]);
@@ -76,7 +76,7 @@ export default function InhaleLayer({ terms }) {
           key={p.id}
           initial={{ x: p.startX, y: p.startY, scale: 1, opacity: 0.7 }}
           animate={{ x: p.endX, y: p.endY, scale: 0.2, opacity: 0 }}
-          transition={{ duration: 1.2, ease: [0.4, 0, 1, 1] }}
+          transition={{ duration: 0.9, ease: [0.4, 0, 1, 1] }}
           onAnimationComplete={() => removeParticle(p.id)}
           style={{
             position: 'absolute', top: 0, left: 0,

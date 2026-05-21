@@ -50,26 +50,26 @@ describe('useInhaleSpawn', () => {
     expect(result.current.particles).toEqual([]);
   });
 
-  it('spawns first particle after 3000ms', () => {
+  it('spawns first particle after 2200ms', () => {
     const { result } = renderHook(() => useInhaleSpawn(['AI', 'LLM']));
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => { vi.advanceTimersByTime(2200); });
     expect(result.current.particles.length).toBe(1);
     expect(['AI', 'LLM']).toContain(result.current.particles[0].text);
     expect(result.current.particles[0].endX).toBe(960);
     expect(result.current.particles[0].endY).toBe(540);
   });
 
-  it('spawns subsequent particles every ~6000ms (allow 4500-7500ms window)', () => {
+  it('spawns subsequent particles every ~4000ms (allow 3000-5000ms window)', () => {
     const { result } = renderHook(() => useInhaleSpawn(['AI']));
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => { vi.advanceTimersByTime(2200); });
     expect(result.current.particles.length).toBe(1);
-    act(() => { vi.advanceTimersByTime(7500); }); // worst-case next window
+    act(() => { vi.advanceTimersByTime(5000); }); // worst-case next window
     expect(result.current.particles.length).toBe(2);
   });
 
   it('removeParticle drops the matching id', () => {
     const { result } = renderHook(() => useInhaleSpawn(['AI']));
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => { vi.advanceTimersByTime(2200); });
     const id = result.current.particles[0].id;
     act(() => { result.current.removeParticle(id); });
     expect(result.current.particles).toEqual([]);
@@ -77,7 +77,7 @@ describe('useInhaleSpawn', () => {
 
   it('cleans up timer on unmount without crashing further timer advance', () => {
     const { result, unmount } = renderHook(() => useInhaleSpawn(['AI']));
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => { vi.advanceTimersByTime(2200); });
     expect(result.current.particles.length).toBe(1);
     unmount();
     // advancing timers after unmount should not spawn more or throw
@@ -116,7 +116,7 @@ describe('InhaleLayer (component)', () => {
 
   it('renders one particle div after the first spawn delay', () => {
     const { container } = render(<InhaleLayer terms={['AI']} />);
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => { vi.advanceTimersByTime(2200); });
     const outer = container.firstChild;
     expect(outer.children.length).toBe(1);
     expect(outer.firstChild.textContent).toBe('AI');
