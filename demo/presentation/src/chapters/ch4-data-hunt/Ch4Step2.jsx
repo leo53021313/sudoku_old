@@ -123,7 +123,7 @@ export default function Ch4Step2() {
   const { beatIndex, triggerShake } = usePresentationContext();
 
   // 著陸 shake 只在進入 dock beat 的「上升緣」觸發一次，避免來回切 beat 重打。
-  const shakeFiredRef = useRef({ supervised: false, rl: false });
+  const shakeFiredRef = useRef({ supervised: false, rl: false, cross: false });
 
   useEffect(() => {
     if (beatIndex === 2 && !shakeFiredRef.current.supervised) {
@@ -137,6 +137,12 @@ export default function Ch4Step2() {
       triggerShake();
     } else if (beatIndex !== 5) {
       shakeFiredRef.current.rl = false;
+    }
+    if (beatIndex === 1 && !shakeFiredRef.current.cross) {
+      shakeFiredRef.current.cross = true;
+      triggerShake();
+    } else if (beatIndex !== 1) {
+      shakeFiredRef.current.cross = false;
     }
   }, [beatIndex, triggerShake]);
 
@@ -308,6 +314,26 @@ export default function Ch4Step2() {
             zIndex: 12,
           }}
         >
+          {/* yellow flash — ✓ 進場時短促閃光，鋪在 caption 後方 */}
+          <motion.div
+            initial={false}
+            animate={beatIndex === 4
+              ? { opacity: [0, 0.55, 0], scale: [0.6, 1.4, 1.6] }
+              : { opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: 48,
+              width: 220, height: 220,
+              marginLeft: -110,
+              marginTop: -110,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #FFD93D 0%, rgba(255,217,61,0) 70%)',
+              pointerEvents: 'none',
+              zIndex: -1,
+            }}
+          />
           <motion.div
             initial={false}
             animate={beatIndex === 4
