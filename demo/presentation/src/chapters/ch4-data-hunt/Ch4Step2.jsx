@@ -243,7 +243,6 @@ export default function Ch4Step2() {
         <motion.div
           initial={false}
           animate={{
-            opacity: beatIndex === 1 ? 1 : 0,
             top: TABLE_H / 2 + CAPTION_TOP_OFFSET,
             left: TABLE_W / 2,
             x: '-50%',
@@ -298,7 +297,6 @@ export default function Ch4Step2() {
         <motion.div
           initial={false}
           animate={{
-            opacity: beatIndex === 4 ? 1 : 0,
             top: TABLE_H / 2 + CAPTION_TOP_OFFSET,
             left: TABLE_W / 2,
             x: '-50%',
