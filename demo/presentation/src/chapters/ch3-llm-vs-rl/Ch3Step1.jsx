@@ -1,5 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
+import ScanlineOverlay from './ScanlineOverlay.jsx';
+import InhaleLayer from './InhaleLayer.jsx';
 
 const TERMS = [
   // 模型 / 技術
@@ -78,6 +80,9 @@ export default function Ch3Step1() {
             <div key={i}>{line}</div>
           ))}
         </div>
+
+        <ScanlineOverlay />
+        <InhaleLayer terms={TERMS} />
 
         {/* "LLM" hero with overshoot stamp */}
         <motion.div
