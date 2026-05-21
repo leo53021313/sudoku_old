@@ -14,18 +14,29 @@ export default function Ch9Step3() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{
           flex: '0 0 40%', background: '#FFFDF5', color: '#000',
-          height: '60vh',
+          height: '60vh', minHeight: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: 32, gap: 16,
           border: '6px solid #000',
         }}
       >
-        <img
-          src="/images/ai/ch9/brain-reward.png"
-          alt="大腦與獎懲 token"
-          style={{ width: '70%', height: 'auto', display: 'block' }}
-        />
         <div style={{
+          flex: '1 1 auto', minHeight: 0,
+          width: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <img
+            src="/images/ai/ch9/brain-reward.png"
+            alt="大腦與獎懲 token"
+            style={{
+              display: 'block',
+              maxWidth: '70%', maxHeight: '100%',
+              width: 'auto', height: 'auto',
+            }}
+          />
+        </div>
+        <div style={{
+          flex: '0 0 auto',
           background: '#FF6B6B', color: '#FFFDF5',
           padding: '8px 20px',
           border: '4px solid #000', boxShadow: '6px 6px 0 0 #000',
@@ -56,7 +67,7 @@ export default function Ch9Step3() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{
           flex: '0 0 40%', background: '#FFFDF5', color: '#000',
-          height: '60vh',
+          height: '60vh', minHeight: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: 32, gap: 16,
           border: '6px solid #000',
