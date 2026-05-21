@@ -424,6 +424,48 @@ Aspect ratio: 1:1 square.
 
 ---
 
+#### 13. `ch6-milk-tea` 奶茶（img2img 真人轉繪）
+
+**用途**：[ch6 s3](outline.md) beat 0-1，奶茶角色登場 + 名牌「奶茶」；與 `ch6-girl-new` 並肩相遇
+**原路線**：無（新角色）
+**生成方式**：**img2img 編輯**——連同一張真人照片一起貼給 Nano Banana 2 / GPT Image，要求保留本人臉部辨識度
+**比例**：1:1 sticker（800×800）
+**重點**：
+- 保留照片本人五官辨識度（同臉型、同特徵），讓觀眾認得出是同一個人
+- 奶茶髮色是這角色的名字哏 → **色票破例**：髮色用一個平塗的奶茶／淺棕色（刻意的一次性延伸），其餘維持五色票
+- 韓式鍋蓋頭（圓蘑菇蓋）髮型要畫清楚
+- 表情：友善、帶點期待（剛遇到喜歡的人）
+- 紫上衣（與 girl-new 紅上衣形成並肩對比）
+- **隱私**：prompt 與任何文件一律不寫真名，只用 "the person in the attached photo" 與暱稱「奶茶」
+
+**Prompt (English)**:
+```
+[Paste shared style prefix from §3 above]
+
+EDIT THE ATTACHED PHOTO: Redraw the real person in the photo in the flat
+illustration style described above, while PRESERVING their facial likeness and
+identity (same face shape, same features) so they stay recognizable. Keep their
+milk-tea / light-brown hair COLOR — render it as a single FLAT milk-tea tan fill
+(a deliberate one-off palette extension; this hair color is the character's whole
+joke), bold black outline, no gradient. Keep the Korean bowl-cut / round
+mushroom-cap hairstyle clearly readable. Redraw as bold black ink outline + flat
+color fill only, NO photo texture, NO gradient, NO blur, NO 3D.
+Pose: 3/4 front-facing, head and upper torso, a friendly slightly-hopeful
+expression (a guy who just met someone he likes). Plain top in soft violet
+#C4B5FD. Cream #FFFDF5 plain background. Character takes ~75% of canvas height,
+centered, clean sticker cutout. NO text.
+Aspect ratio: 1:1 square.
+```
+
+**驗收**：
+- 一眼看出奶茶髮色 + 鍋蓋頭、且保留本人辨識度
+- 線條粗細一致黑邊、平塗無漸層
+- 除髮色奶茶棕外不出現五色票以外雜色、無文字
+- 可乾淨剪成 sticker（透明 / cream 底）
+- 落地路徑：`demo/presentation/public/images/ai/ch6/milk-tea.png`
+
+---
+
 ### §6.3 v2 工時預估
 
 | 項目 | 工時 |
