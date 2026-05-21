@@ -190,7 +190,7 @@ export default function Ch4Step2() {
         {/* ImpactDust — 拉完了 dock 著陸；wrapper 把 motif 內建的 (50%, 78%) 錨點移到 dock 中心 */}
         <div style={{
           position: 'absolute',
-          left: LABEL_W + DIVIDER + DOCK_INSET + 60,  // sticker 視覺中心 ≈ left edge + 60
+          left: LABEL_W + DIVIDER + DOCK_INSET,  // wrapper left = dock left edge; motif's built-in left:50% of 200px wrapper places origin at dock_left + 100 ≈ sticker visual center
           top: rowCenterY(ROW_TRASH) - 78,            // 78% of 100 = 78; offset 使 motif 中心對齊 row 中軸
           width: 200,
           height: 100,
@@ -203,7 +203,7 @@ export default function Ch4Step2() {
         {/* StarburstShards — 夯 dock 著陸；wrapper 把 motif 內建的 (50%, 50%) 錨點移到 dock 中心 */}
         <div style={{
           position: 'absolute',
-          left: LABEL_W + DIVIDER + DOCK_INSET + 60,
+          left: LABEL_W + DIVIDER + DOCK_INSET,
           top: rowCenterY(ROW_HANG) - 50,
           width: 200,
           height: 100,
