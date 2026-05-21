@@ -38,14 +38,13 @@ const STICKER_BASE = {
   fontWeight: 900,
   fontSize: 30,
   whiteSpace: 'nowrap',
-  transformOrigin: 'left center', // dock 時 left 座標 = 視覺左緣
 };
 
 // row i 的 slot 垂直中軸 (相對 table 左上角)
 const rowCenterY = (rowIdx) => rowIdx * (ROW_H + DIVIDER) + ROW_H / 2;
 
 // 「showcase 大」 — 置中 table 容器、scale 1.8。
-// 用 transformOrigin 'left center' 配 x:'-50%' 達成水平居中、y:'-50%' 達成垂直居中。
+// 用 transformOrigin: 'center center' 配 x:'-50%', y:'-50%' 達成水平垂直居中。
 function showcaseAnim(rotate) {
   return {
     opacity: 1,
@@ -56,11 +55,12 @@ function showcaseAnim(rotate) {
     y: '-50%',
     rotate,
     filter: 'blur(0px)',
+    transformOrigin: 'center center',
   };
 }
 
 // 「dock 小」 — sticker 視覺左緣 = LABEL_W + DIVIDER + DOCK_INSET。
-// transformOrigin: 'left center' (在 STICKER_BASE) + x:0 → left 座標即視覺左緣。
+// transformOrigin: 'left center' + x:0 → left 座標即視覺左緣。
 function dockAnim(rowIdx, rotate, dim) {
   return {
     opacity: dim ? 0.35 : 1,
@@ -71,6 +71,7 @@ function dockAnim(rowIdx, rotate, dim) {
     y: '-50%',
     rotate,
     filter: dim ? 'blur(3px)' : 'blur(0px)',
+    transformOrigin: 'left center',
   };
 }
 
@@ -85,6 +86,7 @@ function hiddenAnim() {
     y: '-50%',
     rotate: 0,
     filter: 'blur(0px)',
+    transformOrigin: 'center center',
   };
 }
 
