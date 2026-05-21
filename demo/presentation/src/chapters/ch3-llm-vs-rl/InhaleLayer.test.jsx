@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { pickStart } from './InhaleLayer.jsx';
+import { renderHook, act } from '@testing-library/react';
+import { vi, beforeEach, afterEach } from 'vitest';
+import { pickStart, useInhaleSpawn } from './InhaleLayer.jsx';
 
 describe('pickStart', () => {
   it('returns a coordinate within the viewport bounds', () => {
@@ -25,5 +27,57 @@ describe('pickStart', () => {
     // forbidden box of a 1920x1080 viewport is roughly (0.037)^6 ≈ 2.6e-9.
     // Allow up to 1 outlier across 200 samples for safety.
     expect(insideCount).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('useInhaleSpawn', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1920 });
+    Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('starts with empty particles', () => {
+    const { result } = renderHook(() => useInhaleSpawn(['AI', 'LLM']));
+    expect(result.current.particles).toEqual([]);
+  });
+
+  it('spawns first particle after 3000ms', () => {
+    const { result } = renderHook(() => useInhaleSpawn(['AI', 'LLM']));
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(result.current.particles.length).toBe(1);
+    expect(['AI', 'LLM']).toContain(result.current.particles[0].text);
+    expect(result.current.particles[0].endX).toBe(960);
+    expect(result.current.particles[0].endY).toBe(540);
+  });
+
+  it('spawns subsequent particles every ~6000ms (allow 4500-7500ms window)', () => {
+    const { result } = renderHook(() => useInhaleSpawn(['AI']));
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(result.current.particles.length).toBe(1);
+    act(() => { vi.advanceTimersByTime(7500); }); // worst-case next window
+    expect(result.current.particles.length).toBe(2);
+  });
+
+  it('removeParticle drops the matching id', () => {
+    const { result } = renderHook(() => useInhaleSpawn(['AI']));
+    act(() => { vi.advanceTimersByTime(3000); });
+    const id = result.current.particles[0].id;
+    act(() => { result.current.removeParticle(id); });
+    expect(result.current.particles).toEqual([]);
+  });
+
+  it('cleans up timer on unmount without crashing further timer advance', () => {
+    const { result, unmount } = renderHook(() => useInhaleSpawn(['AI']));
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(result.current.particles.length).toBe(1);
+    unmount();
+    // advancing timers after unmount should not spawn more or throw
+    expect(() => {
+      act(() => { vi.advanceTimersByTime(10000); });
+    }).not.toThrow();
   });
 });
