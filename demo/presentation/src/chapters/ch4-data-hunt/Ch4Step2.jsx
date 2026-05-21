@@ -1,5 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
+import { ImpactDust } from '../../motifs/ImpactDust.jsx';
+import { StarburstShards } from '../../motifs/StarburstShards.jsx';
 
 // 夯爆了 / 拉完了 tier-list meme — 把 supervised vs RL 兩條路線丟進排行榜。
 // 5 rows top→bottom: 夯 顶级 人上人 NPC 拉完了 (簡體中文以還原迷因原版)
@@ -117,7 +120,25 @@ function rlState(beatIndex) {
 }
 
 export default function Ch4Step2() {
-  const { beatIndex } = usePresentationContext();
+  const { beatIndex, triggerShake } = usePresentationContext();
+
+  // 著陸 shake 只在進入 dock beat 的「上升緣」觸發一次，避免來回切 beat 重打。
+  const shakeFiredRef = useRef({ supervised: false, rl: false });
+
+  useEffect(() => {
+    if (beatIndex === 2 && !shakeFiredRef.current.supervised) {
+      shakeFiredRef.current.supervised = true;
+      triggerShake();
+    } else if (beatIndex !== 2) {
+      shakeFiredRef.current.supervised = false;
+    }
+    if (beatIndex === 5 && !shakeFiredRef.current.rl) {
+      shakeFiredRef.current.rl = true;
+      triggerShake();
+    } else if (beatIndex !== 5) {
+      shakeFiredRef.current.rl = false;
+    }
+  }, [beatIndex, triggerShake]);
 
   return (
     <main style={{
@@ -165,6 +186,32 @@ export default function Ch4Step2() {
             </div>
           ))}
         </motion.div>
+
+        {/* ImpactDust — 拉完了 dock 著陸；wrapper 把 motif 內建的 (50%, 78%) 錨點移到 dock 中心 */}
+        <div style={{
+          position: 'absolute',
+          left: LABEL_W + DIVIDER + DOCK_INSET + 60,  // sticker 視覺中心 ≈ left edge + 60
+          top: rowCenterY(ROW_TRASH) - 78,            // 78% of 100 = 78; offset 使 motif 中心對齊 row 中軸
+          width: 200,
+          height: 100,
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}>
+          <ImpactDust active={beatIndex >= 2} />
+        </div>
+
+        {/* StarburstShards — 夯 dock 著陸；wrapper 把 motif 內建的 (50%, 50%) 錨點移到 dock 中心 */}
+        <div style={{
+          position: 'absolute',
+          left: LABEL_W + DIVIDER + DOCK_INSET + 60,
+          top: rowCenterY(ROW_HANG) - 50,
+          width: 200,
+          height: 100,
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}>
+          <StarburstShards active={beatIndex >= 5} />
+        </div>
 
         {/* supervised — beat 0-1 showcase、beat ≥ 2 dock 在 拉完了 (beat 3-4 dim) */}
         <motion.div
