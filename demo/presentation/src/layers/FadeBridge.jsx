@@ -36,7 +36,7 @@ function ChapterEntryGesture({ chapterId, duration }) {
     case 2: return <Ch2GridDrawIn duration={duration} />;
     case 3: return <Ch3SplitScreen duration={duration} />;
     case 4: return <Ch4TierSnap duration={duration} />;
-    case 5: return <Ch5CrashCard duration={duration} />;
+    case 5: return <Ch5FaultLineShear duration={duration} />;
     case 6: return <Ch6PinkStampCascade duration={duration} />;
     case 7: return <Ch7StairsAscend duration={duration} />;
     case 8: return <Ch8BoardMaterialize duration={duration} />;
@@ -244,46 +244,39 @@ function Ch4TierSnap({ duration }) {
   );
 }
 
-// ch5 · CrashLine 卡片放大版作為章節進場 —— cream + 6px 紅邊 + 12px 黑硬陰影 + 閃爍游標
-// drop-in overshoot → hold → crash-punch (scale wobble) → fade
-function Ch5CrashCard({ duration }) {
+// ch5 · 斷層撕裂 —— cream 沿反對角剪兩半、鋸齒黑裂縫 pathLength 描入 + 紅光、兩半 shear 滑出
+function Ch5FaultLineShear({ duration }) {
   const d = duration / 1000;
+  const crack = 'M2000,0 L1500,360 L1180,200 L760,560 L420,360 L0,1200';
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 80, pointerEvents: 'none' }}>
+      {/* 左上三角 cream，hold 後往左上 shear 出 */}
       <motion.div
-        animate={{ opacity: [0, 1, 1, 0] }}
-        transition={{ duration: d, times: [0, 0.15, 0.75, 1], ease: 'linear' }}
-        style={{ position: 'absolute', inset: 0, background: '#FFFDF5' }}
+        animate={{ x: ['0%', '0%', '0%', '-60%'], y: ['0%', '0%', '0%', '-60%'], opacity: [0, 1, 1, 0] }}
+        transition={{ duration: d, times: [0, 0.12, 0.62, 1], ease: ['easeOut', 'linear', [0.7, 0, 0.84, 0]] }}
+        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
       />
+      {/* 右下三角 cream，往右下 shear 出 */}
       <motion.div
-        animate={{
-          opacity: [0, 0, 1, 1, 1, 1, 1, 0],
-          scale: [0.85, 0.85, 1, 1, 1.06, 0.96, 1, 1],
-        }}
-        transition={{
-          duration: d,
-          times: [0, 0.15, 0.28, 0.40, 0.44, 0.48, 0.55, 1],
-          ease: ['linear', [0.34, 1.56, 0.64, 1], 'linear', 'easeIn', 'easeOut', 'easeOut', 'easeOut'],
-        }}
-        style={{
-          position: 'absolute', top: '50%', left: '50%',
-          width: '55vw', height: '30vh',
-          marginLeft: '-27.5vw', marginTop: '-15vh',
-          background: '#FFFDF5',
-          border: '6px solid #FF6B6B',
-          boxShadow: '12px 12px 0 0 #000',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <motion.span
-          animate={{ opacity: [1, 0, 1, 0, 1] }}
-          transition={{ duration: d * 0.6, delay: d * 0.18, times: [0, 0.25, 0.5, 0.75, 1], ease: 'linear' }}
-          style={{
-            fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: '6rem',
-            color: '#FF6B6B',
-          }}
-        >_</motion.span>
-      </motion.div>
+        animate={{ x: ['0%', '0%', '0%', '60%'], y: ['0%', '0%', '0%', '60%'], opacity: [0, 1, 1, 0] }}
+        transition={{ duration: d, times: [0, 0.12, 0.62, 1], ease: ['easeOut', 'linear', [0.7, 0, 0.84, 0]] }}
+        style={{ position: 'absolute', inset: 0, background: '#FFFDF5', clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+      />
+      <svg viewBox="0 0 2000 1200" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        {/* 鋸齒黑裂縫 —— pathLength 0→1 描入 */}
+        <motion.path
+          d={crack} fill="none" stroke="#000" strokeWidth={10}
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: [0, 1, 1, 1], opacity: [1, 1, 1, 0] }}
+          transition={{ duration: d, times: [0, 0.42, 0.62, 1], ease: ['easeIn', 'linear', 'easeOut'] }}
+        />
+        {/* 紅光 flash 沿裂縫 */}
+        <motion.path
+          d={crack} fill="none" stroke="#FF6B6B" strokeWidth={22}
+          animate={{ opacity: [0, 0, 0.85, 0, 0] }}
+          transition={{ duration: d, times: [0, 0.42, 0.5, 0.62, 1], ease: 'linear' }}
+        />
+      </svg>
     </div>
   );
 }
