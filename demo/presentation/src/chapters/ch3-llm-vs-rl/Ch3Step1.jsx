@@ -1,6 +1,53 @@
 import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+
+const TERMS = [
+  // 模型 / 技術
+  '人工智慧', '語言模型', '神經網路', '深度學習', '機器學習',
+  'Transformer', 'Token', 'Prompt', 'RAG', 'Embedding',
+  // 訓練流程
+  '提示詞', '訓練資料', '監督式學習', '強化學習', '微調',
+  '預訓練', '對齊', '人類回饋', '梯度', '反向傳播',
+  // 模型內部
+  '詞元', '上下文', '注意力機制', '推理', '生成',
+  '損失函數', '嵌入向量', '詞彙表', '機率分布', '取樣',
+  '思維鏈', '解碼', '溫度', '演算法',
+  // 資料來源 (呼應 tagline「讀完整個網路」)
+  '網路文章', '維基百科', '對話紀錄', '程式碼', '論文',
+  '故事', '新聞', '部落格', '評論', '翻譯',
+  '留言', '小說', '教科書', '文件', '字典',
+  // 人類動作
+  '理解', '預測', '學習', '記憶', '推論',
+];
+
+const LINE_COUNT = 50;
+const TERMS_PER_LINE_MIN = 7;
+const TERMS_PER_LINE_MAX = 11;
+
+function makeLine() {
+  const n = TERMS_PER_LINE_MIN + Math.floor(Math.random() * (TERMS_PER_LINE_MAX - TERMS_PER_LINE_MIN + 1));
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(TERMS[(Math.random() * TERMS.length) | 0]);
+  return out.join('  ');
+}
 
 export default function Ch3Step1() {
+  const [lines, setLines] = useState(() => Array.from({ length: LINE_COUNT }, makeLine));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLines((prev) => {
+        const next = prev.slice();
+        // 每 tick 替換 ~4 行 (8%) — 緩慢交替的「資料持續流入」感
+        for (let i = 0; i < 4; i++) {
+          next[(Math.random() * next.length) | 0] = makeLine();
+        }
+        return next;
+      });
+    }, 2500);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <main style={{
       position: 'relative', zIndex: 20, height: '100vh',
@@ -12,7 +59,7 @@ export default function Ch3Step1() {
         animate={{ clipPath: 'inset(0 0 0 0)' }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
         style={{
-          position: 'absolute', top: 0, bottom: 0, left: 0, width: '60%',
+          position: 'absolute', top: 0, bottom: 0, left: 0, width: '100%',
           background: 'transparent', padding: 64,
           display: 'flex', flexDirection: 'column',
           justifyContent: 'center', alignItems: 'center', textAlign: 'center',
@@ -27,8 +74,8 @@ export default function Ch3Step1() {
             lineHeight: 1.6, padding: 12, color: '#000',
           }}
         >
-          {Array.from({ length: 50 }).map((_, i) => (
-            <div key={i}>The quick brown fox jumps over the lazy dog 一二三四 ABC </div>
+          {lines.map((line, i) => (
+            <div key={i}>{line}</div>
           ))}
         </div>
 

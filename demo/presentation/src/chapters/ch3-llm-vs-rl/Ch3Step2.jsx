@@ -12,11 +12,24 @@ export default function Ch3Step2() {
         display: 'flex', flexDirection: 'column',
         justifyContent: 'center', alignItems: 'center', textAlign: 'center',
       }}>
-        <div style={{ fontWeight: 900, fontSize: '6rem', color: '#000' }}>LLM</div>
+        {/* LLM slides from Ch3Step1's center position (viewport center, ~10rem)
+            to this left-half center at 6rem. Left-half center is at 25vw of the
+            viewport; an initial x of +25vw px places the word on viewport center
+            so it visually continues from Step 1. Scale 10/6 matches Step 1's
+            font-size during the entrance. motion's x/y treat unit strings
+            inconsistently across versions, so compute the px value at render. */}
+        <motion.div
+          initial={{ x: window.innerWidth * 0.25, scale: 10 / 6 }}
+          animate={{ x: 0, scale: 1 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          style={{ fontWeight: 900, fontSize: '6rem', color: '#000' }}
+        >
+          LLM
+        </motion.div>
         <motion.div
           initial={{ y: -200, scale: 0, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.5, delay: 0.85, ease: [0.34, 1.56, 0.64, 1] }}
           style={{
             marginTop: 24, background: '#FF6B6B', color: '#FFFDF5',
             padding: '20px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
@@ -38,7 +51,7 @@ export default function Ch3Step2() {
       <motion.div
         initial={{ scale: 0, rotate: 0 }}
         animate={{ scale: 1, rotate: -10 }}
-        transition={{ duration: 0.5, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+        transition={{ duration: 0.5, delay: 0.55, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
           position: 'absolute', left: '50%', top: '50%',
           x: '-50%', y: '-50%',
@@ -56,7 +69,7 @@ export default function Ch3Step2() {
       <motion.div
         initial={{ clipPath: 'inset(0 0 0 100%)' }}
         animate={{ clipPath: 'inset(0 0 0 0)' }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.6, delay: 0.55, ease: 'easeOut' }}
         style={{
           flex: '0 0 50%', padding: 64, position: 'relative',
           display: 'flex', flexDirection: 'column',
@@ -81,7 +94,7 @@ export default function Ch3Step2() {
         <motion.div
           initial={{ y: -200, scale: 0, opacity: 0 }}
           animate={{ y: 0, scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
+          transition={{ duration: 0.5, delay: 1.25, ease: [0.34, 1.56, 0.64, 1] }}
           style={{
             marginTop: 24, background: '#FFD93D', color: '#000',
             padding: '20px 36px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
