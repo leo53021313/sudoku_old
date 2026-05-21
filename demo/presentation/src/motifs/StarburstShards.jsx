@@ -17,13 +17,15 @@ const SHARDS = [
   { a: -60, dist: 200, size: 40, color: '#000', d: 0.1 },
 ];
 
-export function StarburstShards({ active = false }) {
+// fade=true：碎片在 burst 後繼續可見 ~0.6s、最後 ~0.8s 自身 opacity 飛散到 0（呼應 ImpactDust 風格）。
+export function StarburstShards({ active = false, fade = false }) {
   return (
     <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0 }}>
       {SHARDS.map((s, i) => {
         const rad = (s.a * Math.PI) / 180;
         const dx = Math.cos(rad) * s.dist;
         const dy = Math.sin(rad) * s.dist;
+        const delay = active ? 0.08 + s.d : 0;
         return (
           <motion.svg
             key={i}
@@ -32,9 +34,20 @@ export function StarburstShards({ active = false }) {
             viewBox="0 0 100 100"
             initial={false}
             animate={active
-              ? { x: dx - s.size / 2, y: dy - s.size / 2, scale: [0, 1.3, 1], opacity: 1, rotate: s.a }
+              ? {
+                  x: dx - s.size / 2,
+                  y: dy - s.size / 2,
+                  scale: [0, 1.3, 1],
+                  opacity: fade ? [1, 1, 0] : 1,
+                  rotate: s.a,
+                }
               : { x: -s.size / 2, y: -s.size / 2, scale: 0, opacity: 0, rotate: 0 }}
-            transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1], delay: active ? 0.08 + s.d : 0 }}
+            transition={fade
+              ? {
+                  default: { duration: 0.45, ease: [0.34, 1.56, 0.64, 1], delay },
+                  opacity: { duration: 1.4, times: [0, 0.45, 1], ease: 'easeOut', delay },
+                }
+              : { duration: 0.45, ease: [0.34, 1.56, 0.64, 1], delay }}
             style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible' }}
           >
             <path d={STAR} fill={s.color} stroke="#000" strokeWidth={6} strokeLinejoin="round" />

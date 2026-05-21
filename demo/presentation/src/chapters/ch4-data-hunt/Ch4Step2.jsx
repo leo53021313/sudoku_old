@@ -218,23 +218,18 @@ export default function Ch4Step2() {
         </div>
 
         {/* StarburstShards — 夯 dock 著陸；wrapper 把 motif 內建的 (50%, 50%) 錨點移到 dock 中心。
-            外層 motion.div 控制 fade-out：beat 5 進來時瞬間顯示、停留 ~1.5s 後在 1s 內淡出。 */}
-        <motion.div
-          initial={false}
-          animate={beatIndex === 5 ? { opacity: [1, 1, 0] } : { opacity: 0 }}
-          transition={{ duration: 2.5, times: [0, 0.6, 1], ease: 'easeOut' }}
-          style={{
-            position: 'absolute',
-            left: LABEL_W + DIVIDER + DOCK_INSET,
-            top: rowCenterY(ROW_HANG) - 50,
-            width: 200,
-            height: 100,
-            pointerEvents: 'none',
-            zIndex: 5,
-          }}
-        >
-          <StarburstShards active={beatIndex >= 5} />
-        </motion.div>
+            fade prop 讓碎片在 burst 後自己飛散 + opacity 淡出（呼應 ImpactDust 風格）。 */}
+        <div style={{
+          position: 'absolute',
+          left: LABEL_W + DIVIDER + DOCK_INSET,
+          top: rowCenterY(ROW_HANG) - 50,
+          width: 200,
+          height: 100,
+          pointerEvents: 'none',
+          zIndex: 5,
+        }}>
+          <StarburstShards active={beatIndex >= 5} fade />
+        </div>
 
         {/* supervised — beat 0-1 showcase、beat ≥ 2 dock 在 拉完了 (beat 3-4 dim) */}
         <motion.div
