@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
 // Impact speed-lines that burst outward from behind the decision stamp.
@@ -34,6 +35,18 @@ function SpeedLines({ count = 16, delay = 1.15 }) {
 }
 
 export default function Ch3Step3() {
+  // 純 RL stamp lands at delay 0.95s + duration 0.45s. Anticipation = pre-stamp tint breath;
+  // Aftermath = 600ms after settle, rotate +1° delta on 純 RL + shadow soften.
+  const [anticipationActive, setAnticipationActive] = useState(false);
+  const [aftermath, setAftermath] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setAnticipationActive(true), 350);
+    const t2 = setTimeout(() => setAnticipationActive(false), 950);
+    const t3 = setTimeout(() => setAftermath(true), 950 + 450 + 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   return (
     <main style={{
       position: 'relative', zIndex: 20, height: '100vh',
@@ -45,8 +58,16 @@ export default function Ch3Step3() {
       {/* "OK" wipes in first — the beat opens with the verdict */}
       <motion.div
         initial={{ clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
-        animate={{ clipPath: 'inset(-24px)', opacity: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        animate={
+          anticipationActive
+            ? { clipPath: 'inset(-24px)', opacity: 1, scale: [1.0, 1.015, 0.99, 1.0], rotate: [0, 0.4, -0.4, 0] }
+            : { clipPath: 'inset(-24px)', opacity: 1, scale: 1, rotate: 0 }
+        }
+        transition={
+          anticipationActive
+            ? { duration: 1.4, repeat: Infinity, ease: 'linear' }
+            : { duration: 0.6, ease: 'easeOut' }
+        }
       >
         <span style={{
           background: '#FF6B6B', color: '#FFFDF5',
@@ -71,12 +92,18 @@ export default function Ch3Step3() {
           <SpeedLines delay={1.15} />
           <motion.span
             initial={{ scale: 2.4, opacity: 0, rotate: 2 }}
-            animate={{ scale: 1, opacity: 1, rotate: 2 }}
-            transition={{ duration: 0.45, delay: 0.95, ease: [0.34, 1.56, 0.64, 1] }}
+            animate={aftermath
+              ? { scale: 1, opacity: 1, rotate: 3 }
+              : { scale: 1, opacity: 1, rotate: 2 }}
+            transition={aftermath
+              ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.45, delay: 0.95, ease: [0.34, 1.56, 0.64, 1] }}
             style={{
               background: '#FFD93D', color: '#000',
-              padding: '0 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
+              padding: '0 24px', border: '6px solid #000',
+              boxShadow: aftermath ? '6px 6px 0 0 #000' : '8px 8px 0 0 #000',
               display: 'inline-block', position: 'relative', zIndex: 1,
+              transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             純 RL

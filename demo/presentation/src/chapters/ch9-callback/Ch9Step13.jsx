@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
@@ -17,14 +17,19 @@ export default function Ch9Step13() {
   const { beatIndex, triggerShake } = usePresentationContext();
   const climax = useClimax(['A', 'B', 'C', 'G']);
   const firedRef = useRef(false);
+  const [aftermath, setAftermath] = useState(false);
 
   useEffect(() => {
     if (beatIndex === 2 && !firedRef.current) {
       firedRef.current = true;
       climax.play();
       triggerShake();
+      const t = setTimeout(() => setAftermath(true), 700);
+      return () => clearTimeout(t);
     }
   }, [beatIndex, climax, triggerShake]);
+
+  const anticipationActive = beatIndex === 1;
 
   return (
     <main style={{
@@ -86,20 +91,33 @@ export default function Ch9Step13() {
         {beatIndex >= 2 && CLIMAX_VARIANT === 2 && <ImpactDust active />}
 
         <motion.div
-          animate={beatIndex === 2
-            ? (CLIMAX_VARIANT === 2
-                ? { y: [-460, 0, -26, 0], scale: 1 }
-                : { scale: [0.85, 1.5, 1.0, 0.95, 1.0] })
-            : { scale: beatIndex >= 1 ? 1 : 0, y: 0 }}
-          transition={{ duration: CLIMAX_VARIANT === 2 ? 0.55 : 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+          animate={
+            beatIndex === 2
+              ? aftermath
+                ? { scale: 1, y: 0, rotate: 1 }
+                : (CLIMAX_VARIANT === 2
+                    ? { y: [-460, 0, -26, 0], scale: 1, rotate: 0 }
+                    : { scale: [0.85, 1.5, 1.0, 0.95, 1.0], y: 0, rotate: 0 })
+              : anticipationActive
+                ? { scale: [1, 1.012, 0.992, 1], rotate: [0, 0.5, -0.4, 0], y: 0 }
+                : { scale: beatIndex >= 1 ? 1 : 0, y: 0, rotate: 0 }
+          }
+          transition={
+            beatIndex === 2 && aftermath
+              ? { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+              : anticipationActive
+                ? { duration: 1.6, repeat: Infinity, ease: 'linear' }
+                : { duration: CLIMAX_VARIANT === 2 ? 0.55 : 0.6, ease: [0.34, 1.56, 0.64, 1] }
+          }
         >
           <div style={{
             background: beatIndex >= 2 ? '#FF6B6B' : '#FFFDF5',
             color: beatIndex >= 2 ? '#FFFDF5' : '#000',
-            padding: '40px 72px', border: '8px solid #000', boxShadow: '20px 20px 0 0 #000',
+            padding: '40px 72px', border: '8px solid #000',
+            boxShadow: aftermath ? '16px 16px 0 0 #000' : '20px 20px 0 0 #000',
             fontWeight: 900, fontSize: beatIndex >= 2 ? '5rem' : '2.25rem', rotate: -3, lineHeight: 1.2,
             textAlign: 'center', minWidth: 480,
-            transition: 'background 0.3s, color 0.3s, font-size 0.3s',
+            transition: 'background 0.3s, color 0.3s, font-size 0.3s, box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
           }}>
             {beatIndex >= 2 ? (
               <>
@@ -108,7 +126,16 @@ export default function Ch9Step13() {
                 電費小偷
               </>
             ) : (
-              <>我不一樣 → <span style={{ color: '#FF6B6B' }}>?</span></>
+              <>
+                我不一樣 →{' '}
+                <motion.span
+                  animate={anticipationActive ? { opacity: [1, 0.6, 1] } : { opacity: 1 }}
+                  transition={anticipationActive
+                    ? { duration: 0.6, repeat: Infinity, ease: 'linear' }
+                    : { duration: 0.2 }}
+                  style={{ color: '#FF6B6B', display: 'inline-block' }}
+                >?</motion.span>
+              </>
             )}
           </div>
         </motion.div>

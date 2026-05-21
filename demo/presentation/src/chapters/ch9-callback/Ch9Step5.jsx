@@ -11,6 +11,10 @@ export default function Ch9Step5() {
   const firedRef = useRef(false);
   const [pluses, setPluses] = useState([]);
   const [minuses, setMinuses] = useState([]);
+  const [aftermath, setAftermath] = useState(false);
+
+  const anticipationActive = beatIndex === 2;
+  const particleSpeedMul = anticipationActive ? 1 / 1.3 : 1;
 
   useEffect(() => {
     if (beatIndex >= 1) {
@@ -37,6 +41,8 @@ export default function Ch9Step5() {
       firedRef.current = true;
       climax.play();
       triggerShake();
+      const t = setTimeout(() => setAftermath(true), 700);
+      return () => clearTimeout(t);
     }
   }, [beatIndex, climax, triggerShake]);
 
@@ -91,7 +97,7 @@ export default function Ch9Step5() {
               key={p.id}
               initial={{ y: 0, opacity: 1 }}
               animate={{ y: -400, opacity: 0 }}
-              transition={{ duration: 2.5, ease: 'easeOut' }}
+              transition={{ duration: 2.5 * particleSpeedMul, ease: 'easeOut' }}
               style={{
                 position: 'absolute', bottom: 0, left: `${p.x}%`,
                 fontSize: 40, fontWeight: 900, color: '#10B981',
@@ -115,7 +121,7 @@ export default function Ch9Step5() {
               key={m.id}
               initial={{ y: 0, opacity: 1 }}
               animate={{ y: 400, opacity: 0 }}
-              transition={{ duration: 2.5, ease: 'easeOut' }}
+              transition={{ duration: 2.5 * particleSpeedMul, ease: 'easeOut' }}
               style={{
                 position: 'absolute', top: 0, right: `${m.x}%`,
                 fontSize: 40, fontWeight: 900, color: '#FF6B6B',
@@ -129,10 +135,16 @@ export default function Ch9Step5() {
       {/* Beat 3 punchline */}
       <motion.div
         initial={false}
-        animate={beatIndex >= 3
-          ? { scale: 1, opacity: 1, y: 0 }
-          : { scale: 0.85, opacity: 0, y: 100 }}
-        transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+        animate={
+          beatIndex >= 3
+            ? aftermath
+              ? { scale: 1, opacity: 1, y: 0, rotate: 1 }
+              : { scale: 1, opacity: 1, y: 0, rotate: 0 }
+            : { scale: 0.85, opacity: 0, y: 100, rotate: 0 }
+        }
+        transition={beatIndex >= 3 && aftermath
+          ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+          : { duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
         style={{
           position: 'absolute', bottom: 64, left: 0, right: 0, textAlign: 'center',
           zIndex: 20,
@@ -140,8 +152,10 @@ export default function Ch9Step5() {
       >
         <span style={{
           background: '#FF6B6B', color: '#FFFDF5',
-          padding: '24px 48px', border: '8px solid #000', boxShadow: '16px 16px 0 0 #000',
+          padding: '24px 48px', border: '8px solid #000',
+          boxShadow: aftermath ? '12px 12px 0 0 #000' : '16px 16px 0 0 #000',
           fontWeight: 900, fontSize: '3.5rem', display: 'inline-block', rotate: -2,
+          transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
         }}>
           跟 AI 訓練一模一樣
         </span>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
@@ -13,6 +13,8 @@ export default function Ch7Step7() {
   const firedA = useRef(false);
   const firedB = useRef(false);
   const firedBoth = useRef(false);
+  const [aftermathA, setAftermathA] = useState(false);
+  const [aftermathB, setAftermathB] = useState(false);
 
   // Auto-advance from beat 4 → beat 5 after 400ms
   useEffect(() => {
@@ -27,17 +29,23 @@ export default function Ch7Step7() {
       firedA.current = true;
       climaxA.play();
       triggerShake();
+      const t = setTimeout(() => setAftermathA(true), 700);
+      return () => clearTimeout(t);
     }
     if (beatIndex === 4 && !firedB.current) {
       firedB.current = true;
       climaxB.play();
       triggerShake();
+      const t = setTimeout(() => setAftermathB(true), 700);
+      return () => clearTimeout(t);
     }
     if (beatIndex === 5 && !firedBoth.current) {
       firedBoth.current = true;
       climaxBoth.play();
     }
   }, [beatIndex, climaxA, climaxB, climaxBoth, triggerShake]);
+
+  const anticipationActive = beatIndex === 2;
 
   return (
     <main style={{
@@ -117,15 +125,32 @@ export default function Ch7Step7() {
           說要 →
           <motion.span
             initial={false}
-            animate={beatIndex >= 3
-              ? { scale: [0.9, 1.2, 1], opacity: 1 }
-              : { scale: 0.9, opacity: beatIndex >= 2 ? 0.4 : 0 }}
-            transition={{ duration: 0.4 }}
+            animate={
+              beatIndex >= 3
+                ? aftermathA
+                  ? { scale: 1, rotate: 1, opacity: 1 }
+                  : { scale: [0.9, 1.2, 1], rotate: 0, opacity: 1 }
+                : anticipationActive
+                  ? { scale: [0.9, 0.915, 0.885, 0.9], rotate: [0, 0.6, -0.4, 0], opacity: 0.4 }
+                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 2 ? 0.4 : 0 }
+            }
+            transition={
+              beatIndex >= 3
+                ? aftermathA
+                  ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+                  : { duration: 0.4 }
+                : anticipationActive
+                  ? { duration: 1.4, repeat: Infinity, ease: 'linear' }
+                  : { duration: 0.4 }
+            }
             style={{
               marginLeft: 8,
               background: '#FF6B6B', color: '#FFF',
-              padding: '4px 12px', border: '4px solid #000',
+              padding: '4px 12px',
+              border: '4px solid #000',
+              boxShadow: aftermathA ? '2px 2px 0 0 #000' : '4px 4px 0 0 #000',
               display: 'inline-block',
+              transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             {beatIndex >= 3 ? '❌ 嫌那個女生胖' : '❌ ???'}
@@ -140,15 +165,32 @@ export default function Ch7Step7() {
           說不用 →
           <motion.span
             initial={false}
-            animate={beatIndex >= 4
-              ? { scale: [0.9, 1.2, 1], opacity: 1 }
-              : { scale: 0.9, opacity: beatIndex >= 2 ? 0.4 : 0 }}
-            transition={{ duration: 0.4 }}
+            animate={
+              beatIndex >= 4
+                ? aftermathB
+                  ? { scale: 1, rotate: 1, opacity: 1 }
+                  : { scale: [0.9, 1.2, 1], rotate: 0, opacity: 1 }
+                : anticipationActive
+                  ? { scale: [0.9, 0.915, 0.885, 0.9], rotate: [0, -0.6, 0.4, 0], opacity: 0.4 }
+                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 2 ? 0.4 : 0 }
+            }
+            transition={
+              beatIndex >= 4
+                ? aftermathB
+                  ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+                  : { duration: 0.4 }
+                : anticipationActive
+                  ? { duration: 1.4, repeat: Infinity, ease: 'linear' }
+                  : { duration: 0.4 }
+            }
             style={{
               marginLeft: 8,
               background: '#FF6B6B', color: '#FFF',
-              padding: '4px 12px', border: '4px solid #000',
+              padding: '4px 12px',
+              border: '4px solid #000',
+              boxShadow: aftermathB ? '2px 2px 0 0 #000' : '4px 4px 0 0 #000',
               display: 'inline-block',
+              transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             {beatIndex >= 4 ? '❌ 你不關心健康' : '❌ ???'}

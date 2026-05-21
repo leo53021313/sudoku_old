@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { ImpactDust } from '../../motifs/ImpactDust.jsx';
@@ -135,6 +135,19 @@ export default function Ch4Step2() {
 
   // 著陸 shake 只在進入 dock beat 的「上升緣」觸發一次，避免來回切 beat 重打。
   const shakeFiredRef = useRef({ supervised: false, rl: false, cross: false });
+
+  // Beat 1 = ✕ red-stamp caption arrival (supervised 被否決). Beat 4 = ✓ green-stamp (RL 受寵).
+  // Aftermath: stamp settle 500ms later.
+  const [supervisedAftermath, setSupervisedAftermath] = useState(false);
+
+  useEffect(() => {
+    if (beatIndex === 1) {
+      const t = setTimeout(() => setSupervisedAftermath(true), 500 + 450);
+      return () => clearTimeout(t);
+    } else {
+      setSupervisedAftermath(false);
+    }
+  }, [beatIndex]);
 
   useEffect(() => {
     if (beatIndex === 2 && !shakeFiredRef.current.supervised) {
@@ -308,17 +321,22 @@ export default function Ch4Step2() {
           </motion.div>
           <motion.div
             initial={false}
-            animate={beatIndex === 1 ? { y: 0, opacity: 1 } : { y: 12, opacity: 0 }}
-            transition={{ ...CAPTION_TEXT_TR, delay: beatIndex === 1 ? 0.2 : 0 }}
+            animate={beatIndex === 1
+              ? (supervisedAftermath ? { y: 0, opacity: 1, rotate: 1 } : { y: 0, opacity: 1, rotate: 0 })
+              : { y: 12, opacity: 0, rotate: 0 }}
+            transition={supervisedAftermath
+              ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+              : { ...CAPTION_TEXT_TR, delay: beatIndex === 1 ? 0.2 : 0 }}
             style={{
               background: '#000',
               color: '#FFFDF5',
               padding: '12px 28px',
               border: '4px solid #000',
-              boxShadow: '6px 6px 0 0 #000',
+              boxShadow: supervisedAftermath ? '4px 4px 0 0 #000' : '6px 6px 0 0 #000',
               fontWeight: 900,
               fontSize: 30,
               whiteSpace: 'nowrap',
+              transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
             我不想要 AI 背答案

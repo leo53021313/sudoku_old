@@ -8,7 +8,9 @@ export default function Ch7Step6() {
   const climax = useClimax(['A', 'B', 'C']);
   const firedRef = useRef(false);
   const [count, setCount] = useState(0);
+  const [aftermath, setAftermath] = useState(false);
 
+  // Beat 0: count-up across 2s
   useEffect(() => {
     if (beatIndex === 0) {
       let raf, start;
@@ -24,13 +26,18 @@ export default function Ch7Step6() {
     }
   }, [beatIndex]);
 
+  // Beat 2 climax — fire + aftermath at +700ms
   useEffect(() => {
     if (beatIndex === 2 && !firedRef.current) {
       firedRef.current = true;
       climax.play();
       triggerShake();
+      const t = setTimeout(() => setAftermath(true), 700);
+      return () => clearTimeout(t);
     }
   }, [beatIndex, climax, triggerShake]);
+
+  const anticipationActive = beatIndex === 1;
 
   return (
     <main style={{
@@ -70,24 +77,40 @@ export default function Ch7Step6() {
         完整解出一道題的機率是
         {beatIndex < 2 && (
           <motion.span
-            animate={{ opacity: [1, 0] }}
-            transition={{ duration: 0.6, repeat: Infinity, ease: 'steps(2)' }}
-            style={{ marginLeft: 16, color: '#FF6B6B' }}
+            animate={anticipationActive
+              ? { opacity: [1, 0, 1, 0, 1], y: [-1, 1, -1, 1, 0] }
+              : { opacity: [1, 0] }}
+            transition={anticipationActive
+              ? { duration: 0.4, repeat: Infinity, ease: 'linear' }
+              : { duration: 0.6, repeat: Infinity, ease: 'steps(2)' }}
+            style={{ marginLeft: 16, color: '#FF6B6B', display: 'inline-block' }}
           >_</motion.span>
         )}
       </motion.div>
 
-      {/* Beat 2 punchline: "0" drop-in */}
+      {/* Beat 2 punchline: "0" drop-in + aftermath settle */}
       <motion.div
-        animate={beatIndex === 2
-          ? { scale: [0, 1.4, 1.0, 0.95, 1.0], y: [0, 0, 0, 0, 0], opacity: 1 }
-          : { scale: 0, opacity: 0 }}
-        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+        animate={
+          beatIndex === 2
+            ? aftermath
+              ? { scale: 1, rotate: 1, opacity: 1 }                                            // aftermath delta +1°
+              : { scale: [0, 1.4, 1.0, 0.95, 1.0], y: [0, 0, 0, 0, 0], rotate: 0, opacity: 1 } // climax overshoot
+            : { scale: 0, rotate: 0, opacity: 0 }
+        }
+        transition={
+          beatIndex === 2
+            ? aftermath
+              ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+              : { duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }
+            : { duration: 0.3 }
+        }
         style={{
           background: '#FFD93D', color: '#000',
-          padding: '32px 96px', border: '8px solid #000', boxShadow: '20px 20px 0 0 #000',
+          padding: '32px 96px', border: '8px solid #000',
+          boxShadow: aftermath ? '16px 16px 0 0 #000' : '20px 20px 0 0 #000',
           fontWeight: 900, fontSize: '12rem', lineHeight: 1, rotate: -3,
           position: 'relative', zIndex: 50,
+          transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
         0

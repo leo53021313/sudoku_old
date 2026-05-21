@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
@@ -8,6 +8,7 @@ export default function Ch4Step3() {
   const { beatIndex, triggerShake } = usePresentationContext();
   const climax = useClimax(['A', 'C']);
   const firedRef = useRef(false);
+  const [aftermath, setAftermath] = useState(false);
 
   // beat 2 觸發 climax（A 震動 + C overshoot），只觸發一次。
   // 延遲到 stamp 落定時才震 —— 讓觀眾先看清網站截圖，再被「這個受害者」蓋章砸下。
@@ -15,7 +16,9 @@ export default function Ch4Step3() {
     if (beatIndex === 2 && !firedRef.current) {
       firedRef.current = true;
       const t = setTimeout(() => { climax.play(); triggerShake(); }, 650);
-      return () => clearTimeout(t);
+      // aftermath fires 700ms after the stamp settles (stamp delay 650 + duration 600 + 700)
+      const tA = setTimeout(() => setAftermath(true), 650 + 600 + 700);
+      return () => { clearTimeout(t); clearTimeout(tA); };
     }
   }, [beatIndex, climax, triggerShake]);
 
@@ -44,9 +47,9 @@ export default function Ch4Step3() {
       <motion.div
         initial={false}
         animate={
-          beatIndex >= 2 ? { y: -32, opacity: 1 }
-          : beatIndex >= 1 ? { y: 0, opacity: 1 }
-          : { y: 60, opacity: 0 }
+          beatIndex >= 2 ? { y: -32, opacity: 1, scale: 1, rotate: 0 }
+          : beatIndex >= 1 ? { y: 0, opacity: 1, scale: 1, rotate: 0 }
+          : { y: 60, opacity: 0, scale: 1, rotate: 0 }
         }
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
@@ -98,10 +101,18 @@ export default function Ch4Step3() {
             {/* 受害者紅 stamp —— 蓋在右下角邊緣（不擋截圖主體），delay 後才砸下，讓觀眾先看截圖。
                 climax C overshoot 在 stamp 落定時彈跳（同 ch1 s8 pattern）。 */}
             <motion.div
-              animate={beatIndex === 2
-                ? { scale: [0.85, 1.4, 1.0, 0.95, 1.0] }
-                : { scale: 1 }}
-              transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1], delay: beatIndex === 2 ? 0.65 : 0 }}
+              animate={
+                beatIndex === 2 && aftermath
+                  ? { scale: 1, rotate: 1, filter: 'drop-shadow(8px 8px 0 #000)' }
+                  : beatIndex === 2
+                    ? { scale: [0.85, 1.4, 1.0, 0.95, 1.0], rotate: 0 }
+                    : { scale: 1, rotate: 0 }
+              }
+              transition={
+                beatIndex === 2 && aftermath
+                  ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+                  : { duration: 0.6, ease: [0.34, 1.56, 0.64, 1], delay: beatIndex === 2 ? 0.65 : 0 }
+              }
               style={{ position: 'absolute', bottom: -44, right: -36, zIndex: 30 }}
             >
               <RedStamp active={beatIndex >= 2} rotation={-8} size="medium" delay={0.65} nowrap>這個受害者</RedStamp>
