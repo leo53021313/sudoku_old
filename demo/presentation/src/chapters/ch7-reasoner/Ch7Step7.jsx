@@ -4,48 +4,46 @@ import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { useClimax } from '../../climax/useClimax.js';
 import { SpotlightVignette } from '../../motifs/SpotlightVignette.jsx';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
+import { MilkTea } from '../../motifs/MilkTea.jsx';
+
+const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 
 export default function Ch7Step7() {
-  const { beatIndex, advance, triggerShake } = usePresentationContext();
-  const climaxA = useClimax(['A', 'G']);  // beat 3
-  const climaxB = useClimax(['A', 'G']);  // beat 4
-  const climaxBoth = useClimax(['B']);         // beat 5 (double burst)
+  const { beatIndex, triggerShake } = usePresentationContext();
+  const climaxA = useClimax(['A', 'G']);   // beat 4
+  const climaxB = useClimax(['A', 'G']);   // beat 5
+  const climaxBoth = useClimax(['B']);     // beat 6（雙爆）
   const firedA = useRef(false);
   const firedB = useRef(false);
   const firedBoth = useRef(false);
   const [aftermathA, setAftermathA] = useState(false);
   const [aftermathB, setAftermathB] = useState(false);
 
-  // Auto-advance from beat 4 → beat 5 after 400ms
   useEffect(() => {
-    if (beatIndex === 4) {
-      const t = setTimeout(() => advance(), 400);
-      return () => clearTimeout(t);
-    }
-  }, [beatIndex, advance]);
-
-  useEffect(() => {
-    if (beatIndex === 3 && !firedA.current) {
+    if (beatIndex === 4 && !firedA.current) {
       firedA.current = true;
       climaxA.play();
       triggerShake();
+      // 用 setTimeout 包住 setState，避免在 effect 主體同步呼叫 setState 觸發 cascade render
       const t = setTimeout(() => setAftermathA(true), 700);
       return () => clearTimeout(t);
     }
-    if (beatIndex === 4 && !firedB.current) {
+    if (beatIndex === 5 && !firedB.current) {
       firedB.current = true;
       climaxB.play();
       triggerShake();
       const t = setTimeout(() => setAftermathB(true), 700);
       return () => clearTimeout(t);
     }
-    if (beatIndex === 5 && !firedBoth.current) {
+    if (beatIndex === 6 && !firedBoth.current) {
       firedBoth.current = true;
       climaxBoth.play();
+      triggerShake();
     }
   }, [beatIndex, climaxA, climaxB, climaxBoth, triggerShake]);
 
-  const anticipationActive = beatIndex === 2;
+  const anticipationActive = beatIndex === 3;
+  const frozen = beatIndex >= 6;
 
   return (
     <main style={{
@@ -56,28 +54,74 @@ export default function Ch7Step7() {
     }}>
       <SpotlightVignette active={climaxA.activeFX.G || climaxB.activeFX.G} />
 
-      {/* The 'asker' character — appears on beat 0 alongside hero */}
+      {/* 奶茶 — 左、翻轉面向右；beat6 灰階 freeze + 浮動 ❓ */}
       <motion.div
         initial={false}
-        animate={beatIndex >= 0
-          ? { scale: 1, opacity: 1, rotate: 4 }
-          : { scale: 0, opacity: 0, rotate: 0 }}
-        transition={{ duration: 0.5, delay: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+        animate={beatIndex >= 0 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: OVERSHOOT }}
         style={{
-          position: 'absolute', top: 48, right: 48, zIndex: 15,
+          position: 'absolute', left: 60, bottom: 100, zIndex: 15,
+          filter: frozen ? 'grayscale(1)' : 'none',
+          transition: 'filter 0.4s ease',
         }}
       >
-        <GirlVeteran width={200} rotation={0} shadow={10} />
+        {/* 翻轉讓奶茶面向右側女生 */}
+        <div style={{ transform: 'scaleX(-1)' }}>
+          <MilkTea width={220} rotation={-3} shadow={10} />
+        </div>
+
+        {/* 戀愛攻略 [D] sticker */}
+        <motion.div
+          initial={false}
+          animate={beatIndex >= 0 ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          style={{
+            position: 'absolute', right: -36, bottom: 8,
+            background: '#FFD93D', color: '#000',
+            padding: '6px 14px', border: '4px solid #000', boxShadow: '4px 4px 0 0 #000',
+            fontWeight: 900, fontSize: 16, whiteSpace: 'nowrap',
+            transform: 'rotate(-8deg)',
+          }}
+        >
+          戀愛攻略
+        </motion.div>
+
+        {/* freeze 浮動 ❓❓❓ */}
+        {frozen && [0, 1, 2].map(i => (
+          <motion.div
+            key={i}
+            initial={false}
+            animate={{ y: [0, -70], opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, repeatType: 'loop', delay: i * 0.3, ease: 'easeOut' }}
+            style={{
+              position: 'absolute', top: -20, left: 40 + i * 34,
+              fontSize: 40, fontWeight: 900, color: '#FF3B30',
+              WebkitTextStroke: '2px #000', pointerEvents: 'none', zIndex: 16,
+            }}
+          >
+            ?
+          </motion.div>
+        ))}
       </motion.div>
 
-      {/* Beat 0: hero */}
+      {/* 老油條女生 — 右、beat>=1 */}
       <motion.div
         initial={false}
-        animate={beatIndex >= 0 ? { clipPath: 'inset(-24px)', opacity: 1 } : { clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
+        animate={beatIndex >= 1
+          ? { scale: 1, opacity: 1, rotate: 4 }
+          : { scale: 0, opacity: 0, rotate: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: OVERSHOOT }}
+        style={{ position: 'absolute', top: 60, right: 60, zIndex: 15 }}
+      >
+        <GirlVeteran width={220} rotation={0} shadow={10} />
+      </motion.div>
+
+      {/* Beat 1: 標題 */}
+      <motion.div
+        initial={false}
+        animate={beatIndex >= 1 ? { clipPath: 'inset(-24px)', opacity: 1 } : { clipPath: 'inset(0px 100% 0px 0px)', opacity: 0 }}
         transition={{ duration: 0.8 }}
-        style={{
-          fontWeight: 900, fontSize: '3rem',
-        }}
+        style={{ fontWeight: 900, fontSize: '3rem' }}
       >
         <span style={{ background: '#FFD93D', padding: '4px 24px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000' }}>
           女生陷阱題
@@ -85,11 +129,11 @@ export default function Ch7Step7() {
       </motion.div>
 
       <div style={{ display: 'flex', gap: 48, marginTop: 32 }}>
-        {/* Beat 1: trap 1 left */}
+        {/* Beat 2: 陷阱題 1（左） */}
         <motion.div
           initial={false}
-          animate={beatIndex >= 1 ? { rotate: -3, x: 0, opacity: 1 } : { rotate: -30, x: -200, opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+          animate={beatIndex >= 2 ? { rotate: -3, x: 0, opacity: 1 } : { rotate: -30, x: -200, opacity: 0 }}
+          transition={{ duration: 0.5, ease: OVERSHOOT }}
           style={{
             background: '#FF6B6B', color: '#FFF',
             padding: '24px 32px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
@@ -99,11 +143,11 @@ export default function Ch7Step7() {
           和你媽一起<br/>掉進水裡<br/>你會先救誰？
         </motion.div>
 
-        {/* Beat 2: trap 2 right */}
+        {/* Beat 3: 陷阱題 2（右） */}
         <motion.div
           initial={false}
-          animate={beatIndex >= 2 ? { rotate: 4, x: 0, opacity: 1 } : { rotate: 30, x: 200, opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+          animate={beatIndex >= 3 ? { rotate: 4, x: 0, opacity: 1 } : { rotate: 30, x: 200, opacity: 0 }}
+          transition={{ duration: 0.5, ease: OVERSHOOT }}
           style={{
             background: '#C4B5FD', color: '#000',
             padding: '24px 32px', border: '6px solid #000', boxShadow: '12px 12px 0 0 #000',
@@ -114,11 +158,11 @@ export default function Ch7Step7() {
         </motion.div>
       </div>
 
-      {/* Answer arrows + placeholders — 整列等到 beat 2「你覺得我該不該去運動」出現後才顯示 */}
+      {/* 答案箭頭 + 填空 — beat>=3 顯示，beat>=4/5 填入 */}
       <div style={{ display: 'flex', gap: 48, marginTop: 32 }}>
         <motion.div
           initial={false}
-          animate={{ opacity: beatIndex >= 2 ? 1 : 0 }}
+          animate={{ opacity: beatIndex >= 3 ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}
         >
@@ -126,16 +170,16 @@ export default function Ch7Step7() {
           <motion.span
             initial={false}
             animate={
-              beatIndex >= 3
+              beatIndex >= 4
                 ? aftermathA
                   ? { scale: 1, rotate: 1, opacity: 1 }
                   : { scale: [0.9, 1.2, 1], rotate: 0, opacity: 1 }
                 : anticipationActive
                   ? { scale: [0.9, 0.915, 0.885, 0.9], rotate: [0, 0.6, -0.4, 0], opacity: 0.4 }
-                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 2 ? 0.4 : 0 }
+                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 3 ? 0.4 : 0 }
             }
             transition={
-              beatIndex >= 3
+              beatIndex >= 4
                 ? aftermathA
                   ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
                   : { duration: 0.4 }
@@ -153,12 +197,12 @@ export default function Ch7Step7() {
               transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            {beatIndex >= 3 ? '❌ 嫌那個女生胖' : '❌ ???'}
+            {beatIndex >= 4 ? '❌ 嫌那個女生胖' : '❌ ???'}
           </motion.span>
         </motion.div>
         <motion.div
           initial={false}
-          animate={{ opacity: beatIndex >= 2 ? 1 : 0 }}
+          animate={{ opacity: beatIndex >= 3 ? 1 : 0 }}
           transition={{ duration: 0.4 }}
           style={{ minWidth: 340, textAlign: 'center', fontWeight: 700, fontSize: 18 }}
         >
@@ -166,16 +210,16 @@ export default function Ch7Step7() {
           <motion.span
             initial={false}
             animate={
-              beatIndex >= 4
+              beatIndex >= 5
                 ? aftermathB
                   ? { scale: 1, rotate: 1, opacity: 1 }
                   : { scale: [0.9, 1.2, 1], rotate: 0, opacity: 1 }
                 : anticipationActive
                   ? { scale: [0.9, 0.915, 0.885, 0.9], rotate: [0, -0.6, 0.4, 0], opacity: 0.4 }
-                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 2 ? 0.4 : 0 }
+                  : { scale: 0.9, rotate: 0, opacity: beatIndex >= 3 ? 0.4 : 0 }
             }
             transition={
-              beatIndex >= 4
+              beatIndex >= 5
                 ? aftermathB
                   ? { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
                   : { duration: 0.4 }
@@ -193,12 +237,13 @@ export default function Ch7Step7() {
               transition: 'box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            {beatIndex >= 4 ? '❌ 你不關心健康' : '❌ ???'}
+            {beatIndex >= 5 ? '❌ 你不關心健康' : '❌ ???'}
           </motion.span>
         </motion.div>
       </div>
 
-      {beatIndex >= 5 && (
+      {/* Beat 6: 兩面不討好 punchline */}
+      {beatIndex >= 6 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -1,10 +1,10 @@
-// Beat manifest — encodes all 98 beats across 9 chapters / 58 steps.
+// Beat manifest — encodes all 99 beats across 9 chapters / 58 steps.
 // Source of truth: demo/outline.md per-step descriptions.
 
 export const manifest = {
   totalChapters: 9,
   totalSteps: 58,
-  totalBeats: 98,
+  totalBeats: 99,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -140,14 +140,15 @@ export const manifest = {
             { id: 'zero-drop',           type: 'click', cue: '零', wait: '2-3s 嘆息/笑聲', climax: ['A', 'B', 'C'], scriptLines: 'L237' },
           ],
         },
-        { id: 7, title: '老油條 ★★★',  duration: 26, punchline: true, starLevel: 3, motifs: ['girl-veteran', 'yellow-highlight'], climax: ['A', 'G', 'B'],
+        { id: 7, title: '老油條 ★★★',  duration: 30, punchline: true, starLevel: 3, motifs: ['milk-tea', 'girl-veteran', 'yellow-highlight'], climax: ['A', 'G', 'B'],
           beats: [
-            { id: 'hero',             type: 'click', cue: '這個感覺就是、你剛開始學習如何跟女生互動...', wait: '0.5s', scriptLines: 'L241' },
-            { id: 'trap-1',           type: 'click', cue: '但是那些女生都是老油條...例如——和你媽一起掉進水裡你會先救誰？', wait: '2s 觀眾笑', scriptLines: 'L243-247' },
-            { id: 'trap-2-question',  type: 'click', cue: '每道都是陷阱題。舉個例子，『你覺得我該不該去運動？』', wait: '1s', scriptLines: 'L249-251' },
-            { id: 'answer-a-fill',    type: 'click', cue: '你回答要去運動——那就是你嫌那個女生胖', wait: '2s 笑點', climax: ['A', 'G'], scriptLines: 'L253-255' },
-            { id: 'answer-b-fill',    type: 'click', cue: '你回答不用去運動——那就是你不關心那個女生的身體健康', wait: '2s 笑點', climax: ['A', 'G'], scriptLines: 'L255-257' },
-            { id: 'both-flash',       type: 'auto', autoDelayMs: 400, cue: null, wait: null, climax: ['B', 'B'], scriptLines: 'L257' },
+            { id: 'milk-tea-study',  type: 'click', cue: '奶茶為了雪恥、看了一堆與女生聊天的攻略、以為這次能更進一步', wait: '0.5s', scriptLines: 'L296' },
+            { id: 'girl-traps',      type: 'click', cue: '結果女生直接出陷阱題給他', wait: '0.5s', scriptLines: 'L298' },
+            { id: 'trap-1',          type: 'click', cue: '例如——和你媽一起掉進水裡你會先救誰？', wait: '2s 觀眾笑', scriptLines: 'L298' },
+            { id: 'trap-2-question', type: 'click', cue: '又例如『你覺得我該不該去運動？』', wait: '1s', scriptLines: 'L300' },
+            { id: 'answer-a-fill',   type: 'click', cue: '你答該去運動——那就是嫌那個女生胖', wait: '2s 笑點', climax: ['A', 'G'], scriptLines: 'L302' },
+            { id: 'answer-b-fill',   type: 'click', cue: '你答不用——那就是不關心女生的身體健康', wait: '2s 笑點', climax: ['A', 'G'], scriptLines: 'L304' },
+            { id: 'milk-tea-freeze', type: 'click', cue: '奶茶一看人都傻了、網路上也沒有正確解答', wait: '2-3s', climax: ['B'], scriptLines: 'L306' },
           ],
         },
         { id: 8, title: '死結',        duration: 20, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L265-269' }] },
