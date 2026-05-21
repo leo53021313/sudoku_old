@@ -369,10 +369,10 @@ function Ch8GoldWedge({ duration }) {
       />
       {/* 紫窄帶 trailing depth */}
       <motion.div
-        initial={{ x: '-160%', rotate: -18 }}
-        animate={{ x: ['-160%', '-32%', '-32%', '170%'], rotate: [-18, -18, -18, -18] }}
+        initial={{ x: '-60vw', rotate: -18 }}
+        animate={{ x: ['-60vw', '38vw', '38vw', '150vw'], rotate: [-18, -18, -18, -18] }}
         transition={{ duration: d, times: [0, 0.5, 0.66, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
-        style={{ position: 'absolute', top: '-80%', left: '-50%', width: '22%', height: '260%', background: '#C4B5FD', borderRight: '6px solid #000' }}
+        style={{ position: 'absolute', top: '-80%', left: '0%', width: '22%', height: '260%', background: '#C4B5FD', borderRight: '6px solid #000' }}
       />
     </div>
   );
