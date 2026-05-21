@@ -71,6 +71,13 @@ CKPT_RE = re.compile(r"apprentice_ckpt_(\d+)_steps\.zip$")
 
 
 def find_latest_checkpoint(models_dir: Path) -> Path:
+    # 資料夾完全不存在時 iterdir() 會丟 FileNotFoundError，這裡先攔下來
+    # 給清楚的提示（代表還沒訓練出任何 checkpoint），而不是噴 traceback。
+    if not models_dir.is_dir():
+        raise SystemExit(
+            f"No checkpoint found: {models_dir} does not exist.\n"
+            f"Train a model first:  python -m apprentice.train.train"
+        )
     candidates = []
     for p in models_dir.iterdir():
         m = CKPT_RE.search(p.name)

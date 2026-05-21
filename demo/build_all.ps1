@@ -23,6 +23,16 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 用右鍵 "用 PowerShell 執行" / 雙擊時，腳本一拋錯視窗就瞬間關閉（看起來像閃退）。
+# 這個 trap 攔下任何終止性錯誤，先把訊息留在畫面上、等使用者按 Enter 才關。
+trap {
+    Write-Host ''
+    Write-Host "ERROR: $_" -ForegroundColor Red
+    Write-Host ''
+    Read-Host 'Build failed. Press Enter to close'
+    exit 1
+}
+
 # Resolve repo root from this script's location (demo/build_all.ps1 -> ..)
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $PresDir  = Join-Path $RepoRoot 'demo\presentation'
