@@ -1,4 +1,4 @@
-export function AiSticker({ src, alt = '', width = 280, rotation = -3, shadow = 8 }) {
+export function AiSticker({ src, alt = '', width = 280, rotation = -3, shadow = 8, onError }) {
   return (
     <div style={{
       display: 'inline-block',
@@ -12,6 +12,7 @@ export function AiSticker({ src, alt = '', width = 280, rotation = -3, shadow = 
         src={src}
         alt={alt}
         loading="lazy"
+        onError={onError}
         style={{ display: 'block', width, height: 'auto' }}
       />
     </div>

@@ -69,8 +69,23 @@ describe('usePresentation', () => {
     expect(result.current.beatIndex).toBe(0);
   });
 
-  it('reports totalBeats = 95', () => {
+  it('ch6 step3 has 4 beats then crosses to step 4', () => {
+    const { result } = renderHook(() => usePresentation({ chapterId: 6, stepId: 3 }));
+    expect(result.current.beatIndex).toBe(0);            // milk-tea-enter
+    act(() => result.current.advance());
+    expect(result.current.stepId).toBe(3);
+    expect(result.current.beatIndex).toBe(1);            // name-tag
+    act(() => result.current.advance());
+    expect(result.current.beatIndex).toBe(2);            // girl-enter
+    act(() => result.current.advance());
+    expect(result.current.beatIndex).toBe(3);            // reply-plus
+    act(() => result.current.advance());
+    expect(result.current.stepId).toBe(4);               // 第 4 個 beat 後跨到 step 4
+    expect(result.current.beatIndex).toBe(0);
+  });
+
+  it('reports totalBeats = 98', () => {
     const { result } = renderHook(() => usePresentation());
-    expect(result.current.totalBeats).toBe(95);
+    expect(result.current.totalBeats).toBe(98);
   });
 });
