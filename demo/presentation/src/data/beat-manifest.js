@@ -1,10 +1,10 @@
-// Beat manifest — encodes all 95 beats across 9 chapters / 58 steps.
+// Beat manifest — encodes all 98 beats across 9 chapters / 58 steps.
 // Source of truth: demo/outline.md per-step descriptions.
 
 export const manifest = {
   totalChapters: 9,
   totalSteps: 58,
-  totalBeats: 95,
+  totalBeats: 98,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -105,7 +105,14 @@ export const manifest = {
           ],
         },
         { id: 2, title: '套皮仔策略',   duration: 9,  beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L167-177' }] },
-        { id: 3, title: '新女生加分',   duration: 12, motifs: ['girl-new'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L181-185' }] },
+        { id: 3, title: '新女生加分',   duration: 16, motifs: ['girl-new', 'milk-tea'],
+          beats: [
+            { id: 'milk-tea-enter', type: 'click', cue: '今天有一個男生、頭髮奶茶色',           wait: null, scriptLines: 'L181-185' },
+            { id: 'name-tag',       type: 'click', cue: '所以我們叫他奶茶',                       wait: null, scriptLines: 'L181-185' },
+            { id: 'girl-enter',     type: 'click', cue: '奶茶遇見了一個女生、很想追',             wait: null, scriptLines: 'L181-185' },
+            { id: 'reply-plus',     type: 'click', cue: '每次對方持續回訊息就覺得對方也喜歡他',   wait: null, scriptLines: 'L181-185' },
+          ],
+        },
         { id: 4, title: '曲線爬升',     duration: 10, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L181' }] },
         { id: 5, title: '卡平段',       duration: 12, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L187' }] },
         { id: 6, title: '備胎 ★★★',     duration: 12, punchline: true, starLevel: 3, motifs: ['red-stamp'], climax: ['A', 'C', 'G'],
