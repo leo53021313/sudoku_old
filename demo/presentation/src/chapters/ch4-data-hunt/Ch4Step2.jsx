@@ -217,18 +217,24 @@ export default function Ch4Step2() {
           <ImpactDust active={beatIndex >= 2} />
         </div>
 
-        {/* StarburstShards — 夯 dock 著陸；wrapper 把 motif 內建的 (50%, 50%) 錨點移到 dock 中心 */}
-        <div style={{
-          position: 'absolute',
-          left: LABEL_W + DIVIDER + DOCK_INSET,
-          top: rowCenterY(ROW_HANG) - 50,
-          width: 200,
-          height: 100,
-          pointerEvents: 'none',
-          zIndex: 5,
-        }}>
+        {/* StarburstShards — 夯 dock 著陸；wrapper 把 motif 內建的 (50%, 50%) 錨點移到 dock 中心。
+            外層 motion.div 控制 fade-out：beat 5 進來時瞬間顯示、停留 ~1.5s 後在 1s 內淡出。 */}
+        <motion.div
+          initial={false}
+          animate={beatIndex === 5 ? { opacity: [1, 1, 0] } : { opacity: 0 }}
+          transition={{ duration: 2.5, times: [0, 0.6, 1], ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            left: LABEL_W + DIVIDER + DOCK_INSET,
+            top: rowCenterY(ROW_HANG) - 50,
+            width: 200,
+            height: 100,
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
           <StarburstShards active={beatIndex >= 5} />
-        </div>
+        </motion.div>
 
         {/* supervised — beat 0-1 showcase、beat ≥ 2 dock 在 拉完了 (beat 3-4 dim) */}
         <motion.div
@@ -269,6 +275,26 @@ export default function Ch4Step2() {
             zIndex: 12,
           }}
         >
+          {/* red flash — ❌ 進場時短促閃光，鋪在 caption 後方 */}
+          <motion.div
+            initial={false}
+            animate={beatIndex === 1
+              ? { opacity: [0, 0.55, 0], scale: [0.6, 1.4, 1.6] }
+              : { opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: 48,
+              width: 220, height: 220,
+              marginLeft: -110,
+              marginTop: -110,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #FF6B6B 0%, rgba(255,107,107,0) 70%)',
+              pointerEvents: 'none',
+              zIndex: -1,
+            }}
+          />
           <motion.div
             initial={false}
             animate={beatIndex === 1
