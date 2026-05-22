@@ -466,6 +466,136 @@ Aspect ratio: 1:1 square.
 
 ---
 
+#### 14. `ch6-milk-tea-happy` 奶茶開心 / 心動變體（img2img）
+
+**用途**：[ch9 s5](outline.md) beat 2「對方回訊息 → 奶茶開心反應」；同一個奶茶角色的「+ 反應」狀態
+**原路線**：無（v2 新增）
+**生成方式**：**img2img 編輯**——用同一張真人照片，要求保留五官辨識度，只換表情 / 姿勢 / 眼神
+**比例**：1:1 sticker（800×800）
+**重點**：
+- **辨識度第一**：跟 `milk-tea.png` 並排時觀眾要立刻認得是「同一個奶茶」（同臉型、同鍋蓋頭、同奶茶髮色、同紫上衣）
+- 表情關鍵字：眼睛放亮、嘴角上揚（可微張）、臉頰泛紅、整個身體微微前傾（像剛收到訊息很興奮）
+- **不要**畫得太誇張卡通（不要愛心眼、不要血條、不要彈跳線）——是「真的開心」、不是「過度反應」
+- 可以加 1-2 個小 sparkle ✨ 在臉旁（呼應 girl-new 的 sparkle 語彙），但用線條 stroke 畫
+- 鏡頭視角：3/4 正面、半身（同 §13）
+- **隱私**：prompt 一律不寫真名、只用 "the person in the attached photo" 與暱稱「奶茶」
+
+**Prompt (English)**:
+```
+[Paste shared style prefix from §3 above]
+
+EDIT THE ATTACHED PHOTO: Redraw the real person in the photo in the flat
+illustration style described above, while PRESERVING their facial likeness and
+identity (same face shape, same features, same Korean bowl-cut hairstyle) so
+they stay recognizable as the SAME character as the existing `milk-tea.png`
+sticker — this is a different emotional state of the same person, NOT a
+different person. Keep their milk-tea / light-brown hair COLOR as a single
+FLAT milk-tea tan fill (the deliberate one-off palette extension; same hair
+color as `milk-tea.png`), bold black outline, no gradient.
+
+CHANGE the expression and pose to convey "just got a reply from his crush —
+heart skipped a beat":
+- Eyes WIDE OPEN, bright, slightly larger than baseline (genuine excitement,
+  NOT cartoon heart-eyes)
+- Mouth: lips parted in a small open smile, corners turned up clearly, teeth
+  may be slightly visible
+- Cheeks: small flat circular blush patches in soft violet #C4B5FD (comic-book
+  blush, NOT pink, NOT gradient)
+- Body language: torso leaned slightly forward toward the viewer, shoulders
+  raised a touch, ONE hand near his chest or holding an invisible phone at
+  chest height (suggesting "I just read her message")
+- Around his head: add 2 small bold-outlined 4-point sparkle marks in vivid
+  yellow #FFD93D (flat geometric stars, NOT light bursts)
+
+Plain top in soft violet #C4B5FD (same outfit as `milk-tea.png` for character
+continuity). Cream #FFFDF5 plain background. Character takes ~75% of canvas
+height, centered, clean sticker cutout. Bold black ink outlines, flat fills
+only, NO photo texture, NO gradient, NO blur, NO 3D, NO text.
+
+Style continuity test: if placed side-by-side with `milk-tea.png` (neutral)
+and `milk-tea-question.png` (confused), all three must read as the SAME
+character in three different emotional states.
+
+Aspect ratio: 1:1 square.
+```
+
+**驗收**：
+- 跟 `milk-tea.png` 並排時辨識度一致（同臉、同髮、同上衣）
+- 表情「真的開心 / 心動」一眼可讀，不是過度卡通化
+- sparkle ✨ 用線條繪、紫色腮紅（不出 pink）
+- 線條粗細一致、無漸層、無文字
+- 落地路徑：`demo/presentation/public/images/ai/ch6/milk-tea-happy.png`
+
+---
+
+#### 15. `ch6-milk-tea-crashed` 奶茶崩潰 / 心碎變體（img2img）
+
+**用途**：[ch9 s5](outline.md) beat 4「已讀不回 + climax」奶茶崩潰反應；同一個奶茶角色的「− 反應」狀態
+**原路線**：v1 用過 `milk-tea-question.png`（困惑、不夠崩潰）→ v2 升級成「真的被擊垮」
+**生成方式**：**img2img 編輯**——用同一張真人照片，保留五官辨識度，只換表情 / 姿勢 / 眼神
+**比例**：1:1 sticker（800×800）
+**重點**：
+- **辨識度第一**：跟 `milk-tea.png` / `milk-tea-happy.png` 並排時觀眾要立刻認得是「同一個奶茶」
+- 表情關鍵字：眼神空洞、嘴角下垂、整個人下沉 / 駝背、像被抽掉靈魂
+- **崩潰 ≠ 困惑**：不要畫成 `milk-tea-question.png` 那種「？？？」的疑惑感，是「我知道發生什麼事了、就是被已讀不回了」的死心
+- 可以加 1-2 個負面記號：頭頂烏雲（線條畫、紫填充）、額頭直線（comic-style 沮喪線）
+- 鏡頭視角：3/4 正面、半身（同 §13 / §14）
+
+**Prompt (English)**:
+```
+[Paste shared style prefix from §3 above]
+
+EDIT THE ATTACHED PHOTO: Redraw the real person in the photo in the flat
+illustration style described above, while PRESERVING their facial likeness and
+identity (same face shape, same features, same Korean bowl-cut hairstyle) so
+they stay recognizable as the SAME character as the existing `milk-tea.png`
+and `milk-tea-happy.png` stickers — this is a third emotional state of the
+SAME person, NOT a different person. Keep their milk-tea / light-brown hair
+COLOR as a single FLAT milk-tea tan fill (same hair color as the other two
+variants), bold black outline, no gradient.
+
+CHANGE the expression and pose to convey "just got read-but-no-reply — soul
+crushed":
+- Eyes: HOLLOW and dull, half-lidded with no spark, pupils small (NOT closed,
+  NOT crying — just emptied out)
+- Mouth: lips closed, corners visibly turned DOWN in a flat sad frown (NOT
+  exaggerated U-shape, just deflated)
+- Eyebrows: angled DOWN at the outer corners (the classic sad-eyebrow shape)
+- Body language: shoulders SLUMPED forward and down, head tilted slightly
+  downward, torso curved like the air was let out of him — clearly defeated
+  posture (NOT confused, NOT angry, just resigned defeat)
+- Above his head: a small flat-shaded rain cloud drawn in bold black outline
+  with soft violet #C4B5FD fill (the "depressed comic cloud" symbol, kept
+  simple and geometric)
+- Optional 2-3 small vertical dash marks on his forehead (the comic-style
+  "depression lines" — short vertical strokes, NOT tears)
+
+CRUCIAL DIFFERENCE from `milk-tea-question.png` (the confused variant): this
+is NOT "???". The question marks are GONE. He KNOWS what happened. The mood
+is RESIGNATION and EMPTINESS, not confusion.
+
+Plain top in soft violet #C4B5FD (same outfit as the other variants for
+character continuity). Cream #FFFDF5 plain background. Character takes ~75%
+of canvas height, centered, clean sticker cutout. Bold black ink outlines,
+flat fills only, NO photo texture, NO gradient, NO blur, NO 3D, NO text.
+
+Style continuity test: if placed side-by-side with `milk-tea.png` (neutral),
+`milk-tea-happy.png` (excited), and `milk-tea-question.png` (confused), all
+four must read as the SAME character in four distinct emotional states, with
+this one clearly being the "lowest / most defeated" of the four.
+
+Aspect ratio: 1:1 square.
+```
+
+**驗收**：
+- 跟 `milk-tea.png` / `milk-tea-happy.png` 並排時辨識度一致
+- 表情「死心 / 崩潰」一眼可讀，跟 `milk-tea-question.png`「困惑」明顯不同（不是同一張）
+- 鳥雲 / 沮喪線用線條繪、紫色填充，不出現 pink / blue / 灰色
+- 線條粗細一致、無漸層、無文字
+- 落地路徑：`demo/presentation/public/images/ai/ch6/milk-tea-crashed.png`
+
+---
+
 ### §6.3 v2 工時預估
 
 | 項目 | 工時 |
