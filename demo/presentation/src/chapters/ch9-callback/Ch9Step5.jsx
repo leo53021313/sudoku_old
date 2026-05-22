@@ -120,29 +120,37 @@ export default function Ch9Step5() {
           zIndex: 10,
         }}
       >
-        {/* 思考泡泡 — 圓邊框 */}
-        <div style={{
-          width: 240, height: 240,
-          background: '#FFFDF5',
-          border: '6px solid #000',
-          borderRadius: '50%',
-          boxShadow: '8px 8px 0 0 #000',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative',
-        }}>
-          {/* 大腦 sticker（內嵌、無 sticker 邊框，避免框中框） */}
+        {/* 思考泡泡 — 圓邊框（整個泡泡 + brain 同步閃爍） */}
+        <motion.div
+          animate={brainFlash === 'plus'
+            ? { scale: [1, 1.04, 1], boxShadow: '0 0 0 10px rgba(16,185,129,0.55), 8px 8px 0 0 #000' }
+            : brainFlash === 'minus'
+              ? { scale: 1, x: [-3, 3, -2, 0], boxShadow: '0 0 0 10px rgba(255,107,107,0.55), 8px 8px 0 0 #000' }
+              : { scale: 1, x: 0, boxShadow: '0 0 0 0 transparent, 8px 8px 0 0 #000' }}
+          transition={{ duration: 0.25 }}
+          style={{
+            width: 240, height: 240,
+            background: '#FFFDF5',
+            border: '6px solid #000',
+            borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* 大腦 sticker（內嵌、縮小避免溢出圓邊；自身也輕微脈衝呼應外圈 flash） */}
           <motion.img
             src="/images/ai/ch9/brain-reward.png"
             alt="大腦"
             animate={brainFlash === 'plus'
-              ? { scale: [1, 1.08, 1], filter: 'drop-shadow(0 0 12px #10B981)' }
+              ? { scale: [1, 1.08, 1] }
               : brainFlash === 'minus'
-                ? { scale: 1, x: [-3, 3, -2, 0], filter: 'drop-shadow(0 0 12px #FF6B6B)' }
-                : { scale: 1, x: 0, filter: 'drop-shadow(0 0 0px transparent)' }}
+                ? { scale: [1, 0.96, 1] }
+                : { scale: 1 }}
             transition={{ duration: 0.25 }}
-            style={{ width: 180, height: 'auto' }}
+            style={{ width: 150, height: 'auto' }}
           />
-        </div>
+        </motion.div>
 
         {/* 思考泡泡尾巴 — 兩個小圓朝奶茶頭頂方向 */}
         <div style={{
@@ -163,7 +171,7 @@ export default function Ch9Step5() {
         animate={{ ...milkTeaAnimate, opacity: beatIndex >= 0 ? 1 : 0, x: '-50%' }}
         transition={{ duration: 0.5, ease: OVERSHOOT }}
         style={{
-          position: 'absolute', bottom: '18%', left: '50%',
+          position: 'absolute', bottom: '35%', left: '50%',
           zIndex: 11,
         }}
       >
