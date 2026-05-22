@@ -8,7 +8,7 @@ const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 
 // 粒子發射位置（label 中心點下方）
 const PLUS_SPAWN = { left: '15%', top: 70 };
-const MINUS_SPAWN = { right: '15%', top: 70 };
+const MINUS_SPAWN = { left: '85%', top: 70 };
 // 大腦泡泡中心（粒子飛行目的地）
 const BUBBLE_CENTER_X = '50%';
 const BUBBLE_CENTER_Y = '35%';
@@ -17,14 +17,15 @@ export default function Ch9Step5() {
   const { beatIndex, triggerShake } = usePresentationContext();
   const climax = useClimax(['A', 'C']);
   const firedRef = useRef(false);
+  const brainFlashTimerRef = useRef(null);
   const [pluses, setPluses] = useState([]);
   const [minuses, setMinuses] = useState([]);
   const [aftermath, setAftermath] = useState(false);
   const [brainFlash, setBrainFlash] = useState(null); // 'plus' | 'minus' | null
 
-  // beat 1：+ 粒子從綠 label 連發飛向大腦泡泡
+  // + 粒子在 beat 1~2 期間連發；beat 3 起停止 spawn（殘留在飛的粒子會自然飛完）
   useEffect(() => {
-    if (beatIndex < 1) return;
+    if (beatIndex < 1 || beatIndex >= 3) return;
     let id = 0;
     const t = setInterval(() => {
       setPluses(p => [...p, { id: id++ }].slice(-10));
@@ -109,12 +110,11 @@ export default function Ch9Step5() {
       <motion.div
         initial={false}
         animate={beatIndex >= 0
-          ? { scale: 1, opacity: 1 }
-          : { scale: 0, opacity: 0 }}
+          ? { scale: 1, opacity: 1, x: '-50%' }
+          : { scale: 0, opacity: 0, x: '-50%' }}
         transition={{ duration: 0.5, ease: OVERSHOOT }}
         style={{
           position: 'absolute', top: '15%', left: '50%',
-          transform: 'translateX(-50%)',
           filter: bubbleFilter,
           transition: 'filter 0.6s ease',
           zIndex: 10,
@@ -160,11 +160,10 @@ export default function Ch9Step5() {
       {/* 奶茶（中央偏下、隨 beat 變 variant + 動作） */}
       <motion.div
         initial={false}
-        animate={{ ...milkTeaAnimate, opacity: beatIndex >= 0 ? 1 : 0 }}
+        animate={{ ...milkTeaAnimate, opacity: beatIndex >= 0 ? 1 : 0, x: '-50%' }}
         transition={{ duration: 0.5, ease: OVERSHOOT }}
         style={{
           position: 'absolute', bottom: '18%', left: '50%',
-          transform: 'translateX(-50%)',
           zIndex: 11,
         }}
       >
@@ -205,8 +204,9 @@ export default function Ch9Step5() {
           animate={{ left: BUBBLE_CENTER_X, top: BUBBLE_CENTER_Y, opacity: [1, 1, 0], scale: [1, 1, 0.5] }}
           transition={{ duration: 1.2, ease: 'easeOut' }}
           onAnimationComplete={() => {
+            clearTimeout(brainFlashTimerRef.current);
             setBrainFlash('plus');
-            setTimeout(() => setBrainFlash(null), 250);
+            brainFlashTimerRef.current = setTimeout(() => setBrainFlash(null), 250);
           }}
           style={{
             position: 'absolute',
@@ -221,12 +221,13 @@ export default function Ch9Step5() {
       {minuses.map(m => (
         <motion.div
           key={`minus-${m.id}`}
-          initial={{ right: MINUS_SPAWN.right, top: MINUS_SPAWN.top, opacity: 1, scale: 1 }}
-          animate={{ right: '50%', top: BUBBLE_CENTER_Y, opacity: [1, 1, 0], scale: [1, 1, 0.5] }}
+          initial={{ left: MINUS_SPAWN.left, top: MINUS_SPAWN.top, opacity: 1, scale: 1 }}
+          animate={{ left: BUBBLE_CENTER_X, top: BUBBLE_CENTER_Y, opacity: [1, 1, 0], scale: [1, 1, 0.5] }}
           transition={{ duration: 1.2, ease: 'easeOut' }}
           onAnimationComplete={() => {
+            clearTimeout(brainFlashTimerRef.current);
             setBrainFlash('minus');
-            setTimeout(() => setBrainFlash(null), 250);
+            brainFlashTimerRef.current = setTimeout(() => setBrainFlash(null), 250);
           }}
           style={{
             position: 'absolute',
