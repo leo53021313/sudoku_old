@@ -432,15 +432,13 @@ git commit -m "feat(ch9-s6): add 💗 hearts particle system on beat 0 (3-cap, 2
 - [ ] 找到 Task 3 加的「告白成功 ✓」 sticker（外層 wrapper div 包著 motion.div），把整段 wrapper + motion.div 替換為：
 
 ```jsx
-      {/* 告白成功 ✓ sticker — beat>=0 入場，beat>=1 變灰 + opacity 0.4 */}
+      {/* 告白成功 ✓ sticker — beat 0 鮮豔，beat>=1 變灰 + opacity 0.4 */}
       <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
         <motion.div
           initial={false}
-          animate={beatIndex >= 0
-            ? beatIndex >= 1
-              ? { scale: 1, opacity: 0.4, rotate: -8 }
-              : { scale: 1, opacity: 1, rotate: -8 }
-            : { scale: 0, opacity: 0, rotate: 0 }}
+          animate={beatIndex >= 1
+            ? { scale: 1, opacity: 0.4, rotate: -8 }
+            : { scale: 1, opacity: 1, rotate: -8 }}
           transition={{ duration: 0.4, ease: OVERSHOOT }}
           style={{
             background: '#FFD93D', color: '#000',
@@ -460,6 +458,7 @@ git commit -m "feat(ch9-s6): add 💗 hearts particle system on beat 0 (3-cap, 2
 - `animate.opacity` 由 motion/react 控制（0.4s ease overshoot）
 - `style.filter` 的 `grayscale(1)` 用 CSS native transition（0.4s ease）— motion/react 不支援動畫 filter，所以用 CSS transition 補足
 - wrapper div 維持 `translateX(-50%)` 不受 motion transform 動畫影響
+- **與 Task 3 的差異：** Task 3 用 `beatIndex >= 0 ? ... : ...`（其實 `beatIndex` 永遠 `>= 0`，外層 tier 是 dead code）。這裡簡化為單層 `beatIndex >= 1 ? ... : ...`，避免巢狀三元複雜化。
 
 ### Step 5.2: dev server 人工驗證
 
