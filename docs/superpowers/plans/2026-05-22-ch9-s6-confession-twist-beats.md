@@ -250,7 +250,7 @@ import { MilkTea } from '../../motifs/MilkTea.jsx';
 - [ ] 在 `<main>` 內、**標題 motion.div 之前**插入：
 
 ```jsx
-      {/* 奶茶 — beat>=0 入場，beat>=2 切到 question variant + 浮動 ❓（後續 task 補） */}
+      {/* 奶茶 — beat>=0 入場；mood arc: happy (beat 0) → normal (beat 1) → question + ❓ (beat 2，下個 task 補) */}
       {/* Wrapper handles absolute centering — motion's transform animation would clobber translateX(-50%) */}
       <div style={{ position: 'absolute', left: '50%', bottom: 60, transform: 'translateX(-50%)', zIndex: 15 }}>
         <motion.div
@@ -259,7 +259,7 @@ import { MilkTea } from '../../motifs/MilkTea.jsx';
           transition={{ duration: 0.5, ease: OVERSHOOT }}
           style={{ position: 'relative' }}
         >
-          <MilkTea width={200} rotation={-3} shadow={10} variant="normal" />
+          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 1 ? 'normal' : 'happy'} />
         </motion.div>
       </div>
 ```
@@ -298,9 +298,9 @@ npm --prefix demo/presentation run dev
 ```
 
 開瀏覽器 `?ch=9&step=6&beat=0` →
-- 預期 beat 0：奶茶從下方 spring-in、黃色「告白成功 ✓」貼紙在他頭上方
-- 按一次 → beat 1：老油條 + 標題出現，奶茶與貼紙仍在原位（**注意：此 task 還沒把貼紙變灰，那是 Task 5**）
-- 按一次 → beat 2：4 卡雨
+- 預期 beat 0：奶茶（**`happy` variant — 心動版**）從下方 spring-in、黃色「告白成功 ✓」貼紙在他頭上方
+- 按一次 → beat 1：老油條 + 標題出現，**奶茶切回 `normal` variant**（預感未明），貼紙仍在原位（**注意：此 task 還沒把貼紙變灰，那是 Task 5**）
+- 按一次 → beat 2：4 卡雨（奶茶 variant 切換到 question 是 Task 6）
 
 Ctrl+C 關 dev server。
 
@@ -541,7 +541,7 @@ import { useClimax } from '../../climax/useClimax.js';
 - [ ] 找到 Task 3 加的奶茶（外層 wrapper div 包著 motion.div + `<MilkTea ... variant="normal" />`），把整段 wrapper + motion.div 替換為：
 
 ```jsx
-      {/* 奶茶 — beat>=0 入場，beat>=2 切到 question variant + 浮動 ❓ */}
+      {/* 奶茶 — beat>=0 入場；mood arc: happy (0) → normal (1) → question + ❓ (2) */}
       <div style={{ position: 'absolute', left: '50%', bottom: 60, transform: 'translateX(-50%)', zIndex: 15 }}>
         <motion.div
           initial={false}
@@ -549,7 +549,7 @@ import { useClimax } from '../../climax/useClimax.js';
           transition={{ duration: 0.5, ease: OVERSHOOT }}
           style={{ position: 'relative' }}
         >
-          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 2 ? 'question' : 'normal'} />
+          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 2 ? 'question' : beatIndex >= 1 ? 'normal' : 'happy'} />
 
           {/* 浮動 ❓ — beat>=2，沿用 Ch7Step7 寫法。父層 motion.div 是 position:relative，這裡 absolute 會 anchor 到奶茶圖 */}
           {beatIndex >= 2 && [0, 1].map(i => (
@@ -580,9 +580,10 @@ npm --prefix demo/presentation run dev
 
 開瀏覽器 `?ch=9&step=6&beat=0` →
 - 預期 beat 0：奶茶 normal + 貼紙 + 💗
-- 按一次 → beat 1：sticker 變灰、💗 停、老油條 + 標題出現、奶茶仍是 normal
+- 按一次 → beat 1：sticker 變灰、💗 停、老油條 + 標題出現、奶茶**切到 normal**（從 happy 過渡到 normal）
 - 按一次 → beat 2：奶茶**切到傻眼版**（picture 換成 milk-tea-question.png）、頭頂兩個 ? 循環浮起、**螢幕震動一次**（climax B + triggerShake）、4 卡 cascade 落定
 - 倒退（左方向鍵）→ beat 1：奶茶切回 normal、? 消失（climax 與 shake 已經放完，不會倒著放，這是設計上接受的）
+- 倒退（左方向鍵）→ beat 0：奶茶切回 **happy**
 
 Ctrl+C 關 dev server。
 
@@ -635,11 +636,11 @@ npm --prefix demo/presentation run dev
 
 | Step | 動作 | 預期畫面 |
 |---|---|---|
-| 1 | 進入 beat 0 | 奶茶（normal）+ 「告白成功 ✓」 貼紙（黃、鮮豔）+ 💗 持續從兩側升起淡出（最多 3 顆同時）。背景乾淨，無老油條、無標題、無 4 卡。 |
-| 2 | 點擊（→ beat 1）| 老油條從右上 spring-in。標題從左 clip-path 刷出「以為穩了 · 結果更多關卡等著奶茶」（紅底反白只在後半段）。貼紙在 0.4s 內變灰 + opacity 0.4。💗 停止生成（最後幾顆走完淡出後消失）。 |
-| 3 | 點擊（→ beat 2）| 4 張陷阱題卡依序 cascade 落定（每張 0.15s stagger，overshoot ease）。奶茶**切到傻眼版**（圖換）、頭頂 2 個 ? 循環浮起。**螢幕震動一次**（climax B + triggerShake，~600ms）。 |
+| 1 | 進入 beat 0 | 奶茶（**happy variant** — 心動版）+ 「告白成功 ✓」 貼紙（黃、鮮豔）+ 💗 持續從兩側升起淡出（最多 3 顆同時）。背景乾淨，無老油條、無標題、無 4 卡。 |
+| 2 | 點擊（→ beat 1）| 老油條從右上 spring-in。標題從左 clip-path 刷出「以為穩了 · 結果更多關卡等著奶茶」（紅底反白只在後半段）。**奶茶切換到 normal variant**（喜→預感過渡）。貼紙在 0.4s 內變灰 + opacity 0.4。💗 停止生成（最後幾顆走完淡出後消失）。 |
+| 3 | 點擊（→ beat 2）| 4 張陷阱題卡依序 cascade 落定（每張 0.15s stagger，overshoot ease）。奶茶**切到 question variant**（傻眼版）、頭頂 2 個 ? 循環浮起。**螢幕震動一次**（climax B + triggerShake，~600ms）。 |
 | 4 | 倒退（← 方向鍵） | 回 beat 1：4 卡縮回消失、奶茶切回 normal、? 消失。climax 與 shake 不會倒放（一次性，設計上接受）。 |
-| 5 | 倒退（← 方向鍵） | 回 beat 0：老油條縮回、標題收回左邊、貼紙變回鮮豔黃、💗 重新開始生成。 |
+| 5 | 倒退（← 方向鍵） | 回 beat 0：老油條縮回、標題收回左邊、貼紙變回鮮豔黃、奶茶切回 **happy**、💗 重新開始生成。 |
 | 6 | 倒退 | 跨回 step 5 beat 末（Ch9Step5）。 |
 | 7 | 從 step 1 一路點到底 | 全片總共 101 個 beat（task 1 manifest 更新後），游標前進到底不卡、不錯位。 |
 
