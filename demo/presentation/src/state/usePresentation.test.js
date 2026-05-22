@@ -97,8 +97,22 @@ describe('usePresentation', () => {
     expect(result.current.beatIndex).toBe(0);
   });
 
-  it('reports totalBeats = 99', () => {
+  it('ch9 step 6 has 3 beats then crosses to step 7', () => {
+    const { result } = renderHook(() => usePresentation({ chapterId: 9, stepId: 6 }));
+    expect(result.current.beatIndex).toBe(0);
+    for (let i = 1; i <= 2; i++) {
+      act(() => result.current.advance());
+      expect(result.current.stepId).toBe(6);
+      expect(result.current.beatIndex).toBe(i);
+    }
+    act(() => result.current.advance());      // 第 3 個 beat 後跨到 step 7
+    expect(result.current.chapterId).toBe(9);
+    expect(result.current.stepId).toBe(7);
+    expect(result.current.beatIndex).toBe(0);
+  });
+
+  it('reports totalBeats = 101', () => {
     const { result } = renderHook(() => usePresentation());
-    expect(result.current.totalBeats).toBe(99);
+    expect(result.current.totalBeats).toBe(101);
   });
 });

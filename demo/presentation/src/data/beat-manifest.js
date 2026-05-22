@@ -4,7 +4,7 @@
 export const manifest = {
   totalChapters: 9,
   totalSteps: 58,
-  totalBeats: 99,
+  totalBeats: 101,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -180,7 +180,13 @@ export const manifest = {
             { id: 'punchline-hero', type: 'click', cue: '你的大腦根據這些 reward 反覆重塑要不要繼續當舔狗的判斷——跟 AI 訓練', wait: '2s', climax: ['A', 'C'], scriptLines: 'L327-329' },
           ],
         },
-        { id: 6, title: '戀愛 b 4 考題',        duration: 18, motifs: ['girl-veteran'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L333-343' }] },
+        { id: 6, title: '戀愛 b 4 考題',        duration: 18, motifs: ['girl-veteran', 'milk-tea'],
+          beats: [
+            { id: 'confess-success', type: 'click', cue: '最後奶茶終於成功跟對方告白成功——', wait: '0.8-1.2s 慶祝感', scriptLines: 'L359' },
+            { id: 'twist-veteran',   type: 'click', cue: '結果殊不知——',                       wait: '1-1.5s 留懸念',  scriptLines: 'L359' },
+            { id: 'traps-rain',      type: 'click', cue: '前面還有更多關卡等著奶茶',           wait: '2-3s 觀眾消化',  climax: ['B'], scriptLines: 'L359' },
+          ],
+        },
         { id: 7, title: 'plasticity 引出',      duration: 8,  beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L347-349' }] },
         { id: 8, title: 'plasticity 三欄',      duration: 12, motifs: ['13-stairs'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L351' }] },
         { id: 9, title: 'plasticity 機制',      duration: 12, motifs: ['flip-20-to-50', 'yellow-highlight'], beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L353-355' }] },
