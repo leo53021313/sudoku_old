@@ -53,9 +53,9 @@ export default function Ch9Step6() {
       <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
         <motion.div
           initial={false}
-          animate={beatIndex >= 1
-            ? { scale: 0, opacity: 0, rotate: 0 }
-            : { scale: 1, opacity: 1, rotate: -8 }}
+          animate={beatIndex < 1
+            ? { scale: 1, opacity: 1, rotate: -8 }
+            : { scale: 0, opacity: 0, rotate: 0 }}
           transition={{ duration: 0.4, ease: OVERSHOOT }}
           style={{
             background: '#FFD93D', color: '#000',
