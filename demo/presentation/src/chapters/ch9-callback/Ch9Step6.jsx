@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
@@ -14,6 +15,18 @@ const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 
 export default function Ch9Step6() {
   const { beatIndex } = usePresentationContext();
+
+  const [hearts, setHearts] = useState([]);
+
+  useEffect(() => {
+    if (beatIndex === 0) {
+      let id = 0;
+      const t = setInterval(() => {
+        setHearts(h => [...h, { id: id++, x: Math.random() * 80 - 40 }].slice(-3));
+      }, 350);
+      return () => clearInterval(t);
+    }
+  }, [beatIndex]);
 
   return (
     <main style={{
@@ -54,6 +67,28 @@ export default function Ch9Step6() {
           告白成功 ✓
         </motion.div>
       </div>
+
+      {/* 💗 粒子 — beat 0 啟動，beat>=1 停止生成（舊粒子讓動畫自然淡出） */}
+      {hearts.map(h => (
+        <div
+          key={h.id}
+          style={{
+            position: 'absolute',
+            left: `calc(50% + ${h.x}px)`, bottom: 240,
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none', zIndex: 13,
+          }}
+        >
+          <motion.div
+            initial={{ y: 0, opacity: 1 }}
+            animate={{ y: -180, opacity: 0 }}
+            transition={{ duration: 2.0, ease: 'easeOut' }}
+            style={{ fontSize: 36 }}
+          >
+            💗
+          </motion.div>
+        </div>
+      ))}
 
       {/* 標題 — beat>=1 clip-path 從左刷出 */}
       <motion.div
