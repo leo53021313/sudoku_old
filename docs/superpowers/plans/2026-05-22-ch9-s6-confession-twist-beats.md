@@ -420,24 +420,24 @@ git commit -m "feat(ch9-s6): add 💗 hearts particle system on beat 0 (3-cap, 2
 
 ---
 
-## Task 5: Beat 1 — 「告白成功 ✓」 sticker dim + grayscale 過渡
+## Task 5: Beat>=1 — 「告白成功 ✓」 sticker 退場
 
-**目的：** beat>=1 時讓 sticker 變灰 + opacity 0.4（被陰影籠罩的感覺），呼應稿子「殊不知」的 pivot。
+**目的：** beat>=1 時讓 sticker 完全退場（user 回饋：sticker 只應出現在 beat 0；原本的 dim+grayscale 設計被否決）。
 
 **Files:**
 - Modify: `demo/presentation/src/chapters/ch9-callback/Ch9Step6.jsx`
 
-### Step 5.1: 改 sticker 的 animate 邏輯 + grayscale filter
+### Step 5.1: 改 sticker 的 animate 邏輯（退場）
 
 - [ ] 找到 Task 3 加的「告白成功 ✓」 sticker（外層 wrapper div 包著 motion.div），把整段 wrapper + motion.div 替換為：
 
 ```jsx
-      {/* 告白成功 ✓ sticker — beat 0 鮮豔，beat>=1 變灰 + opacity 0.4 */}
+      {/* 告白成功 ✓ sticker — 只在 beat 0 出現，beat>=1 scale+opacity 退場 */}
       <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
         <motion.div
           initial={false}
           animate={beatIndex >= 1
-            ? { scale: 1, opacity: 0.4, rotate: -8 }
+            ? { scale: 0, opacity: 0, rotate: 0 }
             : { scale: 1, opacity: 1, rotate: -8 }}
           transition={{ duration: 0.4, ease: OVERSHOOT }}
           style={{
@@ -445,8 +445,6 @@ git commit -m "feat(ch9-s6): add 💗 hearts particle system on beat 0 (3-cap, 2
             padding: '12px 28px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
             fontWeight: 900, fontSize: 28,
             whiteSpace: 'nowrap',
-            filter: beatIndex >= 1 ? 'grayscale(1)' : 'none',
-            transition: 'filter 0.4s ease',
           }}
         >
           告白成功 ✓
@@ -455,10 +453,9 @@ git commit -m "feat(ch9-s6): add 💗 hearts particle system on beat 0 (3-cap, 2
 ```
 
 說明：
-- `animate.opacity` 由 motion/react 控制（0.4s ease overshoot）
-- `style.filter` 的 `grayscale(1)` 用 CSS native transition（0.4s ease）— motion/react 不支援動畫 filter，所以用 CSS transition 補足
-- wrapper div 維持 `translateX(-50%)` 不受 motion transform 動畫影響
-- **與 Task 3 的差異：** Task 3 用 `beatIndex >= 0 ? ... : ...`（其實 `beatIndex` 永遠 `>= 0`，外層 tier 是 dead code）。這裡簡化為單層 `beatIndex >= 1 ? ... : ...`，避免巢狀三元複雜化。
+- 沒有 `filter: grayscale`、沒有 `opacity: 0.4` — 直接 scale 0 + opacity 0 退場
+- 倒退（beat 1 → beat 0）會自動把 sticker 從 scale 0 spring 回 scale 1 + rotate -8°（overshoot ease）
+- **與 Task 3 的差異：** Task 3 commit 的 sticker 用 `beatIndex >= 0 ? ... : ...`（dead outer tier）。這裡簡化為單層 `beatIndex >= 1 ? ... : ...`、且 hide 分支是真正的退場狀態而非「永遠不會走到的 scale 0」。
 
 ### Step 5.2: dev server 人工驗證
 
@@ -468,9 +465,9 @@ npm --prefix demo/presentation run dev
 ```
 
 開瀏覽器 `?ch=9&step=6&beat=0` →
-- 預期 beat 0：黃色 sticker 鮮豔
-- 按一次 → beat 1：sticker 在 0.4s 內由黃變灰、opacity 從 1 降到 0.4（被陰影感覺）
-- 倒退（左方向鍵）→ beat 0：sticker 在 0.4s 內由灰變回黃、opacity 1
+- 預期 beat 0：黃色 sticker 鮮豔出現
+- 按一次 → beat 1：sticker 在 0.4s 內 scale 縮回 0、opacity 0、整個消失
+- 倒退（左方向鍵）→ beat 0：sticker 重新 spring 回原位（scale 1、opacity 1、rotate -8°）
 
 Ctrl+C 關 dev server。
 
@@ -485,14 +482,14 @@ npm --prefix demo/presentation run test:run
 
 ```
 git add demo/presentation/src/chapters/ch9-callback/Ch9Step6.jsx
-git commit -m "feat(ch9-s6): sticker dim + grayscale transition on beat>=1"
+git commit -m "feat(ch9-s6): sticker exits on beat>=1 (scale + opacity)"
 ```
 
 ---
 
-## Task 6: Beat 2 — 奶茶 question variant + 浮動 ❓ + climax B + screen shake
+## Task 6: Beat 2 — 中央奶茶 fade-out + 左下 reaction-shot 奶茶 (question) + 浮動 ❓ + climax B
 
-**目的：** beat 2 時奶茶從 normal 切到 question variant（傻眼版）、頭頂浮動 ❓、觸發一次 climax B + triggerShake（同 Ch7Step7 收尾 pattern）。
+**目的：** beat 2 時中央奶茶 fade-out、左下角小一號 reaction-shot 奶茶（question variant）fade-in + 頭頂浮動 ❓、觸發一次 climax B + triggerShake（同 Ch7Step7 收尾 pattern）。雙實體 crossfade 避免單實體做 `left` % ↔ px 動畫的問題。
 
 **Files:**
 - Modify: `demo/presentation/src/chapters/ch9-callback/Ch9Step6.jsx`
@@ -535,42 +532,72 @@ import { useClimax } from '../../climax/useClimax.js';
   }, [beatIndex, climax, triggerShake]);
 ```
 
-### Step 6.4: 奶茶切到 `variant` dynamic + 加浮動 ❓
+### Step 6.4: 中央奶茶 fade-out on beat>=2
 
-- [ ] 找到 Task 3 加的奶茶（外層 wrapper div 包著 motion.div + `<MilkTea ... variant="normal" />`），把整段 wrapper + motion.div 替換為：
+- [ ] 找到 Task 3 加的中央奶茶（外層 wrapper div 包著 motion.div + `<MilkTea ... />`），把整段 wrapper + motion.div 替換為：
 
 ```jsx
-      {/* 奶茶 — beat>=0 入場；mood arc: happy (0) → normal (1) → question + ❓ (2) */}
+      {/* 中央 hero 奶茶 — beat 0/1 中下方主角、beat>=2 fade-out 讓位給角落 reaction-shot */}
+      {/* Wrapper handles absolute centering — motion's transform animation would clobber translateX(-50%) */}
       <div style={{ position: 'absolute', left: '50%', bottom: 60, transform: 'translateX(-50%)', zIndex: 15 }}>
         <motion.div
           initial={false}
-          animate={beatIndex >= 0 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-          transition={{ duration: 0.5, ease: OVERSHOOT }}
+          animate={beatIndex >= 2 ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3, ease: OVERSHOOT }}
           style={{ position: 'relative' }}
         >
-          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 2 ? 'question' : beatIndex >= 1 ? 'normal' : 'happy'} />
+          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 1 ? 'normal' : 'happy'} />
+        </motion.div>
+      </div>
+```
 
-          {/* 浮動 ❓ — beat>=2，沿用 Ch7Step7 寫法。父層 motion.div 是 position:relative，這裡 absolute 會 anchor 到奶茶圖 */}
+**與 Task 3 的差異：**
+- `animate` 改成 `beatIndex >= 2 ? { scale: 0, opacity: 0 } : { scale: 1, opacity: 1 }`（原本 `beatIndex >= 0` tautology，現在是 beat>=2 fade out）
+- 退場 duration 0.5 → 0.3（讓角落奶茶 delay 0.2s 接上、crossfade 不重疊太久）
+- variant 維持 `beatIndex >= 1 ? 'normal' : 'happy'`（question variant 是 Step 6.5 角落 reaction-shot 奶茶的事）
+
+### Step 6.5: 新增左下 reaction-shot 奶茶（含浮動 ❓）
+
+- [ ] 在剛改完的中央奶茶 wrapper **下方**插入：
+
+```jsx
+      {/* 左下 reaction-shot 奶茶 — beat>=2 fade-in、縮小到 width 130、question variant + 浮動 ❓ */}
+      {/* delay 0.2s 讓中央奶茶先淡出再進場、crossfade 不重疊太久 */}
+      <motion.div
+        initial={false}
+        animate={beatIndex >= 2 ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: OVERSHOOT }}
+        style={{ position: 'absolute', left: 40, bottom: 40, zIndex: 15 }}
+      >
+        <div style={{ position: 'relative' }}>
+          <MilkTea width={130} rotation={-3} shadow={8} variant="question" />
+
+          {/* 浮動 ❓ — beat>=2 才 render；父層 div 是 position:relative，這裡 absolute anchor 到奶茶 */}
           {beatIndex >= 2 && [0, 1].map(i => (
             <motion.div
               key={i}
               initial={false}
-              animate={{ y: [0, -70], opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1] }}
+              animate={{ y: [0, -50], opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1] }}
               transition={{ duration: 1.6, repeat: Infinity, repeatType: 'loop', delay: i * 0.3, ease: 'easeOut' }}
               style={{
-                position: 'absolute', top: -20, left: 60 + i * 50,
-                fontSize: 40, fontWeight: 900, color: '#FF3B30',
+                position: 'absolute', top: -15, left: 40 + i * 35,
+                fontSize: 28, fontWeight: 900, color: '#FF3B30',
                 WebkitTextStroke: '2px #000', pointerEvents: 'none', zIndex: 16,
               }}
             >
               ?
             </motion.div>
           ))}
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
 ```
 
-### Step 6.5: dev server 人工驗證
+**關鍵點：**
+- 角落 wrapper 直接是 `motion.div`（不是 wrapper-div + 內層 motion.div），因為 `left: 40` 是 fixed pixel 不需要 translateX(-50%) 抗 motion 干擾
+- `scale: 0.5 → 1` 給一個小 pop-in、配合 delay 0.2s 讓中央奶茶先退出
+- ❓ 浮動範圍縮小到 -50（原本 -70）、字體 28（原本 40）、位置 left 40 + i*35（原本 60 + i*50）— 適配 width 130 的小奶茶
+
+### Step 6.6: dev server 人工驗證
 
 執行：
 ```
@@ -578,15 +605,15 @@ npm --prefix demo/presentation run dev
 ```
 
 開瀏覽器 `?ch=9&step=6&beat=0` →
-- 預期 beat 0：奶茶 normal + 貼紙 + 💗
-- 按一次 → beat 1：sticker 變灰、💗 停、老油條 + 標題出現、奶茶**切到 normal**（從 happy 過渡到 normal）
-- 按一次 → beat 2：奶茶**切到傻眼版**（picture 換成 milk-tea-question.png）、頭頂兩個 ? 循環浮起、**螢幕震動一次**（climax B + triggerShake）、4 卡 cascade 落定
-- 倒退（左方向鍵）→ beat 1：奶茶切回 normal、? 消失（climax 與 shake 已經放完，不會倒著放，這是設計上接受的）
-- 倒退（左方向鍵）→ beat 0：奶茶切回 **happy**
+- 預期 beat 0：奶茶 (happy) 中央 + sticker + 💗
+- 按一次 → beat 1：sticker 退場（scale 0）、💗 停、老油條 + 標題出現、奶茶切到 normal（仍在中央）
+- 按一次 → beat 2：**中央奶茶 0.3s 內 fade-out**（scale 0、opacity 0）、**左下角小奶茶（question variant）0.5s delay 0.2s 後 pop-in**、頭頂兩個小 ? 循環浮起、**螢幕震動一次**、4 卡 cascade 落定
+- 倒退（左方向鍵）→ beat 1：角落奶茶 fade out、中央奶茶 fade in normal、? 消失（climax 與 shake 已放完不會倒放）
+- 倒退（左方向鍵）→ beat 0：奶茶切回 happy + sticker spring 回 + 💗 重生
 
 Ctrl+C 關 dev server。
 
-### Step 6.6: 跑測試 + commit
+### Step 6.7: 跑測試 + commit
 
 執行：
 ```
@@ -597,7 +624,7 @@ npm --prefix demo/presentation run test:run
 
 ```
 git add demo/presentation/src/chapters/ch9-callback/Ch9Step6.jsx
-git commit -m "feat(ch9-s6): beat 2 — 奶茶 question variant + 浮動 ❓ + climax B + screen shake"
+git commit -m "feat(ch9-s6): beat 2 — 中央奶茶 fade-out + 左下 reaction-shot 奶茶 (question) + ❓ + climax B"
 ```
 
 ---
@@ -636,10 +663,10 @@ npm --prefix demo/presentation run dev
 | Step | 動作 | 預期畫面 |
 |---|---|---|
 | 1 | 進入 beat 0 | 奶茶（**happy variant** — 心動版）+ 「告白成功 ✓」 貼紙（黃、鮮豔）+ 💗 持續從兩側升起淡出（最多 3 顆同時）。背景乾淨，無老油條、無標題、無 4 卡。 |
-| 2 | 點擊（→ beat 1）| 老油條從右上 spring-in。標題從左 clip-path 刷出「以為穩了 · 結果更多關卡等著奶茶」（紅底反白只在後半段）。**奶茶切換到 normal variant**（喜→預感過渡）。貼紙在 0.4s 內變灰 + opacity 0.4。💗 停止生成（最後幾顆走完淡出後消失）。 |
-| 3 | 點擊（→ beat 2）| 4 張陷阱題卡依序 cascade 落定（每張 0.15s stagger，overshoot ease）。奶茶**切到 question variant**（傻眼版）、頭頂 2 個 ? 循環浮起。**螢幕震動一次**（climax B + triggerShake，~600ms）。 |
-| 4 | 倒退（← 方向鍵） | 回 beat 1：4 卡縮回消失、奶茶切回 normal、? 消失。climax 與 shake 不會倒放（一次性，設計上接受）。 |
-| 5 | 倒退（← 方向鍵） | 回 beat 0：老油條縮回、標題收回左邊、貼紙變回鮮豔黃、奶茶切回 **happy**、💗 重新開始生成。 |
+| 2 | 點擊（→ beat 1）| 老油條從右上 spring-in。標題從左 clip-path 刷出「以為穩了 · 結果更多關卡等著奶茶」（紅底反白只在後半段）。**奶茶切換到 normal variant**（喜→預感過渡，仍在中央）。**貼紙完全退場**（scale 0 + opacity 0，0.4s）。💗 停止生成（最後幾顆走完淡出後消失）。 |
+| 3 | 點擊（→ beat 2）| **中央奶茶 0.3s fade-out**（scale 0 + opacity 0）。**左下角小一號奶茶（question variant、width 130）0.5s delay 0.2s 後 pop-in** + 頭頂 2 個小 ? 循環浮起。4 張陷阱題卡依序 cascade 落定（每張 0.15s stagger，overshoot ease）。**螢幕震動一次**（climax B + triggerShake，~600ms）。三分法構圖：老油條右上 / 4 卡中央 / 奶茶左下。 |
+| 4 | 倒退（← 方向鍵） | 回 beat 1：4 卡縮回消失、角落奶茶 fade out、中央奶茶 fade in 回 normal、? 消失。climax 與 shake 不會倒放（一次性，設計上接受）。 |
+| 5 | 倒退（← 方向鍵） | 回 beat 0：老油條縮回、標題收回左邊、貼紙 spring 回鮮豔黃、奶茶切回 **happy**、💗 重新開始生成。 |
 | 6 | 倒退 | 跨回 step 5 beat 末（Ch9Step5）。 |
 | 7 | 從 step 1 一路點到底 | 全片總共 101 個 beat（task 1 manifest 更新後），游標前進到底不卡、不錯位。 |
 
