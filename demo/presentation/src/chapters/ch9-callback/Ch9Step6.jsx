@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
+import { useClimax } from '../../climax/useClimax.js';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
 import { MilkTea } from '../../motifs/MilkTea.jsx';
 
@@ -14,7 +15,9 @@ const QUESTIONS = [
 const OVERSHOOT = [0.34, 1.56, 0.64, 1];
 
 export default function Ch9Step6() {
-  const { beatIndex } = usePresentationContext();
+  const { beatIndex, triggerShake } = usePresentationContext();
+  const climax = useClimax(['B']);
+  const firedRef = useRef(false);
 
   const [hearts, setHearts] = useState([]);
 
@@ -29,6 +32,14 @@ export default function Ch9Step6() {
     }
   }, [beatIndex]);
 
+  useEffect(() => {
+    if (beatIndex === 2 && !firedRef.current) {
+      firedRef.current = true;
+      climax.play();
+      triggerShake();
+    }
+  }, [beatIndex, climax, triggerShake]);
+
   return (
     <main style={{
       position: 'relative', zIndex: 20, height: '100vh',
@@ -36,18 +47,48 @@ export default function Ch9Step6() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32, gap: 32,
     }}>
-      {/* 奶茶 — beat>=0 入場；mood arc: happy (beat 0) → normal (beat 1) → question + ❓ (beat 2，下個 task 補) */}
+      {/* 中央 hero 奶茶 — beat 0/1 中下方主角、beat>=2 fade-out 讓位給角落 reaction-shot */}
       {/* Wrapper handles absolute centering — motion's transform animation would clobber translateX(-50%) */}
       <div style={{ position: 'absolute', left: '50%', bottom: 60, transform: 'translateX(-50%)', zIndex: 15 }}>
         <motion.div
           initial={false}
-          animate={beatIndex >= 0 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-          transition={{ duration: 0.5, ease: OVERSHOOT }}
+          animate={beatIndex < 2 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: OVERSHOOT }}
           style={{ position: 'relative' }}
         >
           <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 1 ? 'normal' : 'happy'} />
         </motion.div>
       </div>
+
+      {/* 左下 reaction-shot 奶茶 — beat>=2 fade-in、縮小到 width 130、question variant + 浮動 ❓ */}
+      {/* delay 0.2s 讓中央奶茶先淡出再進場、crossfade 不重疊太久 */}
+      <motion.div
+        initial={false}
+        animate={beatIndex >= 2 ? { scale: 1, opacity: 1 } : { scale: 0.5, opacity: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: OVERSHOOT }}
+        style={{ position: 'absolute', left: 40, bottom: 40, zIndex: 15 }}
+      >
+        <div style={{ position: 'relative' }}>
+          <MilkTea width={130} rotation={-3} shadow={8} variant="question" />
+
+          {/* 浮動 ❓ — beat>=2 才 render；父層 div 是 position:relative，這裡 absolute anchor 到奶茶 */}
+          {beatIndex >= 2 && [0, 1].map(i => (
+            <motion.div
+              key={i}
+              initial={false}
+              animate={{ y: [0, -50], opacity: [0, 1, 1, 0], scale: [0.5, 1, 1, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, repeatType: 'loop', delay: i * 0.3, ease: 'easeOut' }}
+              style={{
+                position: 'absolute', top: -15, left: 40 + i * 35,
+                fontSize: 28, fontWeight: 900, color: '#FF3B30',
+                WebkitTextStroke: '2px #000', pointerEvents: 'none', zIndex: 16,
+              }}
+            >
+              ?
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
 
       {/* 告白成功 ✓ sticker — 只在 beat 0 出現，beat>=1 scale+opacity 退場 */}
       <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
