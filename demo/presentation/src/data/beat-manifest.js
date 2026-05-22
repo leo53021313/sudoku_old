@@ -4,7 +4,7 @@
 export const manifest = {
   totalChapters: 9,
   totalSteps: 58,
-  totalBeats: 101,
+  totalBeats: 102,
   chapters: [
     {
       id: 1, name: 'coldopen', narrative: '心虛→心理學系→主題→捷運→Code Bullet→繼續發呆→當兵→BOOM',
@@ -172,12 +172,13 @@ export const manifest = {
         { id: 2, title: '核心金句',             duration: 14, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L309' }] },
         { id: 3, title: 'RL 對等',              duration: 12, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L313-317' }] },
         { id: 4, title: '飛機 + 鳥',            duration: 10, beats: [{ id: 'enter', type: 'click', cue: null, wait: null, scriptLines: 'L319' }] },
-        { id: 5, title: '戀愛 a callback', duration: 18, punchline: true, motifs: ['girl-new'], climax: ['A', 'C'],
+        { id: 5, title: '戀愛 a callback', duration: 22, punchline: true, motifs: [], climax: ['A', 'C'],
           beats: [
-            { id: 'bg-callback',    type: 'click', cue: '追一個人的時候——', wait: null, scriptLines: 'L323' },
-            { id: 'left-positive',  type: 'click', cue: '對方回訊息你就被加分', wait: '1s', scriptLines: 'L325' },
-            { id: 'right-negative', type: 'click', cue: '已讀不回你就被扣分', wait: '1.5s', scriptLines: 'L325' },
-            { id: 'punchline-hero', type: 'click', cue: '你的大腦根據這些 reward 反覆重塑要不要繼續當舔狗的判斷——跟 AI 訓練', wait: '2s', climax: ['A', 'C'], scriptLines: 'L327-329' },
+            { id: 'bg-callback',     type: 'click', cue: '追一個人的時候——', wait: null, scriptLines: 'L323' },
+            { id: 'left-positive',   type: 'click', cue: '對方回訊息你就被加分', wait: '1s', scriptLines: 'L325' },
+            { id: 'milktea-happy',   type: 'click', cue: null, wait: '0.8s 觀眾消化反應', scriptLines: 'L325' },
+            { id: 'right-negative',  type: 'click', cue: '已讀不回你就被扣分', wait: '1.5s', scriptLines: 'L325' },
+            { id: 'punchline-hero',  type: 'click', cue: '你的大腦根據這些 reward 反覆重塑要不要繼續當舔狗的判斷——跟 AI 訓練', wait: '2s', climax: ['A', 'C'], scriptLines: 'L327-329' },
           ],
         },
         { id: 6, title: '戀愛 b 4 考題',        duration: 18, motifs: ['girl-veteran', 'milk-tea'],

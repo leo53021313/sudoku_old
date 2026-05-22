@@ -111,8 +111,8 @@ describe('usePresentation', () => {
     expect(result.current.beatIndex).toBe(0);
   });
 
-  it('reports totalBeats = 101', () => {
+  it('reports totalBeats = 102', () => {
     const { result } = renderHook(() => usePresentation());
-    expect(result.current.totalBeats).toBe(101);
+    expect(result.current.totalBeats).toBe(102);
   });
 });
