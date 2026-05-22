@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "export": "node scripts/export-slides.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -32,6 +33,9 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.60.0",
+    "pptxgenjs": "^4.0.1",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   }
