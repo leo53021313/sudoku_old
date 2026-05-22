@@ -20,6 +20,7 @@ export default function Ch9Step6() {
 
   useEffect(() => {
     if (beatIndex === 0) {
+      setHearts([]);
       let id = 0;
       const t = setInterval(() => {
         setHearts(h => [...h, { id: id++, x: Math.random() * 80 - 40 }].slice(-3));
