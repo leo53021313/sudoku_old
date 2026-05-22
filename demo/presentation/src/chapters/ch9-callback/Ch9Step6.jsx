@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { usePresentationContext } from '../../state/PresentationContext.jsx';
 import { GirlVeteran } from '../../motifs/GirlVeteran.jsx';
+import { MilkTea } from '../../motifs/MilkTea.jsx';
 
 const QUESTIONS = [
   { text: '前女友跟我比 · 誰比較好？', bg: '#FFD93D', color: '#000', rotate: -2 },
@@ -21,6 +22,39 @@ export default function Ch9Step6() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Space Grotesk', padding: 32, gap: 32,
     }}>
+      {/* 奶茶 — beat>=0 入場；mood arc: happy (beat 0) → normal (beat 1) → question + ❓ (beat 2，下個 task 補) */}
+      {/* Wrapper handles absolute centering — motion's transform animation would clobber translateX(-50%) */}
+      <div style={{ position: 'absolute', left: '50%', bottom: 60, transform: 'translateX(-50%)', zIndex: 15 }}>
+        <motion.div
+          initial={false}
+          animate={beatIndex >= 0 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+          transition={{ duration: 0.5, ease: OVERSHOOT }}
+          style={{ position: 'relative' }}
+        >
+          <MilkTea width={200} rotation={-3} shadow={10} variant={beatIndex >= 1 ? 'normal' : 'happy'} />
+        </motion.div>
+      </div>
+
+      {/* 告白成功 ✓ sticker — beat>=0 入場，beat>=1 變灰淡出（下一個 task 補） */}
+      {/* Wrapper handles centering; motion controls scale/opacity/rotate */}
+      <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
+        <motion.div
+          initial={false}
+          animate={beatIndex >= 0
+            ? { scale: 1, opacity: 1, rotate: -8 }
+            : { scale: 0, opacity: 0, rotate: 0 }}
+          transition={{ duration: 0.4, ease: OVERSHOOT }}
+          style={{
+            background: '#FFD93D', color: '#000',
+            padding: '12px 28px', border: '6px solid #000', boxShadow: '8px 8px 0 0 #000',
+            fontWeight: 900, fontSize: 28,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          告白成功 ✓
+        </motion.div>
+      </div>
+
       {/* 標題 — beat>=1 clip-path 從左刷出 */}
       <motion.div
         initial={false}
