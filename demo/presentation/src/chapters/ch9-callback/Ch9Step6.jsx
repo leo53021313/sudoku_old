@@ -49,14 +49,13 @@ export default function Ch9Step6() {
         </motion.div>
       </div>
 
-      {/* 告白成功 ✓ sticker — beat>=0 入場，beat>=1 變灰淡出（下一個 task 補） */}
-      {/* Wrapper handles centering; motion controls scale/opacity/rotate */}
+      {/* 告白成功 ✓ sticker — 只在 beat 0 出現，beat>=1 scale+opacity 退場 */}
       <div style={{ position: 'absolute', left: '50%', bottom: 280, transform: 'translateX(-50%)', zIndex: 14 }}>
         <motion.div
           initial={false}
-          animate={beatIndex >= 0
-            ? { scale: 1, opacity: 1, rotate: -8 }
-            : { scale: 0, opacity: 0, rotate: 0 }}
+          animate={beatIndex >= 1
+            ? { scale: 0, opacity: 0, rotate: 0 }
+            : { scale: 1, opacity: 1, rotate: -8 }}
           transition={{ duration: 0.4, ease: OVERSHOOT }}
           style={{
             background: '#FFD93D', color: '#000',
