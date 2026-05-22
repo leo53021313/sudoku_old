@@ -171,7 +171,7 @@ export default function Ch9Step5() {
         animate={{ ...milkTeaAnimate, opacity: beatIndex >= 0 ? 1 : 0, x: '-50%' }}
         transition={{ duration: 0.5, ease: OVERSHOOT }}
         style={{
-          position: 'absolute', bottom: '35%', left: '50%',
+          position: 'absolute', bottom: '28%', left: '50%',
           zIndex: 11,
         }}
       >
