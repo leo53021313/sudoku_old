@@ -3,9 +3,9 @@
   "min_target_empty": 3,
   "max_target_empty": 55,
 
-  "target_rate": 0.70,
-  "tolerance_band": [0.50, 0.85],
-  "step_size": 10.0,
+  "target_rate": 0.85,
+  "tolerance_band": [0.80, 0.92],
+  "step_size": 6.0,
 
   "window_size": 200,
   "min_episodes_before_update": 100,
