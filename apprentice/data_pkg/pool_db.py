@@ -55,7 +55,14 @@ class PuzzlePoolDB:
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute("PRAGMA busy_timeout=5000;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
+            # FULL (not NORMAL): apprentice training is regularly interrupted
+            # (Ctrl+C, crash, resume cycle). NORMAL doesn't fsync the WAL
+            # before each commit, so a hard kill mid-commit can leave the WAL
+            # in a state that corrupts the main DB during the next recovery
+            # apply. FULL costs an extra fsync per commit; since the env path
+            # is now read-only (see fetch_one_puzzle_for_training), there are
+            # almost no commits in the steady state — the perf cost is zero.
+            conn.execute("PRAGMA synchronous=FULL;")
             conn.execute("PRAGMA temp_store=MEMORY;")
             conn.execute("PRAGMA foreign_keys=ON;")
             self._local.conn = conn
@@ -345,51 +352,26 @@ class PuzzlePoolDB:
         level: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        取出一道可訓練題目並鎖定（status → 'training'）。
-        level：若指定則只取該難度的題目（擴充介面）。
+        READ-ONLY: sample a random puzzle at the requested level.
 
-        Uses ``_retry_transaction`` for resilience against transient
-        "database is locked" errors when many env workers race to lock
-        a puzzle simultaneously.
+        Apprentice no longer locks rows or tracks per-puzzle tries — those
+        were a legacy/ feature. Eliminating the UPDATE here removes ~750k
+        writes per 28M-step training run × 8 env workers = the main source
+        of WAL contention and crash-corruption risk. SELECT-only is safe
+        even under heavy parallelism.
+
+        ``worker_name`` and ``max_tries`` retained for API compatibility
+        (ignored). Caller still gets a row-shaped dict.
         """
-        now = now_str()
-
-        level_clause = "AND level=?" if level is not None else ""
-        tries_clause = "AND tries < ?" if max_tries is not None else ""
-
-        args = []
-        if level is not None:
-            args.append(int(level))
-        if max_tries is not None:
-            args.append(int(max_tries))
-
-        def _do(conn):
-            row = conn.execute(
-                f"SELECT * FROM puzzles"
-                f" WHERE status IN ('new','training')"
-                f" {level_clause} {tries_clause}"
-                f" ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,"
-                f"          RANDOM()"
-                f" LIMIT 1",
-                args,
-            ).fetchone()
-
-            if row is None:
-                return None
-
-            conn.execute("""
-                UPDATE puzzles
-                SET status='training', locked_by=?, locked_at=?, updated_at=?
-                WHERE id=?
-            """, (worker_name, now, now, row["id"]))
-
-            return dict(
-                conn.execute(
-                    "SELECT * FROM puzzles WHERE id=?", (row["id"],)
-                ).fetchone()
-            )
-
-        return self._retry_transaction(_do)
+        level_clause = "WHERE level=?" if level is not None else ""
+        args = (int(level),) if level is not None else ()
+        conn = self._get_conn()
+        row = conn.execute(
+            f"SELECT * FROM puzzles {level_clause}"
+            f" ORDER BY RANDOM() LIMIT 1",
+            args,
+        ).fetchone()
+        return dict(row) if row is not None else None
 
     def fetch_random_puzzles(
         self,
