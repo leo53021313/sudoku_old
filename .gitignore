@@ -49,10 +49,12 @@ desktop.ini
 *.swp
 *.swo
 
-# Python virtualenvs
-venv/
-.venv/
-env/
+# Python virtualenvs (root-anchored so they don't shadow the apprentice/env/
+# source package — a bare `env/` matches dirs at ANY depth and silently
+# ignored new files under apprentice/env/).
+/venv/
+/.venv/
+/env/
 
 # Python build artifacts
 *.egg-info/
