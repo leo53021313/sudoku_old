@@ -80,14 +80,24 @@ def test_action_mask_shape_is_1458(db_path):
     assert mask.shape == (1458,)
 
 
-def test_action_mask_fill_and_eliminate_have_same_legal_set(db_path):
-    """Both halves should mask the same (r,c,v) set: empty cell + v in candidates."""
+def test_action_mask_eliminate_mirrors_fill_except_last_candidate(db_path):
+    """The eliminate half mirrors the fill half (empty cell + v in candidates),
+    EXCEPT eliminating a cell's sole candidate is forbidden (would empty it)."""
     env = SudokuGymEnv(db_path=db_path)
     env.reset()
     mask = env.action_masks()
     fill_half = mask[:729]
     elim_half = mask[729:]
-    np.testing.assert_array_equal(fill_half, elim_half)
+    for r in range(9):
+        for c in range(9):
+            if env.board[r, c] != 0:
+                continue
+            cset = env.candidates_cache[r][c]
+            for v in cset:
+                base = r * 81 + c * 9 + (v - 1)
+                assert fill_half[base] == True
+                # last candidate -> eliminate forbidden; otherwise it mirrors fill
+                assert elim_half[base] == (len(cset) > 1)
 
 
 def test_obs_shape_26_channels():
@@ -251,19 +261,37 @@ def test_max_wrong_dynamic_when_target_empty_set():
     assert env.max_wrong_fills == 60  # max(20, 60)
 
 
-def test_max_steps_static_when_target_empty_none():
-    """When target_empty is None, max_steps stays as constructor default."""
-    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1, max_steps=222)
+def test_max_steps_scales_with_density_when_target_empty_none():
+    """target_empty=None (eval path) scales max_steps by the board's empty
+    count (floor 60), instead of restoring a flat static default."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
     env.set_target_empty(None)
     env.reset(seed=42)
-    assert env.max_steps == 222
+    empty = int((env.board == 0).sum())
+    assert env.max_steps == max(60, empty * 8)
 
 
-def test_max_wrong_static_when_target_empty_none():
-    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1, max_wrong_fills=33)
+def test_max_wrong_scales_with_density_when_target_empty_none():
+    """target_empty=None (eval path) scales max_wrong_fills by board density
+    (floor 20). This is what gives full real puzzles a real wrong-budget at
+    eval instead of the strangling static 20."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=1)
     env.set_target_empty(None)
     env.reset(seed=42)
-    assert env.max_wrong_fills == 33
+    empty = int((env.board == 0).sum())
+    assert env.max_wrong_fills == max(20, int(empty * 1.2))
+
+
+def test_full_puzzle_target_none_gets_real_wrong_budget():
+    """REGRESSION: a full L4 puzzle (target_empty=None) must get a wrong-budget
+    well above 20 — the hardcoded-20 cap was what made real-puzzle eval read 0%."""
+    env = SudokuGymEnv(db_path=str(_REPO_DB), difficulty=4)  # L4 ~55 empty
+    env.set_target_empty(None)
+    env.reset(seed=42)
+    empty = int((env.board == 0).sum())
+    assert empty >= 45
+    assert env.max_wrong_fills == max(20, int(empty * 1.2))
+    assert env.max_wrong_fills > 20  # the whole point: NOT the strangling 20
 
 
 def test_tried_bad_elim_initially_empty(db_path):

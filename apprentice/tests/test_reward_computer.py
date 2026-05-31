@@ -341,3 +341,43 @@ def test_bad_eliminate_records_triple_in_tried_bad_elim():
     rc.compute("eliminate", 5, 5, 4)  # wrong: 4 IS the solution
     assert (5, 5, 4) in env._tried_bad_elim
     assert len(env._tried_bad_elim) == 1
+
+
+def test_termination_uses_env_max_wrong_fills_not_constant():
+    """Termination must read env.max_wrong_fills (dynamic budget), not the
+    legacy module constant MAX_WRONG=20. A budget of 31 must allow 30 wrong
+    actions before terminating at the 31st."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[0, 0] = 0  # solution[0,0] == 5
+    env = _StubEnv(board, sol, _candidates_from_board(board))
+    env.max_wrong_fills = 31
+    rc = RewardComputer(env)
+    terminated = False
+    for _ in range(20):
+        env.candidates_cache[0][0] = {1, 5}  # keep a wrong value (1) available
+        env.candidate_count_grid[0, 0] = 2
+        _, terminated = rc.compute("fill", 0, 0, 1)  # 1 != solution 5 -> wrong
+    assert not terminated, "must NOT terminate at 20 when budget is 31"
+    assert env.wrong_count == 20
+    for _ in range(11):
+        env.candidates_cache[0][0] = {1, 5}
+        env.candidate_count_grid[0, 0] = 2
+        _, terminated = rc.compute("fill", 0, 0, 1)
+    assert terminated and env.wrong_count == 31
+
+
+def test_termination_falls_back_to_20_without_attr():
+    """Stub env lacking max_wrong_fills keeps the legacy MAX_WRONG=20 behaviour."""
+    sol = _solved_grid()
+    board = sol.copy()
+    board[0, 0] = 0
+    env = _StubEnv(board, sol, _candidates_from_board(board))
+    assert not hasattr(env, "max_wrong_fills")
+    rc = RewardComputer(env)
+    terminated = False
+    for _ in range(20):
+        env.candidates_cache[0][0] = {1, 5}
+        env.candidate_count_grid[0, 0] = 2
+        _, terminated = rc.compute("fill", 0, 0, 1)
+    assert terminated and env.wrong_count == 20

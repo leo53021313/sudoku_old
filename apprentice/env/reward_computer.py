@@ -90,7 +90,7 @@ class RewardComputer:
             env.wrong_count += 1
             env.candidates_cache[r][c].discard(v)
             env.candidate_count_grid[r, c] = len(env.candidates_cache[r][c])
-            terminated = env.wrong_count >= MAX_WRONG
+            terminated = env.wrong_count >= getattr(env, "max_wrong_fills", MAX_WRONG)
             return -1.0, terminated
 
         # Find the simplest technique that justifies this fill BEFORE committing,
@@ -120,7 +120,7 @@ class RewardComputer:
             env.wrong_count += 1
             # Record the triple so action_masks() forbids re-trying it this episode.
             env._tried_bad_elim.add((r, c, v))
-            terminated = env.wrong_count >= MAX_WRONG
+            terminated = env.wrong_count >= getattr(env, "max_wrong_fills", MAX_WRONG)
             return -1.0, terminated
 
         # Same justifier-based grading as the fill path.

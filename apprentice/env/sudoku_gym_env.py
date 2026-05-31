@@ -193,6 +193,18 @@ class SudokuGymEnv(gym.Env):
                     base = r * 81 + c * 9 + (v - 1)
                     mask[base] = True                       # fill
                     mask[self._ELIM_OFFSET + base] = True   # eliminate
+        # A cell with exactly one candidate must be FILLED, never eliminated —
+        # eliminating its sole candidate empties the cell and is always illegal
+        # (solution-agnostic). Removes the dominant "bad eliminate" wrong action.
+        for r in range(9):
+            for c in range(9):
+                if self.board[r, c] != 0:
+                    continue
+                cset = self.candidates_cache[r][c]
+                if len(cset) == 1:
+                    v = next(iter(cset))
+                    base = r * 81 + c * 9 + (v - 1)
+                    mask[self._ELIM_OFFSET + base] = False
         for (r, c, v) in self._tried_bad_elim:
             base = r * 81 + c * 9 + (v - 1)
             mask[self._ELIM_OFFSET + base] = False          # forbid repeat
@@ -256,20 +268,25 @@ class SudokuGymEnv(gym.Env):
         return obs
 
     def _update_dynamic_limits(self) -> None:
-        """A5+E2: set max_steps and max_wrong_fills based on target_empty.
+        """A5+E2: scale max_steps and max_wrong_fills to board density.
 
-        If target_empty is None, restore constructor defaults.
+        effective = target_empty if set, else the board's actual empty count
+        (the latter gives eval/reserved on full real puzzles a real budget).
         Formula:
-          max_steps = max(60, target_empty * 8)
-          max_wrong = max(20, int(target_empty * 1.2))
+          max_steps = max(60, effective * 8)
+          max_wrong = max(20, int(effective * 1.2))
         """
         if self.target_empty is None:
-            self.max_steps = self._max_steps_static
-            self.max_wrong_fills = self._max_wrong_static
-            return
+            # Eval / reserved on a full real puzzle: scale by the board's ACTUAL
+            # empty count so dense boards get a real wrong-budget. The static-20
+            # budget strangled the eliminate-heavy policy and made real-puzzle
+            # eval read ~0% even though the policy can solve the board.
+            effective = int(np.count_nonzero(self.board == 0))
+        else:
+            effective = self.target_empty
 
-        self.max_steps = max(60, int(self.target_empty * 8))
-        self.max_wrong_fills = max(20, int(self.target_empty * 1.2))
+        self.max_steps = max(60, int(effective * 8))
+        self.max_wrong_fills = max(20, int(effective * 1.2))
 
     def _apply_fill_back(self, target_empty: int) -> None:
         """Fill cells from self.solution until only target_empty cells remain empty.
