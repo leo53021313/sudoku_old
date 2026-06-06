@@ -11,11 +11,12 @@ higher; the two are not directly comparable.
 
 from __future__ import annotations
 
-import numpy as np
 import argparse
 import json
 import os
 import sys
+
+import numpy as np
 
 from apprentice.env.sudoku_gym_env import SudokuGymEnv
 from apprentice.train.ppo import SudokuMaskablePPO
@@ -63,7 +64,8 @@ def _read_curriculum_target(ckpt_path: str) -> int | None:
     side = ckpt_path.replace(".zip", "_curriculum.json")
     if not os.path.exists(side):
         return None
-    data = json.loads(open(side, encoding="utf-8").read())
+    with open(side, encoding="utf-8") as f:
+        data = json.load(f)
     te = data.get("target_empty")
     return int(round(te)) if te is not None else None
 
@@ -102,9 +104,8 @@ def main() -> None:
 
     print("\n=== Distribution 1: real full puzzles (target_empty=None) ===")
     for diff in (1, 2, 3, 4):
+        # constructor already sets _difficulty_dist={diff:1.0} and target_empty=None
         env = SudokuGymEnv(db_path=DB_PATH, difficulty=diff)
-        env.set_difficulty_distribution({diff: 1.0})
-        env.set_target_empty(None)
         stats = measure(model, env, args.n_real, seed=args.seed)
         _print_row(f"REAL L{diff}", stats)
 
@@ -114,8 +115,7 @@ def main() -> None:
         print("[measure] no curriculum sidecar; skipping curriculum-matched measurement")
     else:
         env = SudokuGymEnv(db_path=DB_PATH, difficulty=1)
-        env.set_difficulty_distribution({1: 1.0})
-        env.set_target_empty(curr_target)
+        env.set_target_empty(curr_target)  # fill-back to the curriculum's target_empty
         stats = measure(model, env, args.n_curr, seed=args.seed)
         _print_row(f"CURR te={curr_target}", stats)
 
