@@ -60,3 +60,27 @@ def test_measure_aggregates_correctly():
     assert stats["mean_wrong"] == (2 + 0 + 10) / 3
     assert stats["max_wrong"] == 10
     assert stats["mean_steps"] == (5 + 3 + 4) / 3
+
+
+def test_measure_zero_episodes():
+    env = _ScriptedEnv(n_actions=10, episodes=[])
+    stats = measure(_DummyPolicy(), env, n_episodes=0)
+    assert stats["n_episodes"] == 0
+    assert stats["success_rate"] == 0.0
+    assert stats["mean_wrong"] == 0.0
+    assert stats["max_wrong"] == 0
+    assert stats["mean_steps"] == 0.0
+
+
+def test_measure_propagates_seed_per_episode():
+    seen_seeds = []
+
+    class _SeedSpyEnv(_ScriptedEnv):
+        def reset(self, *, seed=None, options=None):
+            seen_seeds.append(seed)
+            return super().reset(seed=seed, options=options)
+
+    episodes = [{"steps": 1, "wrong": 0, "success": True}] * 3
+    env = _SeedSpyEnv(n_actions=10, episodes=episodes)
+    measure(_DummyPolicy(), env, n_episodes=3, seed=100)
+    assert seen_seeds == [100, 101, 102]

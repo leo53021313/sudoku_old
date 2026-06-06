@@ -19,6 +19,7 @@ def measure(model, env, n_episodes: int, seed: int | None = None) -> dict:
 
     env must expose reset(seed=)/step(action)/action_masks() and put
     is_success / wrong_count / steps into the step info dict.
+    All fields are 0 when n_episodes == 0.
     """
     successes: list[bool] = []
     wrongs: list[int] = []
@@ -40,10 +41,9 @@ def measure(model, env, n_episodes: int, seed: int | None = None) -> dict:
         wrongs.append(int(info.get("wrong_count", 0)))
         steps.append(int(info.get("steps", 0)))
 
-    n = max(len(successes), 1)
     return {
         "n_episodes": len(successes),
-        "success_rate": sum(successes) / n,
+        "success_rate": sum(successes) / len(successes) if successes else 0.0,
         "mean_wrong": float(np.mean(wrongs)) if wrongs else 0.0,
         "max_wrong": int(max(wrongs)) if wrongs else 0,
         "mean_steps": float(np.mean(steps)) if steps else 0.0,
