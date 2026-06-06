@@ -45,6 +45,7 @@ from apprentice.train.curriculum_controller import CurriculumController
 from apprentice.train.curriculum_callback import CurriculumCallback
 from apprentice.eval.eval_callback import SudokuEvalCallback
 from apprentice.eval.reserved_eval_callback import ReservedEvalCallback
+from apprentice.train.wrong_action_callback import WrongActionLogCallback
 
 
 _REPO_ROOT  = Path(__file__).resolve().parents[2]
@@ -191,6 +192,7 @@ def main():
         make_env_fn(DB_PATH, args.max_wrong),
         n_envs=args.n_envs,
         vec_env_cls=SubprocVecEnv,
+        monitor_kwargs={"info_keywords": ("wrong_count",)},
     )
     if not args.no_vecnorm:
         # If resuming AND a VecNormalize sidecar exists, load it.
@@ -319,7 +321,7 @@ def main():
         checkpoint.add_curriculum_callback(curriculum_cb)
 
     try:
-        callbacks = [checkpoint, eval_cb, reserved_eval]
+        callbacks = [checkpoint, eval_cb, reserved_eval, WrongActionLogCallback()]
         if curriculum_cb is not None:
             callbacks.append(curriculum_cb)
         model.learn(
