@@ -70,6 +70,17 @@ class _TinyEnv(gym.Env):
         return np.zeros(1, dtype=np.float32), 1.0, terminated, False, info
 
 
+def test_partial_key_presence_uses_only_episodes_with_key():
+    buf = deque([
+        {"r": 1.0, "l": 10, "wrong_count": 6},
+        {"r": 1.0, "l": 10},               # no wrong_count — should be ignored
+        {"r": 1.0, "l": 10, "wrong_count": 2},
+    ])
+    cb = _make_cb(buf)
+    cb._on_rollout_end()
+    assert cb.model.logger.records["rollout/ep_wrong_mean"] == 4.0  # mean of 6 and 2 only
+
+
 def test_monitor_propagates_wrong_count_into_episode_info():
     env = Monitor(_TinyEnv(), info_keywords=("wrong_count",))
     env.reset()
