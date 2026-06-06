@@ -5,7 +5,7 @@ window used for `rollout/ep_rew_mean` / `rollout/ep_len_mean` — so the new
 `rollout/ep_wrong_mean` metric lines up apples-to-apples with them.
 
 Relies on each episode's info carrying "wrong_count". This must be wired in
-train.py (Task 2) via make_vec_env(..., monitor_kwargs={"info_keywords": ("wrong_count",)}),
+train.py via make_vec_env(..., monitor_kwargs={"info_keywords": ("wrong_count",)}),
 which makes Monitor copy the terminal-step wrong_count into ep_info_buffer.
 """
 
